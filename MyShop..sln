@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.7.11903.348
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MyShop.PL", "MyShop.PL\MyShop.PL.csproj", "{E81509D0-95E0-40B3-9588-5213370F33D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.BLL", "MyShop.BLL\MyShop.BLL.csproj", "{278B7ACD-428A-4268-ADD6-B0493E43036D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyShop.DAL", "MyShop.DAL\MyShop.DAL.csproj", "{2EE48971-8FE5-4A5D-A9EC-332D0A231BD5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E81509D0-95E0-40B3-9588-5213370F33D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E81509D0-95E0-40B3-9588-5213370F33D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E81509D0-95E0-40B3-9588-5213370F33D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E81509D0-95E0-40B3-9588-5213370F33D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{278B7ACD-428A-4268-ADD6-B0493E43036D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{278B7ACD-428A-4268-ADD6-B0493E43036D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{278B7ACD-428A-4268-ADD6-B0493E43036D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{278B7ACD-428A-4268-ADD6-B0493E43036D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EE48971-8FE5-4A5D-A9EC-332D0A231BD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EE48971-8FE5-4A5D-A9EC-332D0A231BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EE48971-8FE5-4A5D-A9EC-332D0A231BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EE48971-8FE5-4A5D-A9EC-332D0A231BD5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C9468A3D-45DC-4208-828C-DB11ABD7EDEF}
+	EndGlobalSection
+EndGlobal

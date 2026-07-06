@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Presistence\Data\Configurations\" />
+    <Folder Include="Presistence\Data\Migrations\" />
+    <Folder Include="Presistence\Data\Seeds\" />
+    <Folder Include="Presistence\UnitOfWork\" />
+    <Folder Include="Presistence\Repositories\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.11" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
+  </ItemGroup>
+
+</Project>
