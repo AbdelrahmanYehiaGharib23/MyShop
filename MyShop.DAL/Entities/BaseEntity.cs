@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MyShop.DAL.Entites
+namespace MyShop.DAL.Entities
 {
     public class BaseEntity
     {

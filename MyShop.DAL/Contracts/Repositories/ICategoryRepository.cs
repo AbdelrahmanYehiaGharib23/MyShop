@@ -5,8 +5,7 @@ using MyShop.DAL.Entites;
 
 namespace MyShop.DAL.Contracts.Repositories
 {
-    public interface IProductRepository:IGenericRepository<Product>
+    public interface ICategoryRepository:IGenericRepository<Category>
     {
-
     }
 }
