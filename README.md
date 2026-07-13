@@ -1,104 +1,106 @@
-# ShopHub Startup Template
+# 🛒 MyShop - E-Commerce Management System
 
-A clean ASP.NET Core MVC startup template designed for students to build E-Commerce projects using the Repository Pattern and Entity Framework Core.
+A modern E-Commerce Management System built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture** and Clean Architecture principles.
 
-## Features
+---
 
-- ASP.NET Core MVC
-- Entity Framework Core
-- Repository Pattern
-- SQL Server Integration
-- Identity Authentication
-- Bootstrap UI
-- AdminLTE Dashboard
-- DataTables Integration
-- Toastr Notifications
-- SweetAlert2
-- TinyMCE Support (Optional)
-- File Upload Support
-- Session Configuration
+## 🚀 Features
 
-## Included Modules
-
-### Category
-- Create Category
-- View Categories
-- Edit Category
-- Delete Category
-
-### Product
+### ✅ Product Management
 - Create Product
-- Upload Product Image
-- View Products
-- Edit Product
+- Update Product
 - Delete Product
+- Product Details
+- Product Listing
+- Product Image Upload
+- Category Selection
 
-## Project Structure
+### ✅ Category Management
+- Create Category
+- Update Category
+- Delete Category
+- Category Listing
 
-```
-Controllers/
-DataAccess/
-Entities/
-    Models/
-    ViewModels/
-Repositories/
-Views/
-wwwroot/
-```
+### ✅ Architecture
+- N-Tier Architecture
+- Repository Pattern
+- Unit of Work
+- Dependency Injection
+- AutoMapper
+- DTO Pattern
+- Service Layer
 
-## Technologies
-
-- ASP.NET Core MVC
+### ✅ Database
 - Entity Framework Core
 - SQL Server
-- LINQ
-- Bootstrap 5
-- AdminLTE 3
-- jQuery
-- DataTables
+- Code First
+- Migrations
 
-## Database
+### ✅ Authentication
+- ASP.NET Core Identity
+- Custom ApplicationUser
 
-Update the connection string inside:
+---
 
-```
-appsettings.json
-```
+## 🛠 Technologies
 
-Then run:
-
-```bash
-Update-Database
-```
-
-or
-
-```bash
-dotnet ef database update
-```
-
-## Default Features
-
+- ASP.NET Core MVC (.NET 10)
+- Entity Framework Core
+- SQL Server
+- ASP.NET Core Identity
+- AutoMapper
+- Bootstrap
+- AdminLTE
 - Repository Pattern
-- Dependency Injection
-- CRUD Operations
-- File Upload
-- Entity Relationships
-- ViewModels
-- TempData Notifications
+- Unit Of Work
 
-## Notes
+---
 
-This template is intended as a starting point for educational E-Commerce projects. Students are expected to extend it with additional features such as:
+## 📌 Current Progress
 
+- ✅ Product CRUD
+- ✅ Category CRUD
+- ✅ Image Upload
+- ✅ Identity Configuration
+- ✅ Database Initialization
+- 🚧 Authentication UI (In Progress)
+- 🚧 Authorization (In Progress)
+- 🚧 User & Role Management (In Progress)
+
+---
+
+## 📂 Project Structure
+
+```
+MyShop.PL
+MyShop.BLL
+MyShop.DAL
+```
+
+---
+
+## 📖 Future Improvements
+
+- Login & Register Pages
+- Role Management
+- Claims & Policies
 - Shopping Cart
 - Orders
 - Payments
-- Reviews
-- Wishlist
-- Authentication Enhancements
 - Dashboard Analytics
 
-## License
+---
 
-Educational Use Only.
+## ⚠️ Note
+
+The backend infrastructure for ASP.NET Core Identity has been configured.
+
+The frontend implementation for Authentication and Authorization is currently under development.
+
+---
+
+## 👨‍💻 Author
+
+**Abdelrahman Yehia Gharib Emam**
+
+Junior Backend .NET Developer
