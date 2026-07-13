@@ -1,0 +1,55 @@
+@using MyShop.PL.ViewModels
+@model CategoryVM
+
+@{
+    var action = ViewData["FormAction"]?.ToString() ?? "Create";
+    var mode = ViewData["FormMode"]?.ToString() ?? "Create";
+    var submitText = ViewData["SubmitText"]?.ToString() ?? "Save";
+    var intro = ViewData["FormIntro"]?.ToString() ?? string.Empty;
+    var formUrl = action == "Edit" ? Url.Action(action, new { id = Model.Id }) : Url.Action(action);
+}
+
+<div class="catalog-form-panel">
+    <div class="catalog-form-heading">
+        <div>
+            <span class="catalog-kicker">@mode category</span>
+            <h2>@submitText</h2>
+            <p>@intro</p>
+        </div>
+        <span class="catalog-form-icon">
+            <i class="fas fa-tags"></i>
+        </span>
+    </div>
+
+    <form action="@formUrl" method="post" class="catalog-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="catalog-validation"></div>
+
+        <div class="catalog-field">
+            <label asp-for="Name">Category name</label>
+            <div class="catalog-input-shell">
+                <i class="fas fa-tag"></i>
+                <input asp-for="Name" placeholder="Example: Electronics, Fashion, Home" />
+            </div>
+            <span asp-validation-for="Name"></span>
+        </div>
+
+        <div class="catalog-field">
+            <label asp-for="Description">Description</label>
+            <textarea asp-for="Description" rows="4" placeholder="Short internal note for this category."></textarea>
+            <span asp-validation-for="Description"></span>
+        </div>
+
+        <div class="catalog-form-actions">
+            <a asp-action="Index" class="catalog-secondary-action">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+            <button type="submit" class="catalog-primary-action">
+                <i class="fas fa-check"></i>
+                <span>@submitText</span>
+            </button>
+        </div>
+    </form>
+</div>

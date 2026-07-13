@@ -1,0 +1,15 @@
+@if (TempData["Message"] is not null)
+{
+    <div class="catalog-alert">
+        <i class="fas fa-info-circle"></i>
+        <span>@TempData["Message"]</span>
+    </div>
+}
+
+@if (TempData["SuccessMessage"] is not null)
+{
+    <div class="catalog-alert success">
+        <i class="fas fa-check-circle"></i>
+        <span>@TempData["SuccessMessage"]</span>
+    </div>
+}

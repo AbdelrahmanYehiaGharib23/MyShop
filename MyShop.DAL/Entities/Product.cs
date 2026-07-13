@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,7 +15,8 @@ namespace MyShop.DAL.Entities
         public string? Description { get; set; }
 
         public int CategoryId { get; set; }
-
-        public Category Category { get; set; } = null!;
+        public string? ImageUrl { get; set; }
+        public virtual Category Category { get; set; } = null!;
     }
 }
+

@@ -1,0 +1,99 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using myshop.Entities.ViewModels
+@model ProductVM
+
+@{
+    var action = ViewData["FormAction"]?.ToString() ?? "Create";
+    var mode = ViewData["FormMode"]?.ToString() ?? "Create";
+    var submitText = ViewData["SubmitText"]?.ToString() ?? "Save";
+    var intro = ViewData["FormIntro"]?.ToString() ?? string.Empty;
+    var categories = Model.CategoryList ?? Enumerable.Empty<SelectListItem>();
+    var formUrl = action == "Edit" ? Url.Action(action, new { id = Model.Id }) : Url.Action(action);
+}
+
+<div class="product-form-panel">
+    <div class="product-form-heading">
+        <div>
+            <span class="product-kicker">@mode product</span>
+            <h2>@submitText</h2>
+            <p>@intro</p>
+        </div>
+        <span class="product-form-icon">
+            <i class="fas fa-box-open"></i>
+        </span>
+    </div>
+
+    <form action="@formUrl" method="post" enctype="multipart/form-data" class="product-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ImageUrl" />
+        <div asp-validation-summary="ModelOnly" class="product-validation"></div>
+
+        <div class="product-form-grid">
+            <div class="product-fields">
+                <div class="product-field">
+                    <label asp-for="Name">Product name</label>
+                    <input asp-for="Name" placeholder="Example: Wireless Headphones" />
+                    <span asp-validation-for="Name"></span>
+                </div>
+
+                <div class="product-field">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description" rows="5" placeholder="Describe product benefits, material, and use cases."></textarea>
+                    <span asp-validation-for="Description"></span>
+                </div>
+
+                <div class="product-field-row">
+                    <div class="product-field">
+                        <label asp-for="Price">Price</label>
+                        <input asp-for="Price" placeholder="0.00" />
+                        <span asp-validation-for="Price"></span>
+                    </div>
+                    <div class="product-field">
+                        <label asp-for="CategoryId">Category</label>
+                        <select asp-for="CategoryId" asp-items="categories">
+                            <option value="">Select category</option>
+                        </select>
+                        <span asp-validation-for="CategoryId"></span>
+                    </div>
+                </div>
+
+                <div class="product-field">
+                    <label asp-for="Image">Product image</label>
+                    <input asp-for="Image" id="productImageInput" type="file" accept="image/*" />
+                    <span asp-validation-for="Image"></span>
+                </div>
+            </div>
+
+            <aside class="product-preview">
+                <span>Preview</span>
+                <div class="product-preview-frame">
+                    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+                    {
+                        <img id="productImagePreview" src="@Model.ImageUrl" alt="@Model.Name" />
+                    }
+                    else
+                    {
+                        <div id="productImageFallback" class="product-image-fallback">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        <img id="productImagePreview" alt="" hidden />
+                    }
+                </div>
+                <strong>@(string.IsNullOrWhiteSpace(Model.Name) ? "Product name" : Model.Name)</strong>
+                <small>@(Model.Price > 0 ? Model.Price.ToString("C") : "Price preview")</small>
+            </aside>
+        </div>
+
+        <div class="product-form-actions">
+            <a asp-action="Index" class="product-secondary-action">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+            <button type="submit" class="product-primary-action">
+                <i class="fas fa-check"></i>
+                <span>@submitText</span>
+            </button>
+        </div>
+    </form>
+</div>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace MyShop.BLL.Models.Dto.ProductDto
 {
@@ -21,6 +22,8 @@ namespace MyShop.BLL.Models.Dto.ProductDto
         [StringLength(500,
             ErrorMessage = "Description cannot exceed 500 characters.")]
         public string? Description { get; set; }
+        public string? ImageUrl { get; set; }
+
 
         [Required(ErrorMessage = "Category is required.")]
         [Range(1, int.MaxValue,

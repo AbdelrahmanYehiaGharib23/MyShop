@@ -1,94 +1,136 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using myshop.DataAccess;
-using myshop.Entities.Models;
+using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
+using MyShop.BLL.Models.Dto.CategoryDto;
+using MyShop.BLL.Services.CategoryServices;
+using MyShop.DAL.Presistence.Data.DbInitializer;
+using MyShop.PL.ViewModels;
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
     public class CategoryController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly ILogger _logger;
+        private readonly ICategoryService _categoryService;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IMapper _mapper;
 
-        public CategoryController(ApplicationDbContext context)
+        public CategoryController(ApplicationDbContext context, ILogger<CategoryController> logger, ICategoryService categoryServic, IMapper mapper)
         {
             _context = context;
-        }
-
-        public IActionResult Index()
-        {
-            var categories = _context.Categories.ToList();
-            return View(categories);
+            _logger = logger;
+            _categoryService = categoryServic;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Index()
         {
-
-            return View();
+            var Categories = await _categoryService.GetCategoryAsync();
+            return View(Categories);
         }
 
+        
+
+        [HttpGet]
+        public IActionResult Create() => View();
+
         [HttpPost]
-        public IActionResult Create(Category category)
+        public async Task<IActionResult> Create(CategoryVM categoryVM)
         {
             if (ModelState.IsValid)
             {
-                _context.Categories.Add(category);
-                _context.SaveChanges();
-                TempData["Create"] = "Item has Created Successfully";
-                return RedirectToAction("Index");
+                try
+                {
+                    var categoryDto = _mapper.Map<CreateCategoryDto>(categoryVM);
+                    int result = await _categoryService.CreateCategoryAsync(categoryDto);
+                    if (result > 0)
+                    {
+                        TempData["Message"] = $"Category {categoryVM.Name} created successfully";
+                        return RedirectToAction(nameof(Index));
+                    }
+                    else
+                        TempData["Message"] = $"Failed to create category {categoryVM.Name}";
+                }
+                catch (Exception ex)
+                {
+                    if (_environment.IsDevelopment())
+                        ModelState.AddModelError(string.Empty, ex.Message);
+                    else
+                        _logger.LogError(ex.Message);
+                }
             }
-            return View(category);
+            return View(categoryVM);
         }
-
         [HttpGet]
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null | id == 0)
-            {
-                NotFound();
-            }
-            var categoryIndb = _context.Categories.Find(id);
-
-            return View(categoryIndb);
+            if (!id.HasValue) return BadRequest();
+            var category = await _categoryService.GetCategoryByIdAsync(id.Value);
+            if (category is null) return NotFound();
+            var categoryVm = _mapper.Map<CategoryVM>(category);
+            return View(categoryVm);
         }
 
         [HttpPost]
-        public IActionResult Edit(Category category)
+        public async Task<IActionResult> Edit([FromRoute] int id, CategoryVM categoryVM)
         {
             if (ModelState.IsValid)
             {
-                _context.Categories.Update(category);
-
-                _context.SaveChanges();
-                TempData["Update"] = "Data has Updated Successfully";
-                return RedirectToAction("Index");
+                try
+                {
+                    var updateDto = _mapper.Map<UpdateCategoryDto>(categoryVM);
+                    var result = await _categoryService.UpdateCategoryAsync(updateDto);
+                    if (result > 0) return RedirectToAction(nameof(Index));
+                    ModelState.AddModelError(string.Empty, "Failed to update category");
+                }
+                catch (Exception ex)
+                {
+                    if (_environment.IsDevelopment())
+                        ModelState.AddModelError(string.Empty, ex.Message);
+                    else
+                    {
+                        _logger.LogError(ex.Message);
+                        return View("ErrorView", ex);
+                    }
+                }
             }
+            return View(categoryVM);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (!id.HasValue) return BadRequest();
+            var category = await _categoryService.GetCategoryByIdAsync(id.Value);
+            if (category == null) return NotFound();
             return View(category);
         }
 
-        [HttpGet]
-        public IActionResult Delete(int? id)
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (id == null | id == 0)
-            {
-                NotFound();
-            }
-            var categoryIndb = _context.Categories.Where(x => x.Id == id).FirstOrDefault();
+            if (id == 0) return BadRequest();
 
-            return View(categoryIndb);
-        }
-
-        [HttpPost]
-        public IActionResult DeleteCategory(int? id)
-        {
-            var categoryIndb = _context.Categories.FirstOrDefault(x => x.Id == id);
-            if (categoryIndb == null)
+            try
             {
-                NotFound();
+                bool deleted = await _categoryService.DeleteCategoryAsync(id);
+                if (deleted)
+                {
+                    TempData["SuccessMessage"] = "Category deleted successfully";
+                    _logger.LogInformation($"Category deleted: ID={id}");
+                    return RedirectToAction(nameof(Index));
+                }
+
+                ModelState.AddModelError(string.Empty, "Failed to delete category");
+                var category = await _categoryService.GetCategoryByIdAsync(id);
+                return View(category);
             }
-            _context.Categories.Remove(categoryIndb);
-            _context.SaveChanges();
-            TempData["Delete"] = "Item has Deleted Successfully";
-            return RedirectToAction("Index");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting category");
+                return View("ErrorView", ex);
+            }
         }
     }
 }

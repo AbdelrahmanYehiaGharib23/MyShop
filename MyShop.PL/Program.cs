@@ -1,10 +1,15 @@
+using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using myshop.DataAccess;
-using myshop.Entities.Models;
-using Stripe;
-using System;
+using MyShop.BLL.Mapping;
+using MyShop.BLL.Services.CategoryServices;
+using MyShop.BLL.Services.ProductServices;
+using MyShop.DAL;
+using MyShop.DAL.Entities.IdentityEntity;
+using MyShop.DAL.Presistence.Data.DbInitializer;
+using MyShop.PL.Extensions;
+using MyShop.PL.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,11 +18,26 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
 
+builder.Services.AddPersistenceServices(builder.Configuration);
 
-builder.Services.AddIdentity<ApplicationUser,IdentityRole>(
-    options=>options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(4)
-    ).AddDefaultTokenProviders().AddDefaultUI()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+
+
+// Configure AutoMapper
+builder.Services.AddAutoMapper(M => M.AddProfile(new MappingProfile()));
+builder.Services.AddAutoMapper(cfg => cfg.AddProfile<PresentationProfile>());
+
+// Configure Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromDays(4);
+    options.User.RequireUniqueEmail = true;
+})
+.AddDefaultTokenProviders()
+.AddDefaultUI()
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 
 builder.Services.AddHttpContextAccessor();
@@ -25,7 +45,11 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession();
+
 var app = builder.Build();
+
+app.InitializeDatabase();
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -57,12 +81,11 @@ app.UseAuthorization();
 app.UseSession();
 
 app.MapRazorPages();
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Product}/{action=Index}/{id?}");
 
 app.Run();
+
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using MyShop.DAL.Entites;
+using MyShop.DAL.Entities;
 
 namespace MyShop.DAL.Contracts.Repositories
 {

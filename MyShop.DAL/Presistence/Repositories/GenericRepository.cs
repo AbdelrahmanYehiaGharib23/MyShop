@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MyShop.DAL.Contracts.Repositories;
-using MyShop.DAL.Entites;
+using MyShop.DAL.Entities;
 using MyShop.DAL.Presistence.Data.DbInitializer;
 
 namespace MyShop.DAL.Presistence.Repositories

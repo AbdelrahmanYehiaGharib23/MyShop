@@ -1,6 +1,6 @@
-﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<ApplicationUser> SignInManager
-@inject UserManager<ApplicationUser> UserManager
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<MyShop.DAL.Entities.IdentityEntity.ApplicationUser> SignInManager
+@inject UserManager<MyShop.DAL.Entities.IdentityEntity.ApplicationUser> UserManager
 
 <style>
     .nav-link-box {
@@ -61,3 +61,4 @@
         </li>
     }
 </ul>
+

@@ -1,172 +1,204 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
-using myshop.DataAccess;
+
 using myshop.Entities.Models;
 using myshop.Entities.ViewModels;
+using MyShop.BLL.Models.Dto.ProductDto;
+using MyShop.BLL.Services.CategoryServices;
+using MyShop.BLL.Services.ProductServices;
+using MyShop.DAL.Presistence.Data.DbInitializer;
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
     public class ProductController : Controller
     {
+        private readonly IProductService _productService;
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly IWebHostEnvironment _environment;
+        private readonly IMapper _mapper;
+        private readonly ILogger _logger;
+        private readonly ICategoryService _categoryService;
 
-        public ProductController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
+        public ProductController(IProductService productService,ApplicationDbContext context, IWebHostEnvironment webHostEnvironment,IMapper mapper,ILogger<ProductController> logger,ICategoryService categoryService)
         {
+            _productService = productService;
             _context = context;
-            _webHostEnvironment = webHostEnvironment;
+            _environment = webHostEnvironment;
+            _mapper = mapper;
+            _logger = logger;
+            _categoryService = categoryService;
         }
-
-        public IActionResult Index()
-        {
-            return View();
-        }
-
         [HttpGet]
-        public IActionResult GetData()
+        public async Task<IActionResult> Index()
         {
-            var products = _context.Products
-                .Include(x => x.Category)
-                .Select(x => new
-                {
-                    id = x.Id,
-                    name = x.Name,
-                    description = x.Description,
-                    price = x.Price,
-                    categoryName = x.Category.Name
-                })
-                .ToList();
-
-            return Json(new { data = products });
+            var products = await _productService.GetProductAsync();
+            return View(products);
         }
 
-        [HttpGet]
-        public IActionResult Create()
+
+        //I will fetch the category data associated with the product for display.
+        private async Task<IEnumerable<SelectListItem>> GetCategorySelectListAsync()
         {
-            ProductVM productVM = new ProductVM()
+            var categories = await _categoryService.GetCategoryAsync();
+
+            return categories.Select(c => new SelectListItem
             {
-                Product = new Product(),
-                CategoryList = _context.Categories.Select(x => new SelectListItem
-                {
-                    Text = x.Name,
-                    Value = x.Id.ToString()
-                })
+                Text = c.Name,
+                Value = c.Id.ToString()
+            });
+        }
+        //Method for uploading images while preventing duplicates during Create and Update operations.
+        private async Task<string?> SaveImageAsync(IFormFile? image)
+        {
+            if (image == null || image.Length == 0)
+                return null;
+
+            var extension = Path.GetExtension(image.FileName);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+
+            var folderPath = Path.Combine(_environment.WebRootPath, "images", "products");
+
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+
+            var filePath = Path.Combine(folderPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream);
+            }
+
+            return $"/images/products/{fileName}";
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            ProductVM productVM = new ProductVM
+            {
+                CategoryList = await GetCategorySelectListAsync()
             };
+
             return View(productVM);
         }
 
         [HttpPost]
-        public IActionResult Create(ProductVM productVM,IFormFile file)
+        public async Task<IActionResult> Create(ProductVM productVM)
         {
             if (ModelState.IsValid)
             {
-                string RootPath = _webHostEnvironment.WebRootPath;
-                if (file != null)
+                try
                 {
-                    string filename = Guid.NewGuid().ToString();
-                    var Upload = Path.Combine(RootPath, @"Images\Products");
-                    var ext = Path.GetExtension(file.FileName);
+                    productVM.ImageUrl = await SaveImageAsync(productVM.Image);
 
-                    using (var filestream = new FileStream(Path.Combine(Upload,filename+ext),FileMode.Create))
+                    var productDto = _mapper.Map<CreateProductDto>(productVM);
+                    int result = await _productService.CreateProductAsync(productDto);
+                    if (result > 0)
                     {
-                        file.CopyTo(filestream);
+                        TempData["Message"] = $"Product {productVM.Name} created successfully";
+                        return RedirectToAction(nameof(Index));
                     }
-                    productVM.Product.Img = @"Images\Products\" + filename + ext;
+                    else
+                        TempData["Message"] = $"Failed to create Produt {productVM.Name}";
                 }
-
-                _context.Products.Add(productVM.Product);
-                _context.SaveChanges();
-                TempData["Create"] = "Item has Created Successfully";
-                return RedirectToAction("Index");
+                catch (Exception ex)
+                {
+                    if (_environment.IsDevelopment())
+                        ModelState.AddModelError(string.Empty, ex.Message);
+                    else
+                        _logger.LogError(ex.Message);
+                }
             }
-            return View(productVM.Product);
+            productVM.CategoryList = await GetCategorySelectListAsync();
+            return View(productVM);
         }
+
         [HttpGet]
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || id == 0)
-            {
+            if (!id.HasValue)
+                return BadRequest();
+
+            var product = await _productService.GetProductByIdAsync(id.Value);
+
+            if (product == null)
                 return NotFound();
-            }
 
-            ProductVM productVM = new ProductVM()
-            {
-                Product = _context.Products.FirstOrDefault(x => x.Id == id),
-                CategoryList = _context.Categories.Select(x => new SelectListItem
-                {
-                    Text = x.Name,
-                    Value = x.Id.ToString()
-                })
-            };
+            var productVM = _mapper.Map<ProductVM>(product);
+
+            productVM.CategoryList = await GetCategorySelectListAsync();
 
             return View(productVM);
         }
-        
+
         [HttpPost]
-        public IActionResult Edit(ProductVM productVM, IFormFile? file)
+        public async Task<IActionResult> Edit([FromRoute] int id,ProductVM productVM)
         {
             if (ModelState.IsValid)
             {
-                string RootPath = _webHostEnvironment.WebRootPath;
-
-                if (file != null)
+                try
                 {
-                    string filename = Guid.NewGuid().ToString();
-                    var Upload = Path.Combine(RootPath, @"Images\Products");
-                    var ext = Path.GetExtension(file.FileName);
+                    if (productVM.Image != null)
+                        productVM.ImageUrl = await SaveImageAsync(productVM.Image);
 
-                    if (productVM.Product.Img != null)
+                    var updateDto = _mapper.Map<UpdateProductDto>(productVM);
+                    var result =await _productService.UpdateProductAsync(updateDto);
+                    if (result > 0) return RedirectToAction(nameof(Index));
+                    ModelState.AddModelError(string.Empty, "Failed to update product");
+                }
+                catch (Exception ex)
+                {
+                    if (_environment.IsDevelopment())
+                        ModelState.AddModelError(string.Empty, ex.Message);
+                    else
                     {
-                        var oldimg = Path.Combine(RootPath, productVM.Product.Img.TrimStart('\\'));
-
-                        if (System.IO.File.Exists(oldimg))
-                        {
-                            System.IO.File.Delete(oldimg);
-                        }
+                        _logger.LogError(ex.Message);
+                        return View("ErrorView", ex);
                     }
+                }
+            }
+            productVM.CategoryList = await GetCategorySelectListAsync();
+            return View(productVM);
+        }
+        [HttpGet]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (!id.HasValue) return BadRequest();
+            var product = await _productService.GetProductByIdAsync(id.Value);
+            if (product == null) return NotFound();
+            return View(product);
+        }
 
-                    using (var filestream = new FileStream(Path.Combine(Upload, filename + ext), FileMode.Create))
-                    {
-                        file.CopyTo(filestream);
-                    }
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            if (id == 0) return BadRequest();
 
-                    productVM.Product.Img = @"Images\Products\" + filename + ext;
+            try
+            {
+                bool deleted = await _productService.DeleteProductAsync(id);
+                if (deleted)
+                {
+                    TempData["SuccessMessage"] = "Product deleted successfully";
+                    _logger.LogInformation($"Product deleted: ID={id}");
+                    return RedirectToAction(nameof(Index));
                 }
 
-                _context.Products.Update(productVM.Product);
-                _context.SaveChanges();
-
-                TempData["Update"] = "Data has Updated Successfully";
-                return RedirectToAction("Index");
+                ModelState.AddModelError(string.Empty, "Failed to delete product");
+                var product = await _productService.GetProductByIdAsync(id);
+                return View(product);
             }
-
-            return View(productVM.Product);
-        }
-        
-        [HttpDelete]
-        public IActionResult Delete(int? id)
-        {
-            var productIndb = _context.Products.FirstOrDefault(x => x.Id == id);
-
-            if (productIndb == null)
+            catch (Exception ex)
             {
-                return Json(new { success = false, message = "Error while Deleting" });
+                _logger.LogError(ex, "Error deleting product");
+                return View("ErrorView", ex);
             }
-
-            _context.Products.Remove(productIndb);
-
-            var oldimg = Path.Combine(_webHostEnvironment.WebRootPath, productIndb.Img.TrimStart('\\'));
-
-            if (System.IO.File.Exists(oldimg))
-            {
-                System.IO.File.Delete(oldimg);
-            }
-
-            _context.SaveChanges();
-
-            return Json(new { success = true, message = "file has been Deleted" });
         }
 
 

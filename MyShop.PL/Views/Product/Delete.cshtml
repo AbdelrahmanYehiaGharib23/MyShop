@@ -1,0 +1,59 @@
+@using MyShop.BLL.Models.Dto.ProductDto
+@model ProductDetailsDto
+
+@{
+    Layout = "~/Views/Shared/_Dashboard.cshtml";
+    ViewBag.PageTitle = "Product Management";
+    ViewBag.CardTitle = "Delete Product";
+}
+
+<partial name="_ProductStyles" />
+
+<section class="product-shell product-narrow">
+    <partial name="_ProductMessages" />
+
+    <div class="product-delete-panel">
+        <div class="product-delete-media">
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.Name" />
+            }
+            else
+            {
+                <div class="product-image-fallback">
+                    <i class="fas fa-image"></i>
+                </div>
+            }
+        </div>
+        <div class="product-delete-copy">
+            <span class="product-kicker">Delete confirmation</span>
+            <h2>@Model.Name</h2>
+            <p>@Model.Description</p>
+            <dl>
+                <div>
+                    <dt>Price</dt>
+                    <dd>@Model.Price.ToString("C")</dd>
+                </div>
+                <div>
+                    <dt>Category</dt>
+                    <dd>@Model.CategoryName</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="product-confirm-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div class="product-confirm-row">
+            <a asp-action="Index" class="product-secondary-action">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+            <button type="submit" class="product-danger-action">
+                <i class="fas fa-trash"></i>
+                <span>Delete Product</span>
+            </button>
+        </div>
+    </form>
+</section>

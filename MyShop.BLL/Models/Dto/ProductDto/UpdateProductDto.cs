@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace MyShop.BLL.Models.Dto.ProductDto
 {
@@ -19,6 +20,7 @@ namespace MyShop.BLL.Models.Dto.ProductDto
         [Range(0.01, 1000000,
             ErrorMessage = "Price must be greater than 0.")]
         public decimal Price { get; set; }
+        public IFormFile? Image { get; set; }
 
         [StringLength(500,
             ErrorMessage = "Description cannot exceed 500 characters.")]

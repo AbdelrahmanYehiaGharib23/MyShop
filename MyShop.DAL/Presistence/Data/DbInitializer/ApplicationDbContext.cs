@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -27,5 +27,8 @@ namespace MyShop.DAL.Presistence.Data.DbInitializer
 
             base.OnModelCreating(builder);
         }
+        public virtual DbSet<Category> Categories { get; set; }
+        public virtual DbSet<Product> Products { get; set; }
     }
 }
+
