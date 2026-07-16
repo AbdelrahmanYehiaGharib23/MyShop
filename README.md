@@ -1,179 +1,119 @@
-# 🛒 MyShop - Enterprise E-Commerce Management System
+# 🛒 MyShop - E-Commerce Management System
 
-A modern **Enterprise E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture**, SOLID Principles, and Clean Code practices.
-
-MyShop provides a complete administration panel for managing products, categories, users, roles, authentication, and authorization through a scalable and maintainable architecture.
+A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture** and Clean Architecture principles.
 
 ---
 
 # 🚀 Features
 
-## 🔐 Authentication & Authorization
+## 📦 Product Management
 
-- ASP.NET Core Identity
-- User Registration
-- User Login & Logout
-- Password Hashing
-- Role-Based Authorization
-- Dynamic Navigation Based on User Role
+- Create Product
+- Update Product
+- Delete Product
+- Product Details
+- Product Listing
+- Product Image Upload
+- Category Assignment
+
+---
+
+## 📂 Category Management
+
+- Create Category
+- Update Category
+- Delete Category
+- Category Listing
 
 ---
 
 ## 👥 User Management
 
 - Display Users
-- User Details
-- Edit User Information
-- Delete Users
-- Search Users
+- Edit Users
+- ASP.NET Core Identity Integration
 
 ---
 
-## 🛡 Role Management
+## 🔐 Role Management
 
 - Create Roles
-- Edit Roles
-- Delete Roles
-- Role Details
-- Assign Users to Roles
-- Remove Users from Roles
-- Search Roles
+- Display Roles
+- Assign Roles to Users
+- Edit User Roles
 
 ---
 
-## 📦 Product Management
-
-- Create Products
-- Edit Products
-- Delete Products
-- Product Details
-- Product Listing
-- Product Image Upload
-- Category Selection
-- Server-side Validation
-
----
-
-## 🗂 Category Management
-
-- Create Categories
-- Edit Categories
-- Delete Categories
-- Category Listing
-- Validation
-
----
-
-## 📊 Admin Dashboard
-
-- Responsive AdminLTE Dashboard
-- Product Statistics
-- Category Statistics
-- Average Product Price
-- Toast Notifications
-- SweetAlert Confirmation Dialogs
-
----
-
-# 🏗 Architecture
+## 🏗 Architecture
 
 - N-Tier Architecture
 - Repository Pattern
-- Unit Of Work Pattern
+- Unit Of Work
+- Dependency Injection
 - Service Layer
 - DTO Pattern
-- Dependency Injection
 - AutoMapper
-- Separation of Concerns
 
 ---
 
-# 💾 Database
+## 💾 Database
 
-- SQL Server
 - Entity Framework Core
+- SQL Server
 - Code First
 - EF Core Migrations
+
+---
+
+## 🔑 Authentication & Authorization
+
 - ASP.NET Core Identity
+- Custom ApplicationUser
+- Login
+- Register
+- Role-Based Authorization
 
 ---
 
 # 🛠 Technologies
 
 - ASP.NET Core MVC (.NET 10)
-- C#
 - Entity Framework Core
 - SQL Server
 - ASP.NET Core Identity
 - AutoMapper
 - Bootstrap 5
-- AdminLTE 4
-- jQuery
-- SweetAlert2
-- Toastr
-- Font Awesome
+- AdminLTE
+- Repository Pattern
+- Unit Of Work
 
 ---
 
 # 📂 Project Structure
 
-```text
+```
 MyShop
 │
-├── MyShop.PL
-│   ├── Controllers
-│   ├── Views
-│   ├── ViewModels
-│   ├── Mapping
-│   └── wwwroot
+├── MyShop.PL      Presentation Layer
+├── MyShop.BLL     Business Logic Layer
+├── MyShop.DAL     Data Access Layer
 │
-├── MyShop.BLL
-│   ├── DTOs
-│   ├── Services
-│   ├── Interfaces
-│   └── Mapping
-│
-└── MyShop.DAL
-    ├── Entities
-    ├── Persistence
-    ├── Repositories
-    └── Configurations
+└── Images         README Screenshots
 ```
 
 ---
 
-# ✅ Current Progress
+# 📌 Current Progress
 
-| Feature | Status |
-|----------|--------|
-| Authentication | ✅ Completed |
-| Authorization | ✅ Completed |
-| Identity | ✅ Completed |
-| Product CRUD | ✅ Completed |
-| Category CRUD | ✅ Completed |
-| User Management | ✅ Completed |
-| Role Management | ✅ Completed |
-| Image Upload | ✅ Completed |
-| Dashboard | ✅ Completed |
-| Repository Pattern | ✅ Completed |
-| Unit Of Work | ✅ Completed |
-| AutoMapper | ✅ Completed |
-| DTO Pattern | ✅ Completed |
-
----
-
-# 🚧 Planned Features
-
-- Brands
-- Product Variants
-- Inventory Management
-- Shopping Cart
-- Orders
-- Payments
-- Reports
-- Dashboard Analytics
-- Pagination
-- Filtering & Sorting
+- ✅ Product CRUD
+- ✅ Category CRUD
+- ✅ User Management
+- ✅ Role Management
+- ✅ Authentication
+- ✅ Authorization
+- ✅ Image Upload
+- ✅ ASP.NET Core Identity
+- ✅ Database Initialization
 
 ---
 
@@ -181,7 +121,7 @@ MyShop
 
 ## Dashboard
 
-![Dashboard](Images/dashboard.png)
+*(Coming Soon)*
 
 ---
 
@@ -189,15 +129,15 @@ MyShop
 
 ### Product List
 
-![Product List](Images/products-list.png)
+![Product List](Images/Dispaly%20Products.png)
 
 ### Create Product
 
-![Create Product](Images/product-create.png)
+![Create Product](Images/Create%20Products.png)
 
 ### Edit Product
 
-![Edit Product](Images/product-edit.png)
+![Edit Product](Images/Edit%20Products.png)
 
 ---
 
@@ -205,67 +145,63 @@ MyShop
 
 ### Category List
 
-![Category List](Images/categories-list.png)
+![Category List](Images/Display%20categories.png)
 
 ### Create Category
 
-![Create Category](Images/category-create.png)
-
----
-
-## Users
-
-### User List
-
-![User List](Images/users-list.png)
-
-### Edit User
-
-![Edit User](Images/user-edit.png)
+![Create Category](Images/Create%20Categories.png)
 
 ---
 
 ## Roles
 
-### Role List
+### Display Roles
 
-![Role List](Images/roles-list.png)
+![Display Roles](Images/Display%20Roles.png)
 
 ### Create Role
 
-![Create Role](Images/role-create.png)
+![Create Role](Images/Create%20Roles.png)
 
-### Edit Role
+### Edit User Role
 
-![Edit Role](Images/role-edit.png)
+![Edit User Role](Images/Edit%20Roles%20(Select%20User).png)
 
 ---
 
-# ▶️ Getting Started
+## Users
 
-## Clone Repository
+### Display Users
 
-```bash
-git clone https://github.com/AbdelrahmanYehiaGharib23/MyShop.git
-```
+![Display Users](Images/Display%20Users.png)
 
-## Restore Packages
+### Edit Users
 
-```bash
-dotnet restore
-```
+![Edit Users](Images/Edit%20Users.png)
 
-## Apply Migrations
+---
 
-```bash
-dotnet ef database update
-```
+# 📖 Future Improvements
 
-## Run Project
+- Shopping Cart
+- Orders Management
+- Payment Integration (Stripe)
+- Dashboard Analytics
+- Email Confirmation
+- Forgot Password
+- Product Search & Filtering
+- Wishlist
+- Reviews & Ratings
+- REST API Version
 
-```bash
-dotnet run
-```
+---
+
+# ⚠️ Notes
+
+- The project follows **N-Tier Architecture**.
+- Uses **Repository Pattern** and **Unit Of Work**.
+- Authentication & Authorization are implemented using **ASP.NET Core Identity**.
+- Entity Framework Core Code First approach is used for database management.
 
 ---
 
@@ -277,7 +213,3 @@ Junior Backend .NET Developer
 
 - GitHub: https://github.com/AbdelrahmanYehiaGharib23
 - LinkedIn: https://www.linkedin.com/in/abdelrahman-yehia-gharib-emam-ba88092a9
-
----
-
-⭐ **If you like this project, don't forget to give it a Star!**
