@@ -1,0 +1,11 @@
+@model RoleViewModel
+
+<input type="hidden" asp-for="Id" />
+
+<div class="identity-form-grid">
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input class="form-control" asp-for="Name" />
+        <span class="text-danger" asp-validation-for="Name"></span>
+    </div>
+</div>

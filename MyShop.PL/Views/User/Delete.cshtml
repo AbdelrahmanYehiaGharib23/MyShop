@@ -1,0 +1,37 @@
+@model UserViewModel
+
+@{
+    ViewData["Title"] = "Delete User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Identity access</span>
+            <h2 class="identity-title">Delete User</h2>
+            <p class="identity-copy">Confirm this account should be removed from the application.</p>
+        </div>
+    </div>
+
+    <form method="post" asp-action="Delete" asp-route-id="@Model.Id">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="identity-panel p-3">
+            <partial name="PartialViews/_UserReadOnlyFields" model="Model" />
+        </div>
+
+        <div class="identity-action-group mt-4">
+            <button class="identity-danger-action border-0" type="submit">
+                <i class="fas fa-trash"></i>
+                <span>Delete</span>
+            </button>
+            <a class="identity-secondary-action" asp-action="Index">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
+    </form>
+</section>

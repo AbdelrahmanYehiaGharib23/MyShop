@@ -1,0 +1,44 @@
+@model List<UserInRoleViewModel>
+
+@{
+    ViewData["Title"] = "Manage Role Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Security groups</span>
+            <h2 class="identity-title">Manage Role Users</h2>
+            <p class="identity-copy">Select which users should belong to this role.</p>
+        </div>
+    </div>
+
+    <form asp-action="AddOrRemoveUsers" asp-route-roleId="@ViewBag.RoleId" method="post">
+        <div class="identity-role-list">
+            @for (var i = 0; i < Model.Count; i++)
+            {
+                <label class="identity-role-option">
+                    <input asp-for="@Model[i].IsInRole" />
+                    <span>@Model[i].Name</span>
+                </label>
+
+                <input type="hidden" asp-for="@Model[i].UserId" />
+                <input type="hidden" asp-for="@Model[i].Name" />
+            }
+        </div>
+
+        <div class="identity-action-group mt-4">
+            <button type="submit" class="identity-primary-action border-0">
+                <i class="fas fa-save"></i>
+                <span>Update</span>
+            </button>
+            <a asp-action="Edit" asp-route-id="@ViewBag.RoleId" class="identity-secondary-action">
+                <i class="fas fa-arrow-left"></i>
+                <span>Cancel</span>
+            </a>
+        </div>
+    </form>
+</section>

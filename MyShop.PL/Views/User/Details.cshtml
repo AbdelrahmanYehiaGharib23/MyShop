@@ -1,0 +1,33 @@
+@model UserViewModel
+
+@{
+    ViewData["Title"] = "User Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Identity access</span>
+            <h2 class="identity-title">User Details</h2>
+            <p class="identity-copy">View account profile data and role membership.</p>
+        </div>
+    </div>
+
+    <div class="identity-panel p-3">
+        <partial name="PartialViews/_UserReadOnlyFields" model="Model" />
+    </div>
+
+    <div class="identity-action-group mt-4">
+        <a class="identity-primary-action" asp-action="Edit" asp-route-id="@Model.Id">
+            <i class="fas fa-pen"></i>
+            <span>Edit</span>
+        </a>
+        <a class="identity-secondary-action" asp-action="Index">
+            <i class="fas fa-arrow-left"></i>
+            <span>Back</span>
+        </a>
+    </div>
+</section>

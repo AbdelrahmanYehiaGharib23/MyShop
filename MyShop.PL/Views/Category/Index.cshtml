@@ -2,16 +2,16 @@
 @model IEnumerable<CategoryDto>
 
 @{
-    Layout = "~/Views/Shared/_Dashboard.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.PageTitle = "Category Management";
     ViewBag.CardTitle = "Categories";
     var categories = (Model ?? Enumerable.Empty<CategoryDto>()).ToList();
 }
 
-<partial name="_CategoryStyles" />
+<partial name="PartialView/_CategoryStyles" />
 
 <section class="catalog-shell">
-    <partial name="_CategoryMessages" />
+    <partial name="PartialView/_CategoryMessages" />
 
     <div class="catalog-toolbar">
         <div>
@@ -57,7 +57,7 @@
                                     <span class="category-avatar">@initial</span>
                                     <div>
                                         <strong>@category.Name</strong>
-                                        <small>ID: @category.Id</small>
+                                        <small>Catalog group</small>
                                     </div>
                                 </div>
                             </td>

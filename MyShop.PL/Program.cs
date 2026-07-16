@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using MyShop.BLL.Mapping;
+using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.ProductServices;
 using MyShop.DAL;
@@ -36,9 +37,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultUI()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// Register application services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
-
+builder.Services.AddScoped<IAttachmentServices, AttachmentService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -83,8 +85,10 @@ app.UseSession();
 app.MapRazorPages();
 
 app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Product}/{action=Index}/{id?}");
+              name: "default",
+              pattern: "{controller=Account}/{action=Register}/{id?}");
+
+
 
 app.Run();
 

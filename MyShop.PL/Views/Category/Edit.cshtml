@@ -2,7 +2,7 @@
 @model CategoryVM
 
 @{
-    Layout = "~/Views/Shared/_Dashboard.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.PageTitle = "Category Management";
     ViewBag.CardTitle = "Edit Category";
     ViewData["FormMode"] = "Edit";
@@ -11,11 +11,11 @@
     ViewData["FormIntro"] = "Refine category naming so the storefront remains easy to browse.";
 }
 
-<partial name="_CategoryStyles" />
+<partial name="PartialView/_CategoryStyles" />
 
 <section class="catalog-shell catalog-narrow">
-    <partial name="_CategoryMessages" />
-    <partial name="_CategoryForm" model="Model ?? new CategoryVM()" />
+    <partial name="PartialView/_CategoryMessages" />
+    <partial name="PartialView/_CategoryForm" model="Model ?? new CategoryVM()" />
 </section>
 
 @section Scripts {

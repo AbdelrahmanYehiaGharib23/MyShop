@@ -1,0 +1,35 @@
+@model UserViewModel
+
+<div class="identity-readonly-grid">
+    <div>
+        <div class="identity-readonly-label">User Id</div>
+        <div class="identity-readonly-value">@Model.Id</div>
+    </div>
+
+    <div>
+        <div class="identity-readonly-label">First Name</div>
+        <div class="identity-readonly-value">@Model.FirstName</div>
+    </div>
+
+    <div>
+        <div class="identity-readonly-label">Last Name</div>
+        <div class="identity-readonly-value">@Model.LastName</div>
+    </div>
+
+    <div>
+        <div class="identity-readonly-label">User Name</div>
+        <div class="identity-readonly-value">@Model.UserName</div>
+    </div>
+
+    <div>
+        <div class="identity-readonly-label">Email</div>
+        <div class="identity-readonly-value">@Model.Email</div>
+    </div>
+
+    <div>
+        <div class="identity-readonly-label">Roles</div>
+        <div class="identity-readonly-value">
+            @(Model.Roles?.Any() == true ? string.Join(", ", Model.Roles) : "No roles")
+        </div>
+    </div>
+</div>

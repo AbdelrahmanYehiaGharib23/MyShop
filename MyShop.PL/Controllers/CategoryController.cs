@@ -15,12 +15,13 @@ namespace MyShop.PL.Areas.Admin.Controllers
         private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
 
-        public CategoryController(ApplicationDbContext context, ILogger<CategoryController> logger, ICategoryService categoryServic, IMapper mapper)
+        public CategoryController(ApplicationDbContext context, ILogger<CategoryController> logger, ICategoryService categoryServic, IMapper mapper, IWebHostEnvironment environment)
         {
             _context = context;
             _logger = logger;
             _categoryService = categoryServic;
             _mapper = mapper;
+            _environment = environment;
         }
 
         [HttpGet]
@@ -36,6 +37,7 @@ namespace MyShop.PL.Areas.Admin.Controllers
         public IActionResult Create() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CategoryVM categoryVM)
         {
             if (ModelState.IsValid)
@@ -73,8 +75,12 @@ namespace MyShop.PL.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromRoute] int id, CategoryVM categoryVM)
         {
+            if (id != categoryVM.Id)
+                return BadRequest();
+
             if (ModelState.IsValid)
             {
                 try

@@ -21,6 +21,7 @@ namespace MyShop.BLL.Models.Dto.ProductDto
             ErrorMessage = "Price must be greater than 0.")]
         public decimal Price { get; set; }
         public IFormFile? Image { get; set; }
+        public string? ImageUrl { get; set; }
 
         [StringLength(500,
             ErrorMessage = "Description cannot exceed 500 characters.")]

@@ -1,0 +1,103 @@
+@model IEnumerable<RoleViewModel>
+
+@{
+    ViewData["Title"] = "Roles";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var roles = (Model ?? Enumerable.Empty<RoleViewModel>()).ToList();
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Security groups</span>
+            <h2 class="identity-title">Roles</h2>
+            <p class="identity-copy">Create and maintain role names used to control application access.</p>
+        </div>
+        <a asp-action="Create" class="identity-primary-action">
+            <i class="fas fa-plus"></i>
+            <span>New Role</span>
+        </a>
+    </div>
+
+    <div class="identity-stats">
+        <div class="identity-stat">
+            <span>Total roles</span>
+            <strong>@roles.Count</strong>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="get" class="identity-search">
+        <input name="name" class="form-control identity-input" type="text" placeholder="Search by role name" />
+        <button type="submit" class="identity-primary-action">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+        </button>
+        <a asp-action="Index" class="identity-secondary-action">
+            <i class="fas fa-rotate-left"></i>
+            <span>Reset</span>
+        </a>
+    </form>
+
+    @if (roles.Any())
+    {
+        <div class="identity-table-card">
+            <div class="table-responsive">
+                <table class="table identity-table">
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Role Id</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var role in roles)
+                        {
+                            var initial = string.IsNullOrWhiteSpace(role.Name) ? "R" : role.Name.Substring(0, 1).ToUpper();
+
+                            <tr>
+                                <td>
+                                    <div class="identity-name-cell">
+                                        <span class="identity-avatar">@initial</span>
+                                        <div>
+                                            <strong>@role.Name</strong>
+                                            <small>Application role</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@role.Id</td>
+                                <td>
+                                    <div class="identity-action-group justify-content-end">
+                                        <a asp-action="Details" asp-route-id="@role.Id" class="identity-secondary-action" title="Role details">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Details</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@role.Id" class="identity-secondary-action" title="Edit role">
+                                            <i class="fas fa-pen"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@role.Id" class="identity-danger-action" title="Delete role">
+                                            <i class="fas fa-trash"></i>
+                                            <span>Delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="identity-empty">
+            <i class="fas fa-user-shield"></i>
+            <strong>No roles found.</strong>
+            <p class="mb-0">Create a new role or reset the search.</p>
+        </div>
+    }
+</section>

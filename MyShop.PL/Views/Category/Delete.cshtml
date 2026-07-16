@@ -2,15 +2,15 @@
 @model CategoryDetailsDto
 
 @{
-    Layout = "~/Views/Shared/_Dashboard.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.PageTitle = "Category Management";
     ViewBag.CardTitle = "Delete Category";
 }
 
-<partial name="_CategoryStyles" />
+<partial name="PartialView/_CategoryStyles" />
 
 <section class="catalog-shell catalog-narrow">
-    <partial name="_CategoryMessages" />
+    <partial name="PartialView/_CategoryMessages" />
 
     <div class="catalog-danger-panel">
         <div class="catalog-danger-icon">

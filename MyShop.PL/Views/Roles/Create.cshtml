@@ -1,0 +1,39 @@
+@model RoleViewModel
+
+@{
+    ViewData["Title"] = "Create Role";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell identity-form">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Security groups</span>
+            <h2 class="identity-title">Create Role</h2>
+            <p class="identity-copy">Add a role that can be assigned to application users.</p>
+        </div>
+    </div>
+
+    <form method="post" asp-action="Create">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <partial name="PartialViews/_RoleEditableFields" model="Model" />
+
+        <div class="identity-action-group mt-4">
+            <button class="identity-primary-action border-0" type="submit">
+                <i class="fas fa-plus"></i>
+                <span>Create</span>
+            </button>
+            <a class="identity-secondary-action" asp-action="Index">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+        </div>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

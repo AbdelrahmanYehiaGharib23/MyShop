@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using myshop.Entities.Models;
 using myshop.Entities.ViewModels;
 using MyShop.BLL.Models.Dto.ProductDto;
+using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.ProductServices;
 using MyShop.DAL.Presistence.Data.DbInitializer;
@@ -17,16 +18,16 @@ namespace MyShop.PL.Areas.Admin.Controllers
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
-        private readonly ApplicationDbContext _context;
+        private readonly IAttachmentServices _attachmentServices;
         private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
-        private readonly ILogger _logger;
+        private readonly ILogger<ProductController> _logger;
         private readonly ICategoryService _categoryService;
 
-        public ProductController(IProductService productService,ApplicationDbContext context, IWebHostEnvironment webHostEnvironment,IMapper mapper,ILogger<ProductController> logger,ICategoryService categoryService)
+        public ProductController(IProductService productService,IAttachmentServices attachmentServices, IWebHostEnvironment webHostEnvironment,IMapper mapper,ILogger<ProductController> logger,ICategoryService categoryService)
         {
             _productService = productService;
-            _context = context;
+             _attachmentServices = attachmentServices;
             _environment = webHostEnvironment;
             _mapper = mapper;
             _logger = logger;
@@ -51,31 +52,7 @@ namespace MyShop.PL.Areas.Admin.Controllers
                 Value = c.Id.ToString()
             });
         }
-        //Method for uploading images while preventing duplicates during Create and Update operations.
-        private async Task<string?> SaveImageAsync(IFormFile? image)
-        {
-            if (image == null || image.Length == 0)
-                return null;
-
-            var extension = Path.GetExtension(image.FileName);
-
-            var fileName = $"{Guid.NewGuid()}{extension}";
-
-            var folderPath = Path.Combine(_environment.WebRootPath, "images", "products");
-
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-
-            var filePath = Path.Combine(folderPath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
-
-            return $"/images/products/{fileName}";
-        }
-
+       
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -88,14 +65,25 @@ namespace MyShop.PL.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductVM productVM)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    productVM.ImageUrl = await SaveImageAsync(productVM.Image);
+                    if (productVM.Image != null)
+                    {
+                        productVM.ImageUrl = await _attachmentServices.UploadAsync(productVM.Image, "Products");
 
+                        if (productVM.ImageUrl == null)
+                        {
+                            ModelState.AddModelError(nameof(productVM.Image), "Invalid image. Only JPG, JPEG and PNG files up to 2 MB are allowed.");
+                            productVM.CategoryList = await GetCategorySelectListAsync();
+
+                            return View(productVM);
+                        }
+                    }
                     var productDto = _mapper.Map<CreateProductDto>(productVM);
                     int result = await _productService.CreateProductAsync(productDto);
                     if (result > 0)
@@ -137,14 +125,28 @@ namespace MyShop.PL.Areas.Admin.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit([FromRoute] int id,ProductVM productVM)
         {
+            if (id != productVM.Id)
+                return BadRequest();
             if (ModelState.IsValid)
             {
                 try
                 {
                     if (productVM.Image != null)
-                        productVM.ImageUrl = await SaveImageAsync(productVM.Image);
+                    {
+                        productVM.ImageUrl = await _attachmentServices.UploadAsync(productVM.Image, "Products");
+
+                        if (productVM.ImageUrl == null)
+                        {
+                            ModelState.AddModelError(nameof(productVM.Image),
+                                "Invalid image. Only JPG, JPEG and PNG files up to 2 MB are allowed.");
+                            productVM.CategoryList = await GetCategorySelectListAsync();
+
+                            return View(productVM);
+                        }
+                    }
 
                     var updateDto = _mapper.Map<UpdateProductDto>(productVM);
                     var result =await _productService.UpdateProductAsync(updateDto);
@@ -165,6 +167,21 @@ namespace MyShop.PL.Areas.Admin.Controllers
             productVM.CategoryList = await GetCategorySelectListAsync();
             return View(productVM);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (!id.HasValue)
+                return BadRequest();
+
+            var product = await _productService.GetProductByIdAsync(id.Value);
+
+            if (product == null)
+                return NotFound();
+
+            return View(product);
+        }
+
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {

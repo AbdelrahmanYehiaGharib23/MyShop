@@ -1,0 +1,123 @@
+@model IEnumerable<UserViewModel>
+
+@{
+    ViewData["Title"] = "Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var users = (Model ?? Enumerable.Empty<UserViewModel>()).ToList();
+    var assignedRoles = users.Sum(user => user.Roles?.Count() ?? 0);
+}
+
+<partial name="_IdentityManagementStyles" />
+
+<section class="identity-shell">
+    <div class="identity-toolbar">
+        <div>
+            <span class="identity-kicker">Identity access</span>
+            <h2 class="identity-title">Users</h2>
+            <p class="identity-copy">Review application accounts, contact emails, and assigned roles.</p>
+        </div>
+    </div>
+
+    <div class="identity-stats">
+        <div class="identity-stat">
+            <span>Total users</span>
+            <strong>@users.Count</strong>
+        </div>
+        <div class="identity-stat">
+            <span>Role assignments</span>
+            <strong>@assignedRoles</strong>
+        </div>
+    </div>
+
+    <form asp-action="Index" method="get" class="identity-search">
+        <input name="email" class="form-control identity-input" type="email" placeholder="Search by email address" />
+        <button type="submit" class="identity-primary-action">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+        </button>
+        <a asp-action="Index" class="identity-secondary-action">
+            <i class="fas fa-rotate-left"></i>
+            <span>Reset</span>
+        </a>
+    </form>
+
+    @if (users.Any())
+    {
+        <div class="identity-table-card">
+            <div class="table-responsive">
+                <table class="table identity-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in users)
+                        {
+                            var fullName = $"{user.FirstName} {user.LastName}".Trim();
+                            var displayName = string.IsNullOrWhiteSpace(fullName) ? user.UserName : fullName;
+                            var initial = string.IsNullOrWhiteSpace(displayName) ? "U" : displayName.Substring(0, 1).ToUpper();
+                            var roles = user.Roles ?? Enumerable.Empty<string>();
+
+                            <tr>
+                                <td>
+                                    <div class="identity-name-cell">
+                                        <span class="identity-avatar">@initial</span>
+                                        <div>
+                                            <strong>@displayName</strong>
+                                            <small>@user.UserName</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>@user.Email</td>
+                                <td>
+                                    <div class="identity-badge-list">
+                                        @if (roles.Any())
+                                        {
+                                            foreach (var role in roles)
+                                            {
+                                                <span class="identity-badge">@role</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="identity-badge">No roles</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="identity-action-group justify-content-end">
+                                        <a asp-action="Details" asp-route-id="@user.Id" class="identity-secondary-action" title="User details">
+                                            <i class="fas fa-eye"></i>
+                                            <span>Details</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@user.Id" class="identity-secondary-action" title="Edit user">
+                                            <i class="fas fa-pen"></i>
+                                            <span>Edit</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@user.Id" class="identity-danger-action" title="Delete user">
+                                            <i class="fas fa-trash"></i>
+                                            <span>Delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="identity-empty">
+            <i class="fas fa-users"></i>
+            <strong>No users found.</strong>
+            <p class="mb-0">Try another email address or reset the search.</p>
+        </div>
+    }
+</section>

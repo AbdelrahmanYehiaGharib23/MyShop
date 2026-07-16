@@ -1,0 +1,27 @@
+@model UserViewModel
+
+<input type="hidden" asp-for="Id" />
+
+<div class="identity-form-grid">
+    <div class="form-group">
+        <label asp-for="FirstName"></label>
+        <input class="form-control" asp-for="FirstName" />
+        <span class="text-danger" asp-validation-for="FirstName"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="LastName"></label>
+        <input class="form-control" asp-for="LastName" />
+        <span class="text-danger" asp-validation-for="LastName"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="UserName"></label>
+        <input readonly class="form-control" asp-for="UserName" />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Email"></label>
+        <input readonly class="form-control" asp-for="Email" />
+    </div>
+</div>

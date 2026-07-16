@@ -2,7 +2,7 @@
 @model ProductVM
 
 @{
-    Layout = "~/Views/Shared/_Dashboard.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
     ViewBag.PageTitle = "Product Management";
     ViewBag.CardTitle = "Create Product";
     ViewData["FormMode"] = "Create";
@@ -11,14 +11,12 @@
     ViewData["FormIntro"] = "Add product details customers need before they decide to buy.";
 }
 
-<partial name="_ProductStyles" />
+<partial name="PartialView/_ProductStyles" />
 
 <section class="product-shell product-narrow">
-    <partial name="_ProductMessages" />
-    <partial name="_ProductForm" model="Model ?? new ProductVM()" />
+    <partial name="PartialView/_ProductForm" model="Model ?? new ProductVM()" />
 </section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <partial name="_ProductPreviewScript" />
 }
