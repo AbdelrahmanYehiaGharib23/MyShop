@@ -2,22 +2,19 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.BLL.Models.Dto.CategoryDto;
 using MyShop.BLL.Services.CategoryServices;
-using MyShop.DAL.Presistence.Data.DbInitializer;
 using MyShop.PL.ViewModels;
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _context;
         private readonly ILogger _logger;
         private readonly ICategoryService _categoryService;
         private readonly IWebHostEnvironment _environment;
         private readonly IMapper _mapper;
 
-        public CategoryController(ApplicationDbContext context, ILogger<CategoryController> logger, ICategoryService categoryServic, IMapper mapper, IWebHostEnvironment environment)
+        public CategoryController( ILogger<CategoryController> logger, ICategoryService categoryServic, IMapper mapper, IWebHostEnvironment environment)
         {
-            _context = context;
             _logger = logger;
             _categoryService = categoryServic;
             _mapper = mapper;
