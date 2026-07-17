@@ -29,6 +29,7 @@ namespace MyShop.DAL.Presistence.Data.DbInitializer
         }
         public virtual DbSet<Category> Categories { get; set; }
         public virtual DbSet<Product> Products { get; set; }
+        public DbSet<PasswordResetTokens> PasswordResetTokens { get; set; }
     }
 }
 

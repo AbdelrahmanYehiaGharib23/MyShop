@@ -1,10 +1,10 @@
 using System;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using MyShop.BLL.Mapping;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CategoryServices;
+using MyShop.BLL.Services.IdentityServices;
 using MyShop.BLL.Services.ProductServices;
 using MyShop.DAL;
 using MyShop.DAL.Entities.IdentityEntity;
@@ -41,6 +41,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAttachmentServices, AttachmentService>();
+builder.Services.AddScoped<IEmailSender, EmailSender>();
+builder.Services.AddScoped<IPasswordResetManager, PasswordResetManager>();
 
 builder.Services.AddHttpContextAccessor();
 

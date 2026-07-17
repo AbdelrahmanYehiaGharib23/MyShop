@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <NuGetAuditLevel>moderate</NuGetAuditLevel>
+    <UserSecretsId>dc133e87-4e4d-4223-8cc5-d494409bd9f4</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
