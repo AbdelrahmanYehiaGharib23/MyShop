@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using myshop.Entities.ViewModels;
 using MyShop.BLL.Models.Dto.CategoryDto;
 using MyShop.BLL.Models.Dto.IdentityDto;
 using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.PL.ViewModels;
 using MyShop.PL.ViewModels.Identity;
-using Stripe.Climate;
 
 namespace MyShop.PL.Mapping
 {
