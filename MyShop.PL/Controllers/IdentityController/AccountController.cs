@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MyShop.BLL.Models.Dto.IdentityDto;
+using MyShop.BLL.Services.IdentityServices;
 using MyShop.DAL.Entities.IdentityEntity;
 using MyShop.PL.ViewModels.Identity;
 
@@ -12,15 +14,24 @@ namespace MyShop.PL.Controllers.IdentityController
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IPasswordResetManager _passwordResetManager;
+        private readonly ILogger<AccountController> _logger;
+        private readonly IConfiguration _configuration;
 
         public AccountController(
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IPasswordResetManager passwordResetManager,
+            ILogger<AccountController> logger,
+             IConfiguration configuration)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _roleManager = roleManager;
+            _passwordResetManager = passwordResetManager;
+            _logger = logger;
+            _configuration = configuration;
         }
 
         [HttpGet]
@@ -195,5 +206,114 @@ namespace MyShop.PL.Controllers.IdentityController
 
             return RedirectToAction("Index", "Product");
         }
+        #region Forget Password
+        private bool IsMailSettingsConfigured()
+        {
+            return !string.IsNullOrWhiteSpace(_configuration["MailSettings:Host"])
+                && !string.IsNullOrWhiteSpace(_configuration["MailSettings:Email"])
+                && !string.IsNullOrWhiteSpace(_configuration["MailSettings:Password"]);
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword() => View();
+
+        // Step 2: Send OTP to email
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            if (!IsMailSettingsConfigured())
+            {
+                _logger.LogWarning("ForgotPassword blocked because SMTP settings are not configured.");
+                ModelState.AddModelError(string.Empty, "Email service is not configured. Please configure SMTP settings before sending OTP.");
+                return View(dto);
+            }
+
+            try
+            {
+                await _passwordResetManager.SendOtpAsync(dto.Email);
+                ViewBag.Message = "OTP sent to your email.";
+                return View("VerifyOtp", new VerifyOtpDto { Email = dto.Email });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "ForgotPassword failed because email settings are not configured.");
+                ModelState.AddModelError(string.Empty, "Email service is not configured. Please configure SMTP settings before sending OTP.");
+                return View(dto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ForgotPassword failed to send OTP to {Email}", dto.Email);
+                ModelState.AddModelError(string.Empty, "Unable to send OTP right now. Please try again later.");
+                return View(dto);
+            }
+        }
+
+        // Step 3: Verify OTP
+        [HttpGet]
+        public IActionResult VerifyOtp() => View();
+
+        [HttpPost]
+        public async Task<IActionResult> VerifyOtp(VerifyOtpDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            try
+            {
+                var token = await _passwordResetManager.VerifyOtpAsync(dto.Email, dto.Otp);
+
+                return RedirectToAction("ResetPassword", new { token });
+
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(dto);
+            }
+        }
+
+        // Step 4: Reset Password
+        [HttpGet]
+        public IActionResult ResetPassword(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return BadRequest("Invalid reset token");
+
+            return View(new ResetPasswordDto
+            {
+                Token = token
+            });
+        }
+
+
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return View(dto);
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(dto.Token))
+                {
+                    ModelState.AddModelError("", "Invalid or expired reset token.");
+                    return View(dto);
+                }
+
+                await _passwordResetManager.ResetPasswordAsync(dto.Token, dto.NewPassword);
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(dto);
+            }
+        } 
+        #endregion
+
     }
 }
