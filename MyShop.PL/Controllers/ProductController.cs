@@ -6,7 +6,7 @@ using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.ProductServices;
-using MyShop.DAL.Presistence.Data.DbInitializer;
+
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
@@ -28,10 +28,12 @@ namespace MyShop.PL.Areas.Admin.Controllers
             _logger = logger;
             _categoryService = categoryService;
         }
+
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             var products = await _productService.GetProductAsync();
+
             return View(products);
         }
 
@@ -58,9 +60,9 @@ namespace MyShop.PL.Areas.Admin.Controllers
 
             return View(productVM);
         }
-
-        [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
+        [HttpPost]
         public async Task<IActionResult> Create(ProductVM productVM)
         {
             if (ModelState.IsValid)
@@ -118,9 +120,9 @@ namespace MyShop.PL.Areas.Admin.Controllers
 
             return View(productVM);
         }
-
-        [HttpPost]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
+        [HttpPost]
         public async Task<IActionResult> Edit([FromRoute] int id,ProductVM productVM)
         {
             if (id != productVM.Id)
@@ -186,8 +188,9 @@ namespace MyShop.PL.Areas.Admin.Controllers
             return View(product);
         }
 
-        [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
+        [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             if (id == 0) return BadRequest();

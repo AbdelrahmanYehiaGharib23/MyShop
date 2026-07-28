@@ -1,4 +1,5 @@
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MyShop.BLL.Models.Dto.CategoryDto;
 using MyShop.BLL.Services.CategoryServices;
@@ -6,6 +7,8 @@ using MyShop.PL.ViewModels;
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
+    [Authorize(Roles = "Admin")]
+    [AutoValidateAntiforgeryToken]
     public class CategoryController : Controller
     {
         private readonly ILogger _logger;

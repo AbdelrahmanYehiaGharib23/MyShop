@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MyShop.BLL.Models.Common;
 using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.DAL.Entities;
+using MyShop.DAL.Presistence.Specifications;
 
 namespace MyShop.BLL.Services.ProductServices
 {
@@ -13,6 +15,7 @@ namespace MyShop.BLL.Services.ProductServices
         Task<int> CreateProductAsync(CreateProductDto product);
         Task<int> UpdateProductAsync(UpdateProductDto product);
         Task<bool> DeleteProductAsync(int? id);
+        Task<Pagination<ProductDto>> SearchProductsAsync(ProductSpecParams specParams);
 
     }
 }

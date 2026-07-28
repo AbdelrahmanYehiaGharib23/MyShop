@@ -7,7 +7,8 @@ using MyShop.PL.ViewModels.Identity;
 
 namespace MyShop.PL.Controllers.IdentityController
 {
-    [Authorize]
+    [Authorize(Roles = "Admin")]
+    [AutoValidateAntiforgeryToken]
     public class UserController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;

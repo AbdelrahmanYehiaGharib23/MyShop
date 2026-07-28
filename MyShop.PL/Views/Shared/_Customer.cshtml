@@ -1,144 +1,259 @@
+@inject MyShop.BLL.Services.CartServices.ICartService CartService
+@{
+    var pageTitle = ViewData["Title"]?.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var displayName = User.Identity?.Name ?? "Guest";
+    var createToast = TempData["Create"]?.ToString();
+    var updateToast = TempData["Update"]?.ToString();
+    var deleteToast = TempData["Delete"]?.ToString();
+    var infoToast = TempData["Message"]?.ToString();
+    var successToast = TempData["SuccessMessage"]?.ToString();
+    var searchTerm = ViewData["SearchTerm"]?.ToString() ?? string.Empty;
+    var sort = ViewData["Sort"]?.ToString() ?? string.Empty;
+    var pageSize = ViewData["PageSize"]?.ToString() ?? string.Empty;
+    var cartCount = 0;
+
+    try
+    {
+        cartCount = CartService.GetTotalItems();
+    }
+    catch
+    {
+        cartCount = 0;
+    }
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-store-theme="dark">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>@(ViewData["Title"] is null ? "myShop" : $"{ViewData["Title"]} - myShop")</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "myShop" : $"{pageTitle} - myShop")</title>
+
+    <script>
+            (function () {
+                var theme = localStorage.getItem('myshop-theme') || 'dark';
+                document.documentElement.setAttribute('data-store-theme', theme);
+            })();
+    </script>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" />
-    <style>
-        :root {
-            --shop-ink: #17202a;
-            --shop-muted: #6b7785;
-            --shop-border: #dfe5ed;
-            --shop-accent: #0f9f8f;
-            --shop-warm: #f59e0b;
-            --shop-bg: #f6f8fb;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            background: var(--shop-bg);
-            color: var(--shop-ink);
-        }
-
-        .store-nav {
-            border-bottom: 1px solid var(--shop-border);
-            background: #fff;
-            box-shadow: 0 10px 24px rgba(23, 32, 42, .06);
-        }
-
-        .store-brand {
-            color: var(--shop-ink);
-            font-size: 1.45rem;
-            font-weight: 800;
-            letter-spacing: 0;
-        }
-
-        .store-brand:hover {
-            color: var(--shop-accent);
-        }
-
-        .store-link {
-            color: var(--shop-muted);
-            font-weight: 700;
-        }
-
-        .store-link:hover,
-        .store-link.active {
-            color: var(--shop-accent);
-        }
-
-        .store-hero {
-            border-bottom: 1px solid var(--shop-border);
-            background:
-                linear-gradient(120deg, rgba(23, 32, 42, .94), rgba(15, 159, 143, .84)),
-                url('/img/photo1.png') center/cover;
-            color: #fff;
-            padding: 4rem 0 4.5rem;
-        }
-
-        .store-hero h1 {
-            margin: 0;
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight: 800;
-            letter-spacing: 0;
-        }
-
-        .store-hero p {
-            max-width: 640px;
-            margin: .75rem 0 0;
-            color: rgba(255, 255, 255, .82);
-            font-size: 1.05rem;
-        }
-
-        .store-main {
-            padding: 2rem 0 3rem;
-        }
-
-        .store-footer {
-            border-top: 1px solid var(--shop-border);
-            background: #17202a;
-            color: rgba(255, 255, 255, .75);
-            padding: 1.25rem 0;
-        }
-
-        .store-footer strong {
-            color: #fff;
-        }
-    </style>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/customer-store.css" asp-append-version="true" />
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg store-nav">
-        <div class="container">
-            <a class="navbar-brand store-brand" asp-controller="Product" asp-action="Index">myShop</a>
-
-            <button class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#storeNavbar"
-                    aria-controls="storeNavbar"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="storeNavbar">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link store-link" asp-controller="Product" asp-action="Index">Products</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link store-link" asp-controller="Category" asp-action="Index">Categories</a>
-                    </li>
-                </ul>
-
-                <partial name="_LoginPartial" />
+    <div class="store-app">
+        <div class="store-top-strip">
+            <div class="store-container">
+                <span><i class="fas fa-shipping-fast"></i> Fast session cart</span>
+                <span><i class="fas fa-shield-alt"></i> Premium shopping experience</span>
+                <span><i class="fas fa-headset"></i> Support ready</span>
             </div>
         </div>
-    </nav>
 
-    <header class="store-hero">
-        <div class="container">
-            <h1>myShop</h1>
-            <p>Browse products and manage the catalog through a focused, clean shopping experience.</p>
-        </div>
-    </header>
+        <nav class="store-navbar" aria-label="Main navigation">
+            <div class="store-container store-navbar-inner">
+                <a class="store-brand" asp-controller="Store" asp-action="Index" aria-label="myShop home">
+                    <span class="store-brand-mark"><i class="fas fa-store"></i></span>
+                    <span class="store-brand-text">myShop</span>
+                </a>
 
-    <main class="store-main">
-        <div class="container">
+                <button class="store-mobile-toggle"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#customerNavbar"
+                        aria-controls="customerNavbar"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <div class="collapse navbar-collapse store-navbar-collapse" id="customerNavbar">
+                    <ul class="store-nav-links">
+                        <li>
+                            <a asp-controller="Store"
+                               asp-action="Index"
+                               class="store-nav-link @(string.Equals(currentController, "Store", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                Products
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Cart"
+                               asp-action="Index"
+                               class="store-nav-link @(string.Equals(currentController, "Cart", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                Cart
+                            </a>
+                        </li>
+                    </ul>
+
+                    <form asp-controller="Store" asp-action="Index" method="get" class="store-search" role="search">
+                        <i class="fas fa-search" aria-hidden="true"></i>
+                        <input type="hidden" name="sort" value="@sort" />
+                        <input type="hidden" name="pageSize" value="@pageSize" />
+                        <input class="store-search-input"
+                               type="search"
+                               name="searchTerm"
+                               value="@searchTerm"
+                               placeholder="Search products..."
+                               aria-label="Search products">
+                        <button type="submit" class="store-search-submit" aria-label="Search">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+
+                    <div class="store-nav-actions">
+                        <button type="button" class="store-icon-button" data-store-theme-toggle aria-label="Toggle color theme">
+                            <i class="fas fa-moon"></i>
+                        </button>
+
+                        <a asp-controller="Cart"
+                           asp-action="Index"
+                           class="store-cart-button @(string.Equals(currentController, "Cart", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)"
+                           data-store-cart-target
+                           aria-label="Open cart with @cartCount items">
+                            <i class="fas fa-shopping-bag"></i>
+                            <span>Cart</span>
+                            <span class="store-cart-badge" data-store-cart-badge>@cartCount</span>
+                        </a>
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="store-user-button dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                    <span class="store-user-avatar"><i class="fas fa-user"></i></span>
+                                    <span>@displayName</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end store-user-menu">
+                                    <li>
+                                        <span class="dropdown-item-text">
+                                            <strong>@displayName</strong>
+                                            <small>Customer account</small>
+                                        </span>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cart" asp-action="Index">
+                                            <i class="fas fa-shopping-bag"></i> Cart
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item store-menu-danger">
+                                                <i class="fas fa-sign-out-alt"></i> Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="store-login-link">Login</a>
+                            <a asp-controller="Account" asp-action="Register" class="store-primary-link">Register</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="store-main">
+            <div class="store-toast-stack" data-store-toast-stack role="status" aria-live="polite">
+                @if (!string.IsNullOrWhiteSpace(createToast)
+                                || !string.IsNullOrWhiteSpace(updateToast)
+                                || !string.IsNullOrWhiteSpace(deleteToast)
+                                || !string.IsNullOrWhiteSpace(infoToast)
+                                || !string.IsNullOrWhiteSpace(successToast))
+                {
+                    @if (!string.IsNullOrWhiteSpace(createToast))
+                    {
+                        <div class="store-toast success" data-store-toast>
+                            <i class="fas fa-check-circle"></i>
+                            <span>@createToast</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(successToast))
+                    {
+                        <div class="store-toast success" data-store-toast>
+                            <i class="fas fa-check-circle"></i>
+                            <span>@successToast</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(updateToast))
+                    {
+                        <div class="store-toast info" data-store-toast>
+                            <i class="fas fa-info-circle"></i>
+                            <span>@updateToast</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(infoToast))
+                    {
+                        <div class="store-toast info" data-store-toast>
+                            <i class="fas fa-info-circle"></i>
+                            <span>@infoToast</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(deleteToast))
+                    {
+                        <div class="store-toast danger" data-store-toast>
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>@deleteToast</span>
+                        </div>
+                    }
+                }
+            </div>
             @RenderBody()
-        </div>
-    </main>
+        </main>
 
-    <footer class="store-footer">
-        <div class="container">
-            <strong>myShop</strong> &copy; @DateTime.Now.Year
-        </div>
-    </footer>
+        <footer class="store-footer">
+            <div class="store-container store-footer-grid">
+                <div>
+                    <a class="store-brand footer-brand" asp-controller="Store" asp-action="Index">
+                        <span class="store-brand-mark"><i class="fas fa-store"></i></span>
+                        <span class="store-brand-text">myShop</span>
+                    </a>
+                    <p>Modern shopping for selected tech products with a focused customer cart experience.</p>
+                    <div class="store-socials" aria-label="Social links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+
+                <div>
+                    <h2>Shop</h2>
+                    <a asp-controller="Store" asp-action="Index">Products</a>
+                    <a asp-controller="Cart" asp-action="Index">Cart</a>
+                </div>
+
+                <div>
+                    <h2>Categories</h2>
+                    <span>Laptops</span>
+                    <span>Smartphones</span>
+                    <span>Electronics</span>
+                </div>
+
+                <div>
+                    <h2>Contact</h2>
+                    <span><i class="fas fa-envelope"></i> support@myshop.local</span>
+                    <span><i class="fas fa-phone"></i> +20 100 000 0000</span>
+                </div>
+            </div>
+
+            <div class="store-container store-footer-bottom">
+                <strong>&copy; @DateTime.Now.Year myShop.</strong>
+                <span>All rights reserved.</span>
+            </div>
+        </footer>
+    </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/customer-store.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

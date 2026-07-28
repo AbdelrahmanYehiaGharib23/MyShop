@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyShop.BLL.Mapping;
 using MyShop.BLL.Services.AttachmentServices;
+using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.IdentityServices;
 using MyShop.BLL.Services.ProductServices;
@@ -40,6 +41,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 // Register application services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IAttachmentServices, AttachmentService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPasswordResetManager, PasswordResetManager>();
@@ -48,7 +50,12 @@ builder.Services.AddHttpContextAccessor();
 
 
 builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -77,12 +84,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseSession();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
-
-app.UseSession();
 
 app.MapRazorPages();
 

@@ -2,10 +2,17 @@
 @model IEnumerable<ProductDto>
 
 @{
+    var products = (Model ?? Enumerable.Empty<ProductDto>()).ToList();
+    var categories = products
+        .Select(product => product.CategoryName)
+        .Where(category => !string.IsNullOrWhiteSpace(category))
+        .Distinct()
+        .ToList();
+
     Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Products";
     ViewBag.PageTitle = "Product Management";
     ViewBag.CardTitle = "Products";
-    var products = (Model ?? Enumerable.Empty<ProductDto>()).ToList();
 }
 
 <partial name="PartialView/_ProductStyles" />
@@ -46,7 +53,7 @@
         </div>
         <div>
             <span>Categories in use</span>
-            <strong>@products.Select(product => product.CategoryName).Distinct().Count()</strong>
+            <strong>@categories.Count</strong>
         </div>
         <div>
             <span>Average price</span>

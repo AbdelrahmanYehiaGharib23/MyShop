@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyShop.DAL.Entities.IdentityEntity;
 using MyShop.PL.ViewModels.Identity;
-using Microsoft.EntityFrameworkCore;
 namespace MyShop.PL.Controllers.IdentityController
 {
+    [Authorize(Roles = "Admin")]
+    [AutoValidateAntiforgeryToken]
     public class RolesController : Controller
     {
         private readonly RoleManager<IdentityRole> _roleManager;

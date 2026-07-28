@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MyShop.DAL.Contracts.Repositories;
+using MyShop.DAL.Contracts.Specifications;
 using MyShop.DAL.Entities;
 using MyShop.DAL.Presistence.Data.DbInitializer;
+using MyShop.DAL.Presistence.Specifications;
 
 namespace MyShop.DAL.Presistence.Repositories
 {
@@ -57,5 +60,33 @@ namespace MyShop.DAL.Presistence.Repositories
         }
 
         public void Update(TEntity entity) => _dbContext.Set<TEntity>().Update(entity);
+        public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await _dbContext.Set<TEntity>()
+                .Where(predicate)
+                .Where(e => !e.IsDeleted)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+
+        private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> specification)
+        {
+            return SpecificationEvaluator<TEntity>.GetQuery(
+                _dbContext.Set<TEntity>().AsQueryable(),
+                specification);
+        }
+        public async Task<IEnumerable<TEntity>> GetAllWithSpecAsync(ISpecification<TEntity> spec)
+        {
+            return await ApplySpecification(spec).ToListAsync();
+        }
+
+        public async Task<TEntity?> GetEntityWithSpecAsync(ISpecification<TEntity> spec)
+        {
+            return await ApplySpecification(spec).FirstOrDefaultAsync();
+        }
+        public async Task<int> CountAsync(ISpecification<TEntity> spec)
+        {
+            return await ApplySpecification(spec).CountAsync();
+        }
     }
 }

@@ -39,7 +39,7 @@ namespace MyShop.PL.Controllers.IdentityController
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToLocal(returnUrl);
+                return RedirectToLocal(returnUrl, User.IsInRole("Admin"));
 
             ViewData["ReturnUrl"] = returnUrl;
             return View(new LoginVM());
@@ -65,7 +65,7 @@ namespace MyShop.PL.Controllers.IdentityController
             var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
-                return RedirectToLocal(returnUrl);
+                return RedirectToLocal(returnUrl, await _userManager.IsInRoleAsync(user, "Admin"));
 
             if (result.IsLockedOut)
                 ModelState.AddModelError(string.Empty, "This account is temporarily locked. Please try again later.");
@@ -80,7 +80,7 @@ namespace MyShop.PL.Controllers.IdentityController
         public IActionResult Register(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return RedirectToLocal(returnUrl);
+                return RedirectToLocal(returnUrl, User.IsInRole("Admin"));
 
             ViewData["ReturnUrl"] = returnUrl;
             return View(new RegisterVM());
@@ -114,7 +114,7 @@ namespace MyShop.PL.Controllers.IdentityController
                 await EnsureRoleAsync(roleName);
                 await _userManager.AddToRoleAsync(user, roleName);
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToLocal(returnUrl);
+                return RedirectToLocal(returnUrl, string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase));
             }
 
             foreach (var error in result.Errors)
@@ -199,12 +199,29 @@ namespace MyShop.PL.Controllers.IdentityController
                 await _roleManager.CreateAsync(new IdentityRole(roleName));
         }
 
-        private IActionResult RedirectToLocal(string? returnUrl)
+        private IActionResult RedirectToLocal(string? returnUrl, bool isAdmin)
         {
-            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+            if (!string.IsNullOrWhiteSpace(returnUrl)
+                && Url.IsLocalUrl(returnUrl)
+                && (isAdmin || !IsAdminReturnUrl(returnUrl)))
+            {
                 return LocalRedirect(returnUrl);
+            }
 
-            return RedirectToAction("Index", "Product");
+            if (isAdmin)
+                return RedirectToAction("Index", "Product");
+
+            return RedirectToAction("Index", "Store");
+        }
+
+        private static bool IsAdminReturnUrl(string returnUrl)
+        {
+            var path = returnUrl.Split('?', '#')[0];
+
+            return path.StartsWith("/Product", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/Category", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/User", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("/Roles", StringComparison.OrdinalIgnoreCase);
         }
         #region Forget Password
         private bool IsMailSettingsConfigured()

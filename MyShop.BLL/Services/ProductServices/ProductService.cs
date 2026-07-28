@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using AutoMapper;
+using MyShop.BLL.Models.Common;
 using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.DAL.Contracts.UnitOfWork;
 using MyShop.DAL.Entities;
+using MyShop.DAL.Presistence.Specifications;
 
 namespace MyShop.BLL.Services.ProductServices
 {
@@ -29,14 +31,24 @@ namespace MyShop.BLL.Services.ProductServices
         }
         public async Task<IEnumerable<ProductDto>> GetProductAsync()
         {
-            var products =await _unitOfWork.ProductRepository.GetAllAsync();
+            var spec = new ProductWithCategorySpecification();
+
+            var products = await _unitOfWork.ProductRepository
+                .GetAllWithSpecAsync(spec);
+
             return _mapper.Map<IEnumerable<ProductDto>>(products);
         }
 
         public async Task<ProductDetailsDto?> GetProductByIdAsync(int id)
         {
-            var product =await _unitOfWork.ProductRepository.GetByIdAsync(id);
-            if (product is null) return null;
+            var spec = new ProductByIdSpecification(id);
+
+            var product = await _unitOfWork.ProductRepository
+                .GetEntityWithSpecAsync(spec);
+
+            if (product is null)
+                return null;
+
             return _mapper.Map<ProductDetailsDto>(product);
         }
 
@@ -80,7 +92,26 @@ namespace MyShop.BLL.Services.ProductServices
             return await _unitOfWork.CompleteAsync() > 0;
 
         }
+        public async Task<Pagination<ProductDto>> SearchProductsAsync(ProductSpecParams specParams)
+        {
+            var spec = new ProductSpecification(specParams);
 
-    
+            var products = await _unitOfWork.ProductRepository
+                .GetAllWithSpecAsync(spec);
+
+            var countSpec = new ProductCountSpecification(specParams);
+
+            var totalItems = await _unitOfWork.ProductRepository
+                .CountAsync(countSpec);
+
+            return new Pagination<ProductDto>
+            {
+                PageIndex = specParams.PageIndex,
+                PageSize = specParams.PageSize,
+                Count = totalItems,
+                Data = _mapper.Map<IReadOnlyList<ProductDto>>(products)
+            };
+        }
+
     }
 }

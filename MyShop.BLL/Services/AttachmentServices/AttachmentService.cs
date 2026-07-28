@@ -7,7 +7,7 @@ namespace MyShop.BLL.Services.AttachmentServices
 {
     public class AttachmentService : IAttachmentServices
     {
-        private static readonly List<string> allowedExtensions = new List<string> { ".png", ".jpg", ".jpeg" };
+        private static readonly List<string> allowedExtensions = new List<string> { ".png", ".jpg", ".jpeg",".webp"};
         private const int maxSize = 2_097_152; //2*1024*1024
 
         public async Task<string?> UploadAsync(IFormFile file, string folderName)

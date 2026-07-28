@@ -1,0 +1,387 @@
+﻿@using MyShop.BLL.Models.Dto.ProductDto
+@model MyShop.PL.ViewModels.ShopViewModel
+
+@{
+    var products = (Model?.Products ?? Enumerable.Empty<ProductDto>()).ToList();
+    var searchTerm = Model?.SearchTerm ?? string.Empty;
+    var sort = Model?.Sort ?? string.Empty;
+    var pageIndex = Model?.PageIndex ?? 1;
+    var pageSize = Model?.PageSize ?? 9;
+    var totalCount = Model?.Count ?? products.Count;
+    var totalPages = Model?.TotalPages ?? 0;
+    var startItem = totalCount == 0 ? 0 : ((pageIndex - 1) * pageSize) + 1;
+    var endItem = Math.Min(pageIndex * pageSize, totalCount);
+    var sortOptions = new Dictionary<string, string>
+    {
+        [""] = "Featured",
+        ["nameAsc"] = "Name: A to Z",
+        ["nameDesc"] = "Name: Z to A",
+        ["priceAsc"] = "Price: Low to High",
+        ["priceDesc"] = "Price: High to Low"
+    };
+    var currentSortLabel = sortOptions.TryGetValue(sort, out var sortLabel) ? sortLabel : sortOptions[""];
+    var categories = products
+        .Select(product => product.CategoryName)
+        .Where(category => !string.IsNullOrWhiteSpace(category))
+        .Distinct()
+        .ToList();
+    var heroProducts = products.Take(3).ToList();
+
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = "Products";
+    ViewData["SearchTerm"] = searchTerm;
+    ViewData["Sort"] = sort;
+    ViewData["PageSize"] = pageSize.ToString();
+}
+
+<section class="shop-page">
+    <div class="store-container">
+        <section class="shop-hero">
+            <div class="shop-hero-copy">
+                <span class="shop-eyebrow"><i class="fas fa-bolt"></i> Customer Storefront</span>
+                <h1>Shop the latest tech for work and everyday life.</h1>
+                <p>Discover selected products, compare prices at a glance, and add what you need to your cart.</p>
+                <div class="shop-hero-actions">
+                    <a href="#products" class="store-button-primary">
+                        <i class="fas fa-th-large"></i>
+                        <span>Shop Products</span>
+                    </a>
+                    <a asp-controller="Cart" asp-action="Index" class="store-button-secondary">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>View Cart</span>
+                    </a>
+                </div>
+                <div class="shop-trust-badges" aria-label="Store benefits">
+                    <span><i class="fas fa-check"></i> Free Shipping</span>
+                    <span><i class="fas fa-check"></i> Secure Checkout</span>
+                    <span><i class="fas fa-check"></i> Fast Delivery</span>
+                    <span><i class="fas fa-check"></i> 24/7 Support</span>
+                </div>
+            </div>
+
+            <div class="shop-hero-media">
+                @if (heroProducts.Any())
+                {
+                    @foreach (var product in heroProducts)
+                    {
+                        var imageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
+                            ? null
+                            : Url.Content($"~/{product.ImageUrl.TrimStart('/')}");
+                        var cardClass = product == heroProducts.First() ? "hero-product-card main" : "hero-product-card";
+
+                        <article class="@cardClass">
+                            @if (!string.IsNullOrWhiteSpace(imageUrl))
+                            {
+                                <img src="@imageUrl" alt="@product.Name" loading="eager" decoding="async" />
+                            }
+                            else
+                            {
+                                <div class="hero-product-fallback">
+                                    <span class="placeholder-illustration" aria-hidden="true">
+                                        <span class="placeholder-screen"></span>
+                                        <span class="placeholder-base"></span>
+                                        <span class="placeholder-spark one"></span>
+                                        <span class="placeholder-spark two"></span>
+                                    </span>
+                                </div>
+                            }
+                            <div class="hero-product-info">
+                                <strong>@product.Name</strong>
+                                <span>@product.Price.ToString("C")</span>
+                            </div>
+                        </article>
+                    }
+                }
+                else
+                {
+                    <article class="hero-product-card main">
+                        <div class="hero-product-fallback">
+                            <span class="placeholder-illustration" aria-hidden="true">
+                                <span class="placeholder-screen"></span>
+                                <span class="placeholder-base"></span>
+                                <span class="placeholder-spark one"></span>
+                                <span class="placeholder-spark two"></span>
+                            </span>
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+
+        @if (categories.Any())
+        {
+            <div class="category-strip" aria-label="Product categories">
+                <button type="button" class="category-chip active" data-category-filter="all">
+                    <i class="fas fa-layer-group"></i>
+                    All products
+                </button>
+                @foreach (var category in categories)
+                {
+                    <button type="button" class="category-chip" data-category-filter="@category">
+                        <i class="fas fa-tag"></i>
+                        @category
+                    </button>
+                }
+            </div>
+        }
+
+        <section class="store-section" id="products">
+            <div class="store-section-toolbar">
+                <div class="store-section-title">
+                    <span class="section-eyebrow"><i class="fas fa-layer-group"></i> Catalog</span>
+                    <h2>@(string.IsNullOrWhiteSpace(searchTerm) ? "Featured Products" : $"Search results for \"{searchTerm}\"")</h2>
+                    <p>
+                        @(string.IsNullOrWhiteSpace(searchTerm)
+                            ? "Fresh picks from your store catalog."
+                            : $"{totalCount} product{(totalCount == 1 ? string.Empty : "s")} matched your search.")
+                    </p>
+                    <span class="store-results-meta">
+                        Showing @startItem-@endItem of @totalCount products
+                        <span>Sorted by @currentSortLabel</span>
+                    </span>
+                </div>
+                <div class="store-section-actions">
+                    @if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
+                            <i class="fas fa-times"></i>
+                            <span>Clear Search</span>
+                        </a>
+                    }
+                    <form asp-controller="Store" asp-action="Index" method="get" class="store-sort-form">
+                        <input type="hidden" name="searchTerm" value="@searchTerm" />
+                        <input type="hidden" name="pageIndex" value="1" />
+                        <label for="storeSort">Sort</label>
+                        <select id="storeSort" name="sort" aria-label="Sort products" onchange="this.form.submit()">
+                            @foreach (var option in sortOptions)
+                            {
+                                if (string.Equals(sort, option.Key, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <option value="@option.Key" selected>@option.Value</option>
+                                }
+                                else
+                                {
+                                    <option value="@option.Key">@option.Value</option>
+                                }
+                            }
+                        </select>
+                        <label for="storePageSize">Show</label>
+                        <select id="storePageSize" name="pageSize" aria-label="Products per page" onchange="this.form.submit()">
+                            @foreach (var size in new[] { 6, 9, 12, 18 })
+                            {
+                                if (pageSize == size)
+                                {
+                                    <option value="@size" selected>@size</option>
+                                }
+                                else
+                                {
+                                    <option value="@size">@size</option>
+                                }
+                            }
+                        </select>
+                    </form>
+                    <a asp-controller="Cart" asp-action="Index" class="store-button-secondary">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Open Cart</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="store-stat-grid">
+                <div class="store-stat">
+                    <span class="store-stat-icon"><i class="fas fa-box-open"></i></span>
+                    <div>
+                        <span>Total products</span>
+                        <strong data-store-count data-count-to="@totalCount" data-count-format="integer">@totalCount</strong>
+                    </div>
+                </div>
+                <div class="store-stat">
+                    <span class="store-stat-icon"><i class="fas fa-tags"></i></span>
+                    <div>
+                        <span>Categories</span>
+                        <strong data-store-count data-count-to="@categories.Count" data-count-format="integer">@categories.Count</strong>
+                    </div>
+                </div>
+                <div class="store-stat">
+                    <span class="store-stat-icon"><i class="fas fa-chart-line"></i></span>
+                    <div>
+                        <span>Average price</span>
+                        <strong data-store-count
+                                data-count-to="@((products.Any() ? products.Average(product => product.Price) : 0m).ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                data-count-format="currency">
+                            @(products.Any() ? products.Average(product => product.Price).ToString("C") : "0")
+                        </strong>
+                    </div>
+                </div>
+            </div>
+
+            @if (products.Any())
+            {
+                <div class="store-product-grid">
+                    @foreach (var product in products)
+                    {
+                        var imageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
+                            ? null
+                            : Url.Content($"~/{product.ImageUrl.TrimStart('/')}");
+
+                        <article class="store-product-card store-fade-in"
+                                 data-product-card
+                                 data-product-name="@product.Name"
+                                 data-product-category="@product.CategoryName">
+                            <div class="store-product-media">
+                                <button type="button" class="wishlist-button" aria-label="Add @product.Name to wishlist" data-wishlist-button>
+                                    <i class="far fa-heart"></i>
+                                </button>
+                                @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                {
+                                    <img src="@imageUrl" alt="@product.Name" loading="lazy" decoding="async" />
+                                }
+                                else
+                                {
+                                    <div class="store-product-fallback">
+                                        <span class="placeholder-illustration" aria-hidden="true">
+                                            <span class="placeholder-screen"></span>
+                                            <span class="placeholder-base"></span>
+                                            <span class="placeholder-spark one"></span>
+                                            <span class="placeholder-spark two"></span>
+                                        </span>
+                                    </div>
+                                }
+                                <span class="product-category-badge">@product.CategoryName</span>
+                            </div>
+
+                            <div class="store-product-body">
+                                <div class="store-rating" aria-label="Rated 4.8 out of 5">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                    <span>4.8</span>
+                                </div>
+                                <h3 class="store-product-title">@product.Name</h3>
+                                <p class="store-product-subtitle">
+                                    Premium pick from the @(string.IsNullOrWhiteSpace(product.CategoryName) ? "store" : product.CategoryName) collection.
+                                </p>
+                                <div class="store-product-meta">
+                                    <span class="store-price">@product.Price.ToString("C")</span>
+                                    <span>@product.CategoryName</span>
+                                </div>
+                                <div class="store-product-actions">
+                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="store-cart-form">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="store-button-primary">
+                                            <i class="fas fa-cart-plus"></i>
+                                            <span>Add to Cart</span>
+                                        </button>
+                                    </form>
+                                    <a asp-controller="Store" asp-action="Details" asp-route-id="@product.Id" class="store-button-secondary store-details-button">
+                                        <i class="fas fa-eye"></i>
+                                        <span>View Details</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav class="store-pagination-wrap store-pagination-amazon" aria-label="Product pagination">
+                        <div class="store-pagination">
+                            @if (pageIndex > 1)
+                            {
+                                <a asp-controller="Store"
+                                   asp-action="Index"
+                                   asp-route-searchTerm="@searchTerm"
+                                   asp-route-sort="@sort"
+                                   asp-route-pageIndex="@(pageIndex - 1)"
+                                   asp-route-pageSize="@pageSize"
+                                   class="store-page-link store-page-nav">
+                                    <span aria-hidden="true">&lt;</span>
+                                    <span>Previous</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="store-page-link store-page-nav disabled" aria-disabled="true">
+                                    <span aria-hidden="true">&lt;</span>
+                                    <span>Previous</span>
+                                </span>
+                            }
+
+                            @for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+                            {
+                                if (pageNumber == pageIndex)
+                                {
+                                    <span class="store-page-link active" aria-current="page">@pageNumber</span>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Store"
+                                       asp-action="Index"
+                                       asp-route-searchTerm="@searchTerm"
+                                       asp-route-sort="@sort"
+                                       asp-route-pageIndex="@pageNumber"
+                                       asp-route-pageSize="@pageSize"
+                                       class="store-page-link">@pageNumber</a>
+                                }
+                            }
+
+                            @if (pageIndex < totalPages)
+                            {
+                                <a asp-controller="Store"
+                                   asp-action="Index"
+                                   asp-route-searchTerm="@searchTerm"
+                                   asp-route-sort="@sort"
+                                   asp-route-pageIndex="@(pageIndex + 1)"
+                                   asp-route-pageSize="@pageSize"
+                                   class="store-page-link store-page-nav">
+                                    <span>Next</span>
+                                    <span aria-hidden="true">&gt;</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="store-page-link store-page-nav disabled" aria-disabled="true">
+                                    <span>Next</span>
+                                    <span aria-hidden="true">&gt;</span>
+                                </span>
+                            }
+                        </div>
+                    </nav>
+                }
+
+                <div class="store-empty store-filter-empty store-hidden" data-store-no-results>
+                    <span class="store-empty-visual">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <h3>No matching products</h3>
+                    <p>Try a different keyword or switch to another category.</p>
+                </div>
+            }
+            else
+            {
+                <div class="store-empty">
+                    <span class="store-empty-visual">
+                        <i class="fas fa-box-open"></i>
+                    </span>
+                    <h3>No products available</h3>
+                    <p>
+                        @(string.IsNullOrWhiteSpace(searchTerm)
+                            ? "New products will appear here as soon as the catalog is updated."
+                            : "No products matched your search. Try another keyword or clear the search.")
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <a asp-controller="Store" asp-action="Index" class="store-button-primary mt-3">
+                            <i class="fas fa-undo"></i>
+                            <span>Show All Products</span>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    </div>
+</section>

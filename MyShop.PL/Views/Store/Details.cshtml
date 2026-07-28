@@ -1,0 +1,90 @@
+@using MyShop.BLL.Models.Dto.ProductDto
+@model ProductDetailsDto
+
+@{
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = Model.Name;
+
+    var imageUrl = string.IsNullOrWhiteSpace(Model.ImageUrl)
+        ? null
+        : Url.Content($"~/{Model.ImageUrl.TrimStart('/')}");
+}
+
+<section class="detail-page">
+    <div class="store-container">
+        <div class="detail-layout">
+            <div class="detail-media">
+                @if (!string.IsNullOrWhiteSpace(imageUrl))
+                {
+                    <img src="@imageUrl" alt="@Model.Name" loading="eager" decoding="async" />
+                }
+                else
+                {
+                    <div class="detail-media-fallback">
+                        <span class="placeholder-illustration" aria-hidden="true">
+                            <span class="placeholder-screen"></span>
+                            <span class="placeholder-base"></span>
+                            <span class="placeholder-spark one"></span>
+                            <span class="placeholder-spark two"></span>
+                        </span>
+                    </div>
+                }
+            </div>
+
+            <div class="detail-panel">
+                <div class="detail-heading-row">
+                    <span class="detail-category-badge">@Model.CategoryName</span>
+                    <button type="button" class="wishlist-button detail-wishlist" aria-label="Add @Model.Name to wishlist" data-wishlist-button>
+                        <i class="far fa-heart"></i>
+                    </button>
+                </div>
+
+                <div class="store-rating detail-rating" aria-label="Rated 4.8 out of 5">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                    <span>4.8 customer rating</span>
+                </div>
+
+                <h1>@Model.Name</h1>
+                <p class="detail-description">
+                    @(string.IsNullOrWhiteSpace(Model.Description) ? "Product details will be available soon." : Model.Description)
+                </p>
+
+                <div class="detail-facts">
+                    <div class="detail-fact">
+                        <span>Price</span>
+                        <strong class="price">@Model.Price.ToString("C")</strong>
+                    </div>
+                    <div class="detail-fact">
+                        <span>Category</span>
+                        <strong>@Model.CategoryName</strong>
+                    </div>
+                </div>
+
+                <div class="detail-benefits">
+                    <span><i class="fas fa-shipping-fast"></i> Fast cart flow</span>
+                    <span><i class="fas fa-undo"></i> Easy review before checkout</span>
+                    <span><i class="fas fa-shield-alt"></i> Secure customer session</span>
+                </div>
+
+                <div class="store-detail-actions">
+                    <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Products</span>
+                    </a>
+                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="store-cart-form">
+                        <input type="hidden" name="productId" value="@Model.Id" />
+                        <input type="hidden" name="quantity" value="1" />
+                        <button type="submit" class="store-button-primary">
+                            <i class="fas fa-cart-plus"></i>
+                            <span>Add to Cart</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
