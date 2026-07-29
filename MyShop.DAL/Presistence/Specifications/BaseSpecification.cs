@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
+﻿using System.Linq.Expressions;
 using MyShop.DAL.Contracts.Specifications;
 
 namespace MyShop.DAL.Presistence.Specifications

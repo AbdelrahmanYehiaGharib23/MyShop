@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace MyShop.BLL.Services.AttachmentServices
 {
     public class AttachmentService : IAttachmentServices
     {
-        private static readonly List<string> allowedExtensions = new List<string> { ".png", ".jpg", ".jpeg",".webp"};
+        private static readonly List<string> allowedExtensions = new List<string> { ".png", ".jpg", ".jpeg",".webp",".jfif", ".avif" };
         private const int maxSize = 2_097_152; //2*1024*1024
 
         public async Task<string?> UploadAsync(IFormFile file, string folderName)
