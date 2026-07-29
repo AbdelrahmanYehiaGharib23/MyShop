@@ -1,10 +1,26 @@
 # 🛒 MyShop - E-Commerce Management System
 
-A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture** and Clean Architecture principles.
+A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture**, Repository Pattern, and Clean Architecture principles.
+
+The project includes a complete **Admin Dashboard** for managing the store and a modern **Customer Storefront** for browsing and purchasing products.
 
 ---
 
 # 🚀 Features
+
+## 🛍 Customer Store
+
+- Modern Responsive Store UI
+- Product Catalog
+- Product Details
+- Shopping Cart
+- Product Search
+- Product Sorting
+- Server-Side Pagination
+- Dark & Light Design
+- Session-Based Cart
+
+---
 
 ## 📦 Product Management
 
@@ -24,6 +40,8 @@ A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10
 - Update Category
 - Delete Category
 - Category Listing
+- Memory Cache (30 Minutes)
+- Automatic Cache Invalidation after Create, Update and Delete
 
 ---
 
@@ -44,15 +62,39 @@ A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10
 
 ---
 
+## 🔑 Authentication & Authorization
+
+- ASP.NET Core Identity
+- Login
+- Register
+- Forgot Password
+- OTP Verification
+- Password Reset
+- Role-Based Authorization
+
+---
+
+## ⚡ Performance
+
+- Server-Side Pagination
+- Specification Pattern
+- Dynamic Searching
+- Dynamic Sorting
+- Memory Cache
+- Optimized Database Queries using Skip/Take
+
+---
+
 ## 🏗 Architecture
 
 - N-Tier Architecture
 - Repository Pattern
 - Unit Of Work
-- Dependency Injection
+- Specification Pattern
 - Service Layer
 - DTO Pattern
 - AutoMapper
+- Dependency Injection
 
 ---
 
@@ -65,16 +107,6 @@ A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10
 
 ---
 
-## 🔑 Authentication & Authorization
-
-- ASP.NET Core Identity
-- Custom ApplicationUser
-- Login
-- Register
-- Role-Based Authorization
-
----
-
 # 🛠 Technologies
 
 - ASP.NET Core MVC (.NET 10)
@@ -84,6 +116,9 @@ A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10
 - AutoMapper
 - Bootstrap 5
 - AdminLTE
+- LINQ
+- Memory Cache
+- Session
 - Repository Pattern
 - Unit Of Work
 
@@ -111,7 +146,12 @@ MyShop
 - ✅ Role Management
 - ✅ Authentication
 - ✅ Authorization
-- ✅ Image Upload
+- ✅ Shopping Cart
+- ✅ Product Search
+- ✅ Product Sorting
+- ✅ Server-Side Pagination
+- ✅ Category Memory Cache
+- ✅ Product Image Upload
 - ✅ ASP.NET Core Identity
 - ✅ Database Initialization
 
@@ -119,21 +159,57 @@ MyShop
 
 # 📸 Screenshots
 
-## Dashboard
+## 🛍 Customer Store
 
-*(Coming Soon)*
+### Customer Home (Light)
+
+![Customer Home Light](Images/CustomerHomeLight.png)
 
 ---
 
-## Products
+### Customer Home (Dark)
+
+![Customer Home Dark](Images/CustomerHomeDark.png)
+
+---
+
+### Customer Home (Dark Variant)
+
+![Customer Home Dark 2](Images/CustomerHomeDark2.png)
+
+---
+
+### Product Search
+
+![Product Search](Images/SearchProduct.png)
+
+---
+
+### Product Details
+
+![Product Details](Images/ProductDetailsDark.png)
+
+---
+
+### Shopping Cart
+
+![Shopping Cart](Images/ShoppingCart.png)
+
+---
+
+## 📦 Products
 
 ### Product List
 
 ![Product List](Images/Dispaly%20Products.png)
 
+---
+
 ### Create Product
 
 ![Create Product](Images/Create%20Products.png)
+
+---
 
 ### Edit Product
 
@@ -141,11 +217,13 @@ MyShop
 
 ---
 
-## Categories
+## 📂 Categories
 
 ### Category List
 
 ![Category List](Images/Display%20categories.png)
+
+---
 
 ### Create Category
 
@@ -153,15 +231,19 @@ MyShop
 
 ---
 
-## Roles
+## 🔐 Roles
 
 ### Display Roles
 
 ![Display Roles](Images/Display%20Roles.png)
 
+---
+
 ### Create Role
 
 ![Create Role](Images/Create%20Roles.png)
+
+---
 
 ### Edit User Role
 
@@ -169,11 +251,13 @@ MyShop
 
 ---
 
-## Users
+## 👥 Users
 
 ### Display Users
 
 ![Display Users](Images/Display%20Users.png)
+
+---
 
 ### Edit Users
 
@@ -183,25 +267,28 @@ MyShop
 
 # 📖 Future Improvements
 
-- Shopping Cart
 - Orders Management
 - Payment Integration (Stripe)
 - Dashboard Analytics
 - Email Confirmation
-- Forgot Password
-- Product Search & Filtering
 - Wishlist
 - Reviews & Ratings
-- REST API Version
+- Coupons & Discounts
+- REST API
+- JWT Authentication
+- Docker Support
 
 ---
 
 # ⚠️ Notes
 
-- The project follows **N-Tier Architecture**.
-- Uses **Repository Pattern** and **Unit Of Work**.
-- Authentication & Authorization are implemented using **ASP.NET Core Identity**.
-- Entity Framework Core Code First approach is used for database management.
+- Built using **ASP.NET Core MVC (.NET 10)**.
+- Follows **N-Tier Architecture** with clear separation of concerns.
+- Uses **Repository Pattern**, **Unit Of Work**, and **Specification Pattern**.
+- Implements **Server-Side Pagination**, **Searching**, and **Sorting**.
+- Uses **Memory Cache** to improve category retrieval performance.
+- Shopping Cart is implemented using **ASP.NET Core Session**.
+- Authentication and Authorization are powered by **ASP.NET Core Identity**.
 
 ---
 
