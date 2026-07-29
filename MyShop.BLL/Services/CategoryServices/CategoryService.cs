@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using AutoMapper;
 using Microsoft.Extensions.Caching.Memory;
 using MyShop.BLL.Models.Dto.CategoryDto;

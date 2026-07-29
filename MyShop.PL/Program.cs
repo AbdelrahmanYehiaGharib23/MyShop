@@ -48,7 +48,7 @@ builder.Services.AddScoped<IPasswordResetManager, PasswordResetManager>();
 
 builder.Services.AddHttpContextAccessor();
 
-
+builder.Services.AddMemoryCache();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
