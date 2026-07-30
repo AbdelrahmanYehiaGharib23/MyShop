@@ -1,8 +1,8 @@
 # 🛒 MyShop - E-Commerce Management System
 
-A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture**, Repository Pattern, and Clean Architecture principles.
+A modern **E-Commerce Management System** built with **ASP.NET Core MVC (.NET 10)** following **N-Tier Architecture**, **Repository Pattern**, **Unit of Work**, and **Specification Pattern**.
 
-The project includes a complete **Admin Dashboard** for managing the store and a modern **Customer Storefront** for browsing and purchasing products.
+The project includes a complete **Admin Dashboard** for managing the store and a modern **Customer Storefront** for browsing products, searching, sorting, and managing a shopping cart.
 
 ---
 
@@ -17,7 +17,7 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 - Product Search
 - Product Sorting
 - Server-Side Pagination
-- Dark & Light Design
+- Dark & Light Theme
 - Session-Based Cart
 
 ---
@@ -41,7 +41,7 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 - Delete Category
 - Category Listing
 - Memory Cache (30 Minutes)
-- Automatic Cache Invalidation after Create, Update and Delete
+- Automatic Cache Invalidation after Create, Update, and Delete
 
 ---
 
@@ -100,10 +100,11 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 
 ## 💾 Database
 
-- Entity Framework Core
 - SQL Server
+- Entity Framework Core
 - Code First
 - EF Core Migrations
+- SQL Server Database Backup Included
 
 ---
 
@@ -129,12 +130,81 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 ```
 MyShop
 │
-├── MyShop.PL      Presentation Layer
-├── MyShop.BLL     Business Logic Layer
-├── MyShop.DAL     Data Access Layer
+├── Database
+│   └── MyShop.bak
 │
-└── Images         README Screenshots
+├── Images
+│
+├── MyShop.PL
+├── MyShop.BLL
+└── MyShop.DAL
 ```
+
+---
+
+# 🚀 Getting Started
+
+## Prerequisites
+
+- .NET 10 SDK
+- SQL Server / SQL Server Express
+- Visual Studio 2022
+
+---
+
+## Clone Repository
+
+```bash
+git clone https://github.com/AbdelrahmanYehiaGharib23/MyShop.git
+
+cd MyShop
+```
+
+---
+
+## Restore NuGet Packages
+
+```bash
+dotnet restore
+```
+
+---
+
+## Configure Database
+
+### Option 1 (Recommended)
+
+Restore the SQL Server backup located in:
+
+```
+Database/MyShop.bak
+```
+
+After restoring the database, update the connection string inside:
+
+```
+MyShop.PL/appsettings.json
+```
+
+---
+
+### Option 2
+
+Create the database using Entity Framework Core Migrations.
+
+```bash
+dotnet ef database update
+```
+
+---
+
+## Run the Project
+
+```bash
+dotnet run
+```
+
+or simply run the solution using **Visual Studio**.
 
 ---
 
@@ -153,7 +223,7 @@ MyShop
 - ✅ Category Memory Cache
 - ✅ Product Image Upload
 - ✅ ASP.NET Core Identity
-- ✅ Database Initialization
+- ✅ SQL Server Database Backup
 
 ---
 
@@ -289,6 +359,7 @@ MyShop
 - Uses **Memory Cache** to improve category retrieval performance.
 - Shopping Cart is implemented using **ASP.NET Core Session**.
 - Authentication and Authorization are powered by **ASP.NET Core Identity**.
+- A SQL Server backup (`Database/MyShop.bak`) is included for quick project setup.
 
 ---
 
