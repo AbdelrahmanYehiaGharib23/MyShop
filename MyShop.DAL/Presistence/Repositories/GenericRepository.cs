@@ -26,37 +26,20 @@ namespace MyShop.DAL.Presistence.Repositories
         {
             if (WithTracking)
             {
-                return await _dbContext.Set<TEntity>().Where(T => T.IsDeleted != true).ToListAsync();
+                return await _dbContext.Set<TEntity>()
+                    .ToListAsync();
             }
-            else
-            {
-                return await _dbContext.Set<TEntity>().Where(T => T.IsDeleted != true).AsNoTracking().ToListAsync();
-            }
+
+            return await _dbContext.Set<TEntity>()
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        public async Task<TEntity?> GetByIdAsync(int id) =>await _dbContext.Set<TEntity>().FindAsync(id);
+        public async Task<TEntity?> GetByIdAsync(int id) => await _dbContext.Set<TEntity>().FindAsync(id);
+
         public void Remove(TEntity entity)
         {
-            var isDeletedProp = entity.GetType().GetProperty("IsDeleted");
-            var deletedAtProp = entity.GetType().GetProperty("DeletedAt");
-            if(isDeletedProp != null)
-            {
-                // Soft delete via property
-                isDeletedProp.SetValue(entity, true);
-                if (deletedAtProp != null)
-                    deletedAtProp.SetValue(entity, DateTime.UtcNow);
-
-                _dbContext.Set<TEntity>().Update(entity);
-
-            }
-            else
-            {
-                // Hard delete
-                if (_dbContext.Entry(entity).State == EntityState.Detached)
-                    _dbContext.Set<TEntity>().Attach(entity);
-
-                _dbContext.Set<TEntity>().Remove(entity);
-            }
+            _dbContext.Set<TEntity>().Remove(entity);
         }
 
         public void Update(TEntity entity) => _dbContext.Set<TEntity>().Update(entity);
@@ -64,7 +47,6 @@ namespace MyShop.DAL.Presistence.Repositories
         {
             return await _dbContext.Set<TEntity>()
                 .Where(predicate)
-                .Where(e => !e.IsDeleted)
                 .AsNoTracking()
                 .ToListAsync();
         }

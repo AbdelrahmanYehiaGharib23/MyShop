@@ -1,0 +1,142 @@
+@using System.Security.Claims
+@using MyShop.BLL.Models.Dto.ProductDto
+@model ProductDetailsDto
+
+@{
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var loginUrl = Url.Action("Login", "Account", new { returnUrl }) ?? "/Account/Login";
+}
+
+<section class="reviews-section store-fade-in"
+         aria-labelledby="reviewsTitle"
+         data-review-widget
+         data-product-id="@Model.Id"
+         data-current-user-id="@currentUserId"
+         data-is-authenticated="@isAuthenticated.ToString().ToLowerInvariant()"
+         data-reviews-url="@Url.Action("GetProductReviews", "Review", new { productId = Model.Id })"
+         data-summary-url="@Url.Action("GetProductReviewSummary", "Review", new { productId = Model.Id })"
+         data-add-url="@Url.Action("Add", "Review")"
+         data-edit-url="@Url.Action("Edit", "Review")"
+         data-delete-url="@Url.Action("Delete", "Review")"
+         data-login-url="@loginUrl">
+    <div class="reviews-heading">
+        <div>
+            <span class="section-eyebrow"><i class="fas fa-star"></i> Customer Reviews</span>
+            <h2 id="reviewsTitle">Real feedback for @Model.Name</h2>
+            <p>Share your experience and help other customers choose with confidence.</p>
+        </div>
+
+        <div class="reviews-summary-card" data-review-summary>
+            <span class="reviews-summary-icon"><i class="fas fa-comments"></i></span>
+            <div>
+                <strong data-review-average>0.0</strong>
+                <span data-review-count>No reviews yet</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="reviews-layout">
+        <aside class="review-compose-card">
+            @if (isAuthenticated)
+            {
+                <form method="post"
+                      asp-controller="Review"
+                      asp-action="Add"
+                      class="review-form"
+                      data-review-form>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ProductId" value="@Model.Id" />
+                    <input type="hidden" name="Rating" value="5" data-review-rating-input />
+
+                    <div class="review-form-heading">
+                        <span class="review-form-icon"><i class="fas fa-pen"></i></span>
+                        <div>
+                            <h3 data-review-form-title>Write a review</h3>
+                            <p data-review-form-copy>Rate the product and leave a helpful note for other shoppers.</p>
+                        </div>
+                    </div>
+
+                    <div class="review-star-picker" role="radiogroup" aria-label="Rating" data-review-star-picker>
+                        @for (var rating = 1; rating <= 5; rating++)
+                        {
+                            <button type="button"
+                                    class="review-star-button active"
+                                    data-rating="@rating"
+                                    role="radio"
+                                    aria-checked="@(rating == 5 ? "true" : "false")"
+                                    aria-label="@rating star@(rating == 1 ? string.Empty : "s")">
+                                <i class="fas fa-star"></i>
+                            </button>
+                        }
+                    </div>
+
+                    <label class="review-field">
+                        <span>Your review</span>
+                        <textarea name="Comment"
+                                  rows="5"
+                                  maxlength="1000"
+                                  required
+                                  placeholder="What stood out about this product?"
+                                  data-review-comment></textarea>
+                    </label>
+
+                    <div class="review-form-meta">
+                        <span data-review-char-count>0 / 1000</span>
+                        <button type="button" class="review-delete-button" data-review-delete hidden>
+                            <i class="fas fa-trash"></i>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+
+                    <button type="submit" class="store-button-primary review-submit-button" data-review-submit>
+                        <i class="fas fa-paper-plane"></i>
+                        <span>Submit Review</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="review-login-card">
+                    <span class="review-login-icon"><i class="fas fa-user-lock"></i></span>
+                    <h3>Login to write a review</h3>
+                    <p>Your feedback is linked to your customer account so every product gets one clear review from you.</p>
+                    <a href="@loginUrl" class="store-button-primary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Login to Review</span>
+                    </a>
+                </div>
+            }
+        </aside>
+
+        <div class="reviews-list-card">
+            <div class="reviews-list-toolbar">
+                <div>
+                    <h3>Latest reviews</h3>
+                    <p data-review-toolbar-copy>Loading customer feedback...</p>
+                </div>
+                <span class="reviews-live-badge" data-review-live-badge>
+                    <i class="fas fa-circle-notch fa-spin"></i>
+                    Loading
+                </span>
+            </div>
+
+            <div class="reviews-skeleton" data-review-skeleton aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="reviews-list" data-review-list></div>
+
+            <div class="reviews-empty" data-review-empty hidden>
+                <span class="reviews-empty-visual">
+                    <i class="far fa-star"></i>
+                </span>
+                <h3>No reviews yet</h3>
+                <p>Be the first customer to share a rating for this product.</p>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,207 @@
+@model MyShop.PL.ViewModels.CheckoutViewModel
+
+@{
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = "Checkout";
+
+    var items = Model?.Items ?? new List<MyShop.DAL.Entities.CartItem>();
+    var totalItems = items.Sum(item => item.Quantity);
+    var subtotal = Model?.TotalPrice ?? items.Sum(item => item.TotalPrice);
+    var shipping = 0m;
+    var total = subtotal + shipping;
+}
+
+<section class="checkout-page">
+    <div class="store-container">
+        <div class="checkout-hero store-fade-in">
+            <div class="checkout-hero-copy">
+                <span class="section-eyebrow"><i class="fas fa-lock"></i> Secure Checkout</span>
+                <h1>Confirm your delivery details.</h1>
+                <p>Add the address and phone number for this order. Your cart items will be converted into a saved customer order.</p>
+
+                <div class="checkout-trust-row" aria-label="Checkout benefits">
+                    <span><i class="fas fa-shipping-fast"></i> Fast Delivery</span>
+                    <span><i class="fas fa-shield-alt"></i> Secure Checkout</span>
+                    <span><i class="fas fa-receipt"></i> Order Tracking</span>
+                </div>
+            </div>
+
+            <div class="checkout-progress-card" aria-label="Checkout progress">
+                <div class="checkout-step active">
+                    <span><i class="fas fa-shopping-bag"></i></span>
+                    <strong>Cart</strong>
+                </div>
+                <span class="checkout-step-line"></span>
+                <div class="checkout-step active">
+                    <span><i class="fas fa-truck"></i></span>
+                    <strong>Delivery</strong>
+                </div>
+                <span class="checkout-step-line"></span>
+                <div class="checkout-step active">
+                    <span><i class="fas fa-check"></i></span>
+                    <strong>Create Order</strong>
+                </div>
+            </div>
+        </div>
+
+        @if (items.Any())
+        {
+            <form asp-controller="Cart" asp-action="Checkout" method="post" class="checkout-layout">
+                @Html.AntiForgeryToken()
+
+                <div class="checkout-main">
+                    <section class="checkout-panel store-fade-in" style="animation-delay: 80ms">
+                        <div class="checkout-panel-heading">
+                            <span class="checkout-panel-icon"><i class="fas fa-truck"></i></span>
+                            <div>
+                                <h2>Delivery Information</h2>
+                                <p>These two fields are used by the order service when creating your order.</p>
+                            </div>
+                        </div>
+
+                        <div asp-validation-summary="ModelOnly" class="checkout-validation"></div>
+
+                        <div class="checkout-form-grid">
+                            <div class="checkout-field">
+                                <label asp-for="Phone">Phone Number</label>
+                                <div class="checkout-input-wrap">
+                                    <i class="fas fa-phone-alt"></i>
+                                    <input asp-for="Phone" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" />
+                                </div>
+                                <span asp-validation-for="Phone" class="checkout-field-error"></span>
+                            </div>
+
+                            <div class="checkout-field checkout-field-wide">
+                                <label asp-for="Address">Delivery Address</label>
+                                <div class="checkout-input-wrap">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <input asp-for="Address" type="text" autocomplete="street-address" placeholder="Street, building, apartment, city" />
+                                </div>
+                                <span asp-validation-for="Address" class="checkout-field-error"></span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="checkout-panel checkout-methods store-fade-in" style="animation-delay: 150ms">
+                        <div class="checkout-panel-heading">
+                            <span class="checkout-panel-icon"><i class="fas fa-box-open"></i></span>
+                            <div>
+                                <h2>Order Handling</h2>
+                                <p>The order will be saved to your account and your cart will be cleared after confirmation.</p>
+                            </div>
+                        </div>
+
+                        <div class="checkout-method-grid">
+                            <label class="checkout-method">
+                                <input type="radio" name="CheckoutMode" value="standard" checked />
+                                <span><i class="fas fa-clipboard-check"></i></span>
+                                <strong>Standard Order</strong>
+                                <small>Create order from current cart</small>
+                            </label>
+
+                            <a asp-controller="Orders" asp-action="MyOrders" class="checkout-method checkout-method-link">
+                                <span><i class="fas fa-receipt"></i></span>
+                                <strong>My Orders</strong>
+                                <small>View previous orders</small>
+                            </a>
+                        </div>
+                    </section>
+                </div>
+
+                <aside class="checkout-summary store-fade-in" style="animation-delay: 220ms">
+                    <div class="checkout-summary-header">
+                        <div>
+                            <span class="section-eyebrow"><i class="fas fa-receipt"></i> Order Summary</span>
+                            <h2>@totalItems item@(totalItems == 1 ? string.Empty : "s")</h2>
+                        </div>
+                        <a asp-controller="Cart" asp-action="Index" class="checkout-edit-link">
+                            <i class="fas fa-pen"></i>
+                            <span>Edit</span>
+                        </a>
+                    </div>
+
+                    <div class="checkout-item-list">
+                        @foreach (var item in items)
+                        {
+                            var imageUrl = string.IsNullOrWhiteSpace(item.ImageUrl)
+                                ? null
+                                : Url.Content($"~/{item.ImageUrl.TrimStart('/')}");
+
+                            <article class="checkout-item">
+                                <div class="checkout-item-media">
+                                    @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                    {
+                                        <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                    }
+                                    else
+                                    {
+                                        <span class="placeholder-illustration compact" aria-hidden="true">
+                                            <span class="placeholder-screen"></span>
+                                            <span class="placeholder-base"></span>
+                                            <span class="placeholder-spark one"></span>
+                                            <span class="placeholder-spark two"></span>
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="checkout-item-info">
+                                    <h3>@item.ProductName</h3>
+                                    <span>Qty @item.Quantity x @item.Price.ToString("C")</span>
+                                </div>
+
+                                <strong>@item.TotalPrice.ToString("C")</strong>
+                            </article>
+                        }
+                    </div>
+
+                    <div class="cart-summary-row">
+                        <span>Subtotal</span>
+                        <strong>@subtotal.ToString("C")</strong>
+                    </div>
+                    <div class="cart-summary-row">
+                        <span>Shipping</span>
+                        <strong>@(shipping == 0 ? "Free" : shipping.ToString("C"))</strong>
+                    </div>
+                    <div class="cart-summary-row cart-summary-total">
+                        <span>Total</span>
+                        <strong>@total.ToString("C")</strong>
+                    </div>
+
+                    <div class="cart-summary-actions">
+                        <button type="submit" class="store-button-primary cart-checkout-button">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Place Order</span>
+                        </button>
+                        <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
+                            <i class="fas fa-store"></i>
+                            <span>Continue Shopping</span>
+                        </a>
+                    </div>
+
+                    <div class="checkout-secure-note">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Your order will be linked to your customer account.</span>
+                    </div>
+                </aside>
+            </form>
+        }
+        else
+        {
+            <div class="cart-empty">
+                <span class="cart-empty-visual">
+                    <i class="fas fa-shopping-bag"></i>
+                </span>
+                <h2>Your cart is empty</h2>
+                <p>Add products to your cart before starting checkout.</p>
+                <a asp-controller="Store" asp-action="Index" class="store-button-primary mt-3">
+                    <i class="fas fa-store"></i>
+                    <span>Browse Products</span>
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

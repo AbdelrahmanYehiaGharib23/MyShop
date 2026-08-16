@@ -11,6 +11,9 @@ namespace MyShop.DAL.Contracts.UnitOfWork
         public IProductRepository ProductRepository { get; }
         public ICategoryRepository CategoryRepository { get; }
         IPasswordResetRepository PasswordResetRepository { get; }
+        IOrderRepository OrderRepository { get; }
+        IReviewRepository ReviewRepository { get; }
+
         Task<int> CompleteAsync();
         //void Dispose();
     }

@@ -7,6 +7,8 @@ namespace MyShop.DAL.Contracts.Repositories
 {
     public interface IProductRepository:IGenericRepository<Product>
     {
+        Task<IEnumerable<Product>> GetDeletedProductsAsync();
+        Task<Product?> GetDeletedProductByIdAsync(int id);
 
     }
 }

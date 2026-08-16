@@ -13,9 +13,10 @@ namespace MyShop.DAL.Entities
         public DateTime? DeletedAt { get; set; }
         public string? DeletedBy { get; set; }
 
-        public int CreatedBy { get; set; } //User Id
+        // Audit
+        public string CreatedBy { get; set; } = string.Empty; //User Id
         public DateTime? CreatedOn { get; set; }
-        public int LastModifiedBy { get; set; } //User Id Modified
+        public string LastModifiedBy { get; set; } = string.Empty; //User Id Modified
         public DateTime? LastModifiedOn { get; set; } // Automatic Calculated in (Configuration)
     }
 }

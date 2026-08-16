@@ -7,11 +7,9 @@ namespace MyShop.DAL.Presistence.Specifications
 {
     public static class SpecificationEvaluator<TEntity> where TEntity :BaseEntity
     {
-        public static IQueryable<TEntity> GetQuery(
-           IQueryable<TEntity> inputQuery,
-           ISpecification<TEntity> specification)
+        public static IQueryable<TEntity> GetQuery(IQueryable<TEntity> inputQuery,ISpecification<TEntity> specification)
         {
-            var query = inputQuery.Where(entity => !entity.IsDeleted);
+            var query = inputQuery.AsNoTracking();
 
             if (specification.Criteria is not null)
             {
@@ -27,13 +25,17 @@ namespace MyShop.DAL.Presistence.Specifications
                 query = query.OrderByDescending(specification.OrderByDescending);
             }
 
-            query = specification.Includes.Aggregate(query,
-                (currentQuery, includeExpression)
-                    => currentQuery.Include(includeExpression));
+            query = specification.Includes.Aggregate(query,(currentQuery, includeExpression)
+                       => currentQuery.Include(includeExpression));
+
+            query = specification.IncludeChains.Aggregate( query, (currentQuery, includeChain)
+                    => includeChain(currentQuery));
 
             if (specification.IsPagingEnabled)
             {
-                query = query.Skip(specification.Skip).Take(specification.Take);
+                query = query
+                    .Skip(specification.Skip)
+                    .Take(specification.Take);
             }
 
             return query;

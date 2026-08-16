@@ -40,10 +40,16 @@
             <h2>Products</h2>
             <p>Manage product presentation, pricing, images, and category placement.</p>
         </div>
-        <a asp-action="Create" class="product-primary-action">
-            <i class="fas fa-plus"></i>
-            <span>New Product</span>
-        </a>
+        <div class="product-toolbar-actions">
+            <a asp-action="DeletedProducts" class="product-secondary-action">
+                <i class="fas fa-trash-restore"></i>
+                <span>Deleted Products</span>
+            </a>
+            <a asp-action="Create" class="product-primary-action">
+                <i class="fas fa-plus"></i>
+                <span>New Product</span>
+            </a>
+        </div>
     </div>
 
     <div class="product-metrics">

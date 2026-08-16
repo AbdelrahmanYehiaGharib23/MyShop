@@ -17,5 +17,8 @@ namespace MyShop.BLL.Services.ProductServices
         Task<bool> DeleteProductAsync(int? id);
         Task<Pagination<ProductDto>> SearchProductsAsync(ProductSpecParams specParams);
 
+        Task<IEnumerable<DeletedProductDto>> GetDeletedProductsAsync();
+        Task<bool> RestoreProductAsync(int id);
+
     }
 }

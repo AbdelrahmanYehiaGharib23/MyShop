@@ -17,6 +17,8 @@ namespace MyShop.DAL.Presistence.UnitOfWork
         private readonly Lazy<IProductRepository> _ProductRepository;
         private readonly Lazy<ICategoryRepository> _CategoryRepository;
         private readonly Lazy<IPasswordResetRepository> _PasswordResetRepository;
+        private readonly Lazy<IOrderRepository> _OrderRepository;
+        private readonly Lazy<IReviewRepository> _ReviewRepository;
 
         public UnitOfWork(ApplicationDbContext dbContext)
         {
@@ -24,10 +26,14 @@ namespace MyShop.DAL.Presistence.UnitOfWork
             _ProductRepository = new Lazy<IProductRepository>(() => new ProductRepository(dbContext));
             _CategoryRepository = new Lazy<ICategoryRepository>(() => new CategoryRepository(dbContext));
             _PasswordResetRepository = new Lazy<IPasswordResetRepository>(() => new PasswordResetRepository(dbContext));
+            _OrderRepository = new Lazy<IOrderRepository>(() => new OrderRepository(dbContext));
+            _ReviewRepository = new Lazy<IReviewRepository>(() => new ReviewRepository(dbContext));
         }
         public IProductRepository ProductRepository => _ProductRepository.Value;
         public ICategoryRepository CategoryRepository => _CategoryRepository.Value;
         public IPasswordResetRepository PasswordResetRepository => _PasswordResetRepository.Value;
+        public IOrderRepository OrderRepository => _OrderRepository.Value;
+        public IReviewRepository ReviewRepository => _ReviewRepository.Value;
         public async Task<int> CompleteAsync()
         {
             return await _dbContext.SaveChangesAsync();

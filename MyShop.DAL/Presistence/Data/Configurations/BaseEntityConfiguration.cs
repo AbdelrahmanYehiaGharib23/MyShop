@@ -6,15 +6,15 @@ namespace MyShop.DAL.Presistence.Data.Configurations
 {
     public class BaseEntityConfiguration<T> : IEntityTypeConfiguration<T> where T : BaseEntity
     {
-        public void Configure(EntityTypeBuilder<T> builder)
+        public virtual void Configure(EntityTypeBuilder<T> builder)
         {
-            builder.Property(d => d.CreatedOn)
+            builder.Property(e => e.CreatedOn)
                 .HasDefaultValueSql("GETDATE()")
                 .ValueGeneratedOnAdd();
 
-            builder.Property(d => d.LastModifiedOn)
-                .HasDefaultValueSql("GETDATE()")
-                .ValueGeneratedOnUpdate();
+            builder.Property(e => e.LastModifiedOn)
+                   .HasDefaultValueSql("GETDATE()")
+                   .ValueGeneratedOnUpdate();
         }
     }
 }

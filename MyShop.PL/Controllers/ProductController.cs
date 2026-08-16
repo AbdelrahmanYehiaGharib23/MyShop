@@ -6,10 +6,13 @@ using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.ProductServices;
+using MyShop.PL.ViewModels;
 
 
 namespace MyShop.PL.Areas.Admin.Controllers
 {
+    [Authorize(Roles = "Admin")]
+    [AutoValidateAntiforgeryToken]
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
@@ -216,6 +219,38 @@ namespace MyShop.PL.Areas.Admin.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeletedProducts()
+        {
+            var products = await _productService.GetDeletedProductsAsync();
 
+            var model = products.Select(p => new DeletedProductVM
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Description = p.Description,
+                ImageUrl = p.ImageUrl,
+                DeletedAt = p.DeletedAt,
+                DeletedBy = p.DeletedBy
+            });
+
+            return View(model);
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var restored = await _productService.RestoreProductAsync(id);
+
+            if (!restored)
+            {
+                return NotFound();
+            }
+
+            return RedirectToAction(nameof(DeletedProducts));
+        }
     }
 }

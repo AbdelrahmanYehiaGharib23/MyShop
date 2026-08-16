@@ -83,7 +83,14 @@
                             <a asp-controller="Cart"
                                asp-action="Index"
                                class="store-nav-link @(string.Equals(currentController, "Cart", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                Cart
+                                 Cart
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Orders"
+                               asp-action="MyOrders"
+                               class="store-nav-link @(string.Equals(currentController, "Orders", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                Orders
                             </a>
                         </li>
                     </ul>
@@ -136,13 +143,18 @@
                                         </span>
                                     </li>
                                     <li><hr class="dropdown-divider"></li>
+                                     <li>
+                                         <a class="dropdown-item" asp-controller="Cart" asp-action="Index">
+                                             <i class="fas fa-shopping-bag"></i> Cart
+                                         </a>
+                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Cart" asp-action="Index">
-                                            <i class="fas fa-shopping-bag"></i> Cart
+                                        <a class="dropdown-item" asp-controller="Orders" asp-action="MyOrders">
+                                            <i class="fas fa-receipt"></i> My Orders
                                         </a>
                                     </li>
-                                    <li>
-                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                     <li>
+                                         <form asp-controller="Account" asp-action="Logout" method="post">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="dropdown-item store-menu-danger">
                                                 <i class="fas fa-sign-out-alt"></i> Logout
@@ -226,10 +238,11 @@
                 </div>
 
                 <div>
-                    <h2>Shop</h2>
-                    <a asp-controller="Store" asp-action="Index">Products</a>
-                    <a asp-controller="Cart" asp-action="Index">Cart</a>
-                </div>
+                     <h2>Shop</h2>
+                     <a asp-controller="Store" asp-action="Index">Products</a>
+                     <a asp-controller="Cart" asp-action="Index">Cart</a>
+                    <a asp-controller="Orders" asp-action="MyOrders">My Orders</a>
+                 </div>
 
                 <div>
                     <h2>Categories</h2>

@@ -5,8 +5,11 @@ using MyShop.BLL.Mapping;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.CategoryServices;
+using MyShop.BLL.Services.CurrentUserServices;
 using MyShop.BLL.Services.IdentityServices;
+using MyShop.BLL.Services.OrderServices;
 using MyShop.BLL.Services.ProductServices;
+using MyShop.BLL.Services.ReviewServices;
 using MyShop.DAL;
 using MyShop.DAL.Entities.IdentityEntity;
 using MyShop.DAL.Presistence.Data.DbInitializer;
@@ -42,9 +45,13 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IAttachmentServices, AttachmentService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IPasswordResetManager, PasswordResetManager>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -60,16 +67,6 @@ builder.Services.AddSession(options =>
 var app = builder.Build();
 
 app.InitializeDatabase();
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
-
-
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

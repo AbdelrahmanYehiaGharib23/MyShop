@@ -113,5 +113,39 @@ namespace MyShop.BLL.Services.ProductServices
             };
         }
 
+        public async Task<IEnumerable<DeletedProductDto>> GetDeletedProductsAsync()
+        {
+            var products = await _unitOfWork.ProductRepository
+                .GetDeletedProductsAsync();
+
+            return products.Select(p => new DeletedProductDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                Description = p.Description,
+                ImageUrl = p.ImageUrl,
+                DeletedAt = p.DeletedAt,
+                DeletedBy = p.DeletedBy
+            });
+        }
+
+        public async Task<bool> RestoreProductAsync(int id)
+        {
+            var product = await _unitOfWork.ProductRepository
+                .GetDeletedProductByIdAsync(id);
+
+            if (product == null)
+                return false;
+
+            product.IsDeleted = false;
+            product.DeletedAt = null;
+            product.DeletedBy = null;
+
+            await _unitOfWork.CompleteAsync();
+
+            return true;
+        }
+       
     }
 }

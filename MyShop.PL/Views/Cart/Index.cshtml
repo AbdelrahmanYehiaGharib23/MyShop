@@ -117,10 +117,10 @@
                     </div>
 
                     <div class="cart-summary-actions">
-                        <button type="button" class="store-button-primary cart-checkout-button">
+                        <a asp-controller="Cart" asp-action="Checkout" class="store-button-primary cart-checkout-button">
                             <i class="fas fa-lock"></i>
                             <span>Secure Checkout</span>
-                        </button>
+                        </a>
                         <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
                             <i class="fas fa-store"></i>
                             <span>Keep Shopping</span>

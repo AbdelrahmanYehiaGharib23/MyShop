@@ -17,6 +17,7 @@ namespace MyShop.PL.Controllers.IdentityController
         private readonly IPasswordResetManager _passwordResetManager;
         private readonly ILogger<AccountController> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IEmailSender _emailSender;
 
         public AccountController(
             SignInManager<ApplicationUser> signInManager,
@@ -24,7 +25,8 @@ namespace MyShop.PL.Controllers.IdentityController
             RoleManager<IdentityRole> roleManager,
             IPasswordResetManager passwordResetManager,
             ILogger<AccountController> logger,
-             IConfiguration configuration)
+             IConfiguration configuration,
+             IEmailSender emailSender)
         {
             _signInManager = signInManager;
             _userManager = userManager;
@@ -32,6 +34,7 @@ namespace MyShop.PL.Controllers.IdentityController
             _passwordResetManager = passwordResetManager;
             _logger = logger;
             _configuration = configuration;
+            _emailSender = emailSender;
         }
 
         [HttpGet]
@@ -111,10 +114,34 @@ namespace MyShop.PL.Controllers.IdentityController
             if (result.Succeeded)
             {
                 var roleName = hasUsers ? "Customer" : "Admin";
+
                 await EnsureRoleAsync(roleName);
                 await _userManager.AddToRoleAsync(user, roleName);
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToLocal(returnUrl, string.Equals(roleName, "Admin", StringComparison.OrdinalIgnoreCase));
+
+                await _emailSender.SendEmailAsync(
+                    user.Email!,
+                    "Welcome to MyShop",
+                    $"""
+        <h2>Welcome to MyShop, {user.FirstName}!</h2>
+
+        <p>Your account has been created successfully.</p>
+
+        <p>Thank you for joining MyShop.</p>
+
+        <p>We hope you enjoy your shopping experience.</p>
+        """
+   );
+
+                await _signInManager.SignInAsync(
+                    user,
+                    isPersistent: false);
+
+                return RedirectToLocal(
+                    returnUrl,
+                    string.Equals(
+                        roleName,
+                        "Admin",
+                        StringComparison.OrdinalIgnoreCase));
             }
 
             foreach (var error in result.Errors)

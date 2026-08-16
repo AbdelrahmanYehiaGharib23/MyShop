@@ -18,5 +18,6 @@ namespace MyShop.BLL.Models.Dto.ProductDto
         public int CategoryId { get; set; }
 
         public string CategoryName { get; set; } = null!;
+
     }
 }

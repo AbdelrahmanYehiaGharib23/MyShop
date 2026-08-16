@@ -1,67 +1,97 @@
-﻿
-using System.Net;
-using System.Net.Mail;
+﻿using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace MyShop.BLL.Services.IdentityServices
 {
-    public class EmailSender:IEmailSender
+    public class EmailSender : IEmailSender
     {
         private readonly IConfiguration _config;
         private readonly ILogger<EmailSender> _logger;
 
-        public EmailSender(IConfiguration config, ILogger<EmailSender> logger)
+        public EmailSender(
+            IConfiguration config,
+            ILogger<EmailSender> logger)
         {
             _config = config;
             _logger = logger;
         }
 
-        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+        public async Task SendEmailAsync(
+            string email,
+            string subject,
+            string htmlMessage)
         {
-            var smtpHost = _config["MailSettings:Host"];
-            var smtpPort = int.TryParse(_config["MailSettings:Port"], out var p) ? p : 25;
-            var smtpUser = _config["MailSettings:Email"];
-            var smtpPass = _config["MailSettings:Password"];
-            var fromEmail = _config["MailSettings:Email"];
-
             if (string.IsNullOrWhiteSpace(email))
-                throw new ArgumentException("Recipient email is required.", nameof(email));
+                throw new ArgumentException(
+                    "Recipient email is required.",
+                    nameof(email));
+
+            var smtpHost = _config["MailSettings:Host"];
+            var smtpPort = int.TryParse(
+                _config["MailSettings:Port"],
+                out var port)
+                ? port
+                : 587;
+
+            var smtpUser = _config["MailSettings:Email"];
+            var smtpPassword = _config["MailSettings:Password"];
 
             if (string.IsNullOrWhiteSpace(smtpHost) ||
                 string.IsNullOrWhiteSpace(smtpUser) ||
-                string.IsNullOrWhiteSpace(smtpPass) ||
-                string.IsNullOrWhiteSpace(fromEmail))
+                string.IsNullOrWhiteSpace(smtpPassword))
             {
-                _logger.LogWarning("EmailSender: SMTP settings are missing. Configure MailSettings using User Secrets, environment variables, or a secure secret store.");
-                throw new InvalidOperationException("SMTP settings are not configured.");
+                throw new InvalidOperationException(
+                    "SMTP settings are not configured.");
             }
 
             try
             {
-                _logger.LogDebug("EmailSender: sending email to {To} via {Host}:{Port} from {From}", email, smtpHost, smtpPort, fromEmail);
+                var message = new MimeMessage();
 
-                using var client = new SmtpClient(smtpHost, smtpPort)
+                message.From.Add(
+                    new MailboxAddress("MyShop", smtpUser));
+
+                message.To.Add(
+                    MailboxAddress.Parse(email));
+
+                message.Subject = subject;
+
+                message.Body = new BodyBuilder
                 {
-                    Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true
-                };
+                    HtmlBody = htmlMessage
+                }.ToMessageBody();
 
-                using var mailMessage = new MailMessage(fromEmail, email, subject, htmlMessage)
-                {
-                    IsBodyHtml = true
-                };
+                using var smtpClient = new SmtpClient();
 
-                await client.SendMailAsync(mailMessage);
+                await smtpClient.ConnectAsync(
+                    smtpHost,
+                    smtpPort,
+                    SecureSocketOptions.StartTls);
 
-                _logger.LogInformation("EmailSender: email sent to {To}", email);
+                await smtpClient.AuthenticateAsync(
+                    smtpUser,
+                    smtpPassword);
+
+                await smtpClient.SendAsync(message);
+
+                await smtpClient.DisconnectAsync(true);
+
+                _logger.LogInformation(
+                    "Email sent successfully to {To}",
+                    email);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "EmailSender: failed to send email to {To} via {Host}:{Port}", email, smtpHost, smtpPort);
+                _logger.LogError(
+                    ex,
+                    "Failed to send email to {To}",
+                    email);
+
                 throw;
             }
         }
     }
 }
-

@@ -18,6 +18,7 @@ namespace MyShop.DAL.Presistence.Specifications
 
         public List<Expression<Func<T, object>>> Includes { get; }
             = new List<Expression<Func<T, object>>>();
+        public List<Func<IQueryable<T>, IQueryable<T>>> IncludeChains { get; } = new();
 
         public Expression<Func<T, object>>? OrderBy { get; private set; }
 
@@ -28,6 +29,10 @@ namespace MyShop.DAL.Presistence.Specifications
         public int Take { get; private set; }
 
         public bool IsPagingEnabled { get; private set; }
+        protected void AddIncludeChain(Func<IQueryable<T>, IQueryable<T>> includeChain)
+        {
+            IncludeChains.Add(includeChain);
+        }
 
         protected void AddInclude(Expression<Func<T, object>> includeExpression)
         {

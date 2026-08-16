@@ -1,6 +1,7 @@
 @{
     var pageTitle = ViewData["Title"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var contentTitle = ViewBag.PageTitle as string ?? pageTitle ?? "Admin Console";
     var cardTitle = ViewBag.CardTitle as string ?? pageTitle ?? "Overview";
     var roleName = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Customer") ? "Customer":"Customer";
@@ -360,9 +361,18 @@
                         <li class="nav-item">
                             <a asp-controller="Product"
                                asp-action="Index"
-                               class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                               class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && !string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-box-open"></i>
                                 <p>Products</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a asp-controller="Product"
+                               asp-action="DeletedProducts"
+                               class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-trash-restore"></i>
+                                <p>Deleted Products</p>
                             </a>
                         </li>
 

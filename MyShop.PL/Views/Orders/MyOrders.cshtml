@@ -1,0 +1,129 @@
+@model IEnumerable<MyShop.BLL.Models.Dto.OrderDto.OrderDto>
+
+@{
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = "My Orders";
+
+    var orders = (Model ?? Enumerable.Empty<MyShop.BLL.Models.Dto.OrderDto.OrderDto>())
+        .OrderByDescending(order => order.OrderDate)
+        .ToList();
+}
+
+<section class="orders-page">
+    <div class="store-container">
+        <div class="orders-hero store-fade-in">
+            <div>
+                <span class="section-eyebrow"><i class="fas fa-receipt"></i> Customer Orders</span>
+                <h1>My Orders</h1>
+                <p>Track your saved orders, delivery details, item quantities, and totals from one clean customer page.</p>
+            </div>
+
+            <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
+                <i class="fas fa-store"></i>
+                <span>Continue Shopping</span>
+            </a>
+        </div>
+
+        @if (orders.Any())
+        {
+            <div class="orders-grid">
+                @foreach (var order in orders)
+                {
+                    var itemCount = order.Items?.Sum(item => item.Quantity) ?? 0;
+
+                    <article class="order-card store-fade-in">
+                        <div class="order-card-header">
+                            <div>
+                                <span class="order-id">Order #@order.Id</span>
+                                <h2>@order.TotalPrice.ToString("C")</h2>
+                            </div>
+
+                            <span class="order-status">
+                                <i class="fas fa-check-circle"></i>
+                                Created
+                            </span>
+                        </div>
+
+                        <div class="order-meta-grid">
+                            <div>
+                                <span>Date</span>
+                                <strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</strong>
+                            </div>
+                            <div>
+                                <span>Items</span>
+                                <strong>@itemCount</strong>
+                            </div>
+                            <div>
+                                <span>Phone</span>
+                                <strong>@order.Phone</strong>
+                            </div>
+                        </div>
+
+                        <div class="order-address">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>@order.Address</span>
+                        </div>
+
+                        @if (order.Items?.Any() == true)
+                        {
+                            <div class="order-items">
+                                @foreach (var item in order.Items)
+                                {
+                                    var imageUrl = string.IsNullOrWhiteSpace(item.ProductImageUrl)
+                                        ? null
+                                        : Url.Content($"~/{item.ProductImageUrl.TrimStart('/')}");
+
+                                    <div class="order-item-row">
+                                        <div class="order-item-media">
+                                            @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                            {
+                                                <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                            }
+                                            else
+                                            {
+                                                <span class="placeholder-illustration compact" aria-hidden="true">
+                                                    <span class="placeholder-screen"></span>
+                                                    <span class="placeholder-base"></span>
+                                                    <span class="placeholder-spark one"></span>
+                                                    <span class="placeholder-spark two"></span>
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <div class="order-item-info">
+                                            <strong>@item.ProductName</strong>
+                                            <span>Qty @item.Quantity x @item.Price.ToString("C")</span>
+                                        </div>
+
+                                        <b>@item.TotalPrice.ToString("C")</b>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="order-items-empty">
+                                <i class="fas fa-box-open"></i>
+                                <span>No products are attached to this order yet.</span>
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="cart-empty">
+                <span class="cart-empty-visual">
+                    <i class="fas fa-receipt"></i>
+                </span>
+                <h2>No orders yet</h2>
+                <p>When you place an order from checkout, it will appear here with its products and delivery details.</p>
+                <a asp-controller="Store" asp-action="Index" class="store-button-primary mt-3">
+                    <i class="fas fa-store"></i>
+                    <span>Start Shopping</span>
+                </a>
+            </div>
+        }
+    </div>
+</section>
