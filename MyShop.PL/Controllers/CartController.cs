@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using MyShop.BLL.Models.Common;
 using MyShop.BLL.Models.Dto.OrderDto;
 using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.OrderServices;
+using MyShop.BLL.Services.PaymentServices;
 using MyShop.PL.ViewModels;
 
 namespace MyShop.PL.Controllers
@@ -11,11 +14,21 @@ namespace MyShop.PL.Controllers
     {
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
-        public CartController(ICartService cartService,IOrderService orderService)
+        private readonly IPaymentService _paymentService;
+        private readonly StripeSettings _stripeSettings;
+
+        public CartController(
+            ICartService cartService,
+            IOrderService orderService,
+            IPaymentService paymentService,
+            IOptions<StripeSettings> stripeOptions)
         {
             _cartService = cartService;
             _orderService = orderService;
+            _paymentService = paymentService;
+            _stripeSettings = stripeOptions.Value;
         }
+
         public IActionResult Index()
         {
             var model = new CartViewModel
@@ -30,7 +43,7 @@ namespace MyShop.PL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddToCart(int productId,int quantity=1)
+        public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
             await _cartService.AddToCart(productId, quantity);
             return RedirectToAction(nameof(Index));
@@ -44,7 +57,6 @@ namespace MyShop.PL.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         [HttpPost]
         public IActionResult Increase(int productId)
         {
@@ -52,7 +64,6 @@ namespace MyShop.PL.Controllers
 
             return RedirectToAction(nameof(Index));
         }
-
 
         [HttpPost]
         public IActionResult Decrease(int productId)
@@ -62,7 +73,6 @@ namespace MyShop.PL.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
         [HttpPost]
         public IActionResult Clear()
         {
@@ -71,7 +81,6 @@ namespace MyShop.PL.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        //Checkout
         [Authorize]
         [HttpGet]
         public IActionResult Checkout()
@@ -97,12 +106,49 @@ namespace MyShop.PL.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
+            var cartItems = _cartService.GetCart();
+
+            if (cartItems == null || !cartItems.Any())
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
             if (!ModelState.IsValid)
             {
-                model.Items = _cartService.GetCart();
+                model.Items = cartItems;
                 model.TotalPrice = _cartService.GetTotalPrice();
 
                 return View(model);
+            }
+
+            var totalPrice = _cartService.GetTotalPrice();
+            var stripeIsConfigured =
+                !string.IsNullOrWhiteSpace(_stripeSettings.PublishableKey)
+                && !string.IsNullOrWhiteSpace(_stripeSettings.SecretKey);
+
+            if (stripeIsConfigured)
+            {
+                if (string.IsNullOrWhiteSpace(model.PaymentIntentId))
+                {
+                    ModelState.AddModelError(string.Empty, "Please complete the Stripe payment before placing your order.");
+                    model.Items = cartItems;
+                    model.TotalPrice = totalPrice;
+
+                    return View(model);
+                }
+
+                var paymentSucceeded = await _paymentService.IsPaymentIntentSucceededAsync(
+                    model.PaymentIntentId,
+                    totalPrice);
+
+                if (!paymentSucceeded)
+                {
+                    ModelState.AddModelError(string.Empty, "Payment was not confirmed by Stripe. Please try again.");
+                    model.Items = cartItems;
+                    model.TotalPrice = totalPrice;
+
+                    return View(model);
+                }
             }
 
             var dto = new CreateOrderDto
@@ -113,13 +159,12 @@ namespace MyShop.PL.Controllers
 
             await _orderService.CreateOrderAsync(dto);
 
-            // Clear cart after successful order creation
             _cartService.ClearCart();
-            TempData["SuccessMessage"] = "Order placed successfully.";
+            TempData["SuccessMessage"] = stripeIsConfigured
+                ? "Payment successful. Order placed and confirmation email sent."
+                : "Order placed successfully.";
 
             return RedirectToAction("MyOrders", "Orders");
         }
-
-
     }
 }

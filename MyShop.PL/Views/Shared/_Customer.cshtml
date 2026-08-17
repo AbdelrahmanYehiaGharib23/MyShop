@@ -11,6 +11,7 @@
     var searchTerm = ViewData["SearchTerm"]?.ToString() ?? string.Empty;
     var sort = ViewData["Sort"]?.ToString() ?? string.Empty;
     var pageSize = ViewData["PageSize"]?.ToString() ?? string.Empty;
+    var loadStripeJs = string.Equals(ViewData["LoadStripeJs"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
     var cartCount = 0;
 
     try
@@ -266,6 +267,10 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @if (loadStripeJs)
+    {
+        <script src="https://js.stripe.com/v3/" data-stripe-js></script>
+    }
     <script src="~/js/customer-store.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

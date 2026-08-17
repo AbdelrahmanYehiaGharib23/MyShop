@@ -1,4 +1,7 @@
 @model MyShop.PL.ViewModels.CheckoutViewModel
+@using Microsoft.Extensions.Options
+@using MyShop.BLL.Models.Common
+@inject IOptions<StripeSettings> StripeOptions
 
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
@@ -9,6 +12,12 @@
     var subtotal = Model?.TotalPrice ?? items.Sum(item => item.TotalPrice);
     var shipping = 0m;
     var total = subtotal + shipping;
+    var publishableKey = StripeOptions.Value?.PublishableKey ?? string.Empty;
+    var stripeSecretConfigured = !string.IsNullOrWhiteSpace(StripeOptions.Value?.SecretKey);
+    var stripeConfigured = !string.IsNullOrWhiteSpace(publishableKey) && stripeSecretConfigured;
+    var paymentIntentUrl = Url.Action("CreatePaymentIntent", "Payment") ?? "/Payment/CreatePaymentIntent";
+    var stripeEnabledValue = stripeConfigured.ToString().ToLowerInvariant();
+    ViewData["LoadStripeJs"] = stripeEnabledValue;
 }
 
 <section class="checkout-page">
@@ -38,16 +47,24 @@
                 </div>
                 <span class="checkout-step-line"></span>
                 <div class="checkout-step active">
-                    <span><i class="fas fa-check"></i></span>
-                    <strong>Create Order</strong>
+                    <span><i class="fas fa-credit-card"></i></span>
+                    <strong>Payment</strong>
                 </div>
             </div>
         </div>
 
         @if (items.Any())
         {
-            <form asp-controller="Cart" asp-action="Checkout" method="post" class="checkout-layout">
+            <form asp-controller="Cart"
+                  asp-action="Checkout"
+                  method="post"
+                  class="checkout-layout"
+                  data-stripe-checkout
+                  data-stripe-enabled="@stripeEnabledValue"
+                  data-stripe-publishable-key="@publishableKey"
+                  data-payment-intent-url="@paymentIntentUrl">
                 @Html.AntiForgeryToken()
+                <input asp-for="PaymentIntentId" type="hidden" data-payment-intent-id />
 
                 <div class="checkout-main">
                     <section class="checkout-panel store-fade-in" style="animation-delay: 80ms">
@@ -66,7 +83,7 @@
                                 <label asp-for="Phone">Phone Number</label>
                                 <div class="checkout-input-wrap">
                                     <i class="fas fa-phone-alt"></i>
-                                    <input asp-for="Phone" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" />
+                                    <input asp-for="Phone" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" required />
                                 </div>
                                 <span asp-validation-for="Phone" class="checkout-field-error"></span>
                             </div>
@@ -75,28 +92,28 @@
                                 <label asp-for="Address">Delivery Address</label>
                                 <div class="checkout-input-wrap">
                                     <i class="fas fa-map-marker-alt"></i>
-                                    <input asp-for="Address" type="text" autocomplete="street-address" placeholder="Street, building, apartment, city" />
+                                    <input asp-for="Address" type="text" autocomplete="street-address" placeholder="Street, building, apartment, city" required />
                                 </div>
                                 <span asp-validation-for="Address" class="checkout-field-error"></span>
                             </div>
                         </div>
                     </section>
 
-                    <section class="checkout-panel checkout-methods store-fade-in" style="animation-delay: 150ms">
+                    <section class="checkout-panel checkout-methods checkout-payment-panel store-fade-in" style="animation-delay: 150ms">
                         <div class="checkout-panel-heading">
-                            <span class="checkout-panel-icon"><i class="fas fa-box-open"></i></span>
+                            <span class="checkout-panel-icon"><i class="fab fa-stripe-s"></i></span>
                             <div>
-                                <h2>Order Handling</h2>
-                                <p>The order will be saved to your account and your cart will be cleared after confirmation.</p>
+                                <h2>Payment Method</h2>
+                                <p>Pay securely with Stripe, then your order will be saved to your customer account.</p>
                             </div>
                         </div>
 
                         <div class="checkout-method-grid">
                             <label class="checkout-method">
-                                <input type="radio" name="CheckoutMode" value="standard" checked />
-                                <span><i class="fas fa-clipboard-check"></i></span>
-                                <strong>Standard Order</strong>
-                                <small>Create order from current cart</small>
+                                <input type="radio" name="PaymentMethod" value="stripe" checked />
+                                <span><i class="fas fa-credit-card"></i></span>
+                                <strong>Stripe Card</strong>
+                                <small>Encrypted card payment</small>
                             </label>
 
                             <a asp-controller="Orders" asp-action="MyOrders" class="checkout-method checkout-method-link">
@@ -104,6 +121,71 @@
                                 <strong>My Orders</strong>
                                 <small>View previous orders</small>
                             </a>
+                        </div>
+
+                        <div class="stripe-payment-card" data-stripe-payment-card>
+                            <div class="stripe-payment-card-heading">
+                                <div>
+                                    <span class="section-eyebrow"><i class="fas fa-shield-alt"></i> Card Details</span>
+                                    <h3>Secure card payment</h3>
+                                </div>
+                                <span class="stripe-mode-badge">Stripe</span>
+                            </div>
+
+                            @if (stripeConfigured)
+                            {
+                                <div class="stripe-elements-grid" data-stripe-elements>
+                                    <div class="stripe-element-field stripe-element-field-wide">
+                                        <label for="stripe-card-number">
+                                            <i class="fas fa-credit-card"></i>
+                                            Card number
+                                        </label>
+                                        <div id="stripe-card-number"
+                                             class="stripe-card-shell"
+                                             data-stripe-card-number
+                                             aria-label="Card number"></div>
+                                    </div>
+
+                                    <div class="stripe-element-field">
+                                        <label for="stripe-card-expiry">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            Expiry
+                                        </label>
+                                        <div id="stripe-card-expiry"
+                                             class="stripe-card-shell"
+                                             data-stripe-card-expiry
+                                             aria-label="Card expiry date"></div>
+                                    </div>
+
+                                    <div class="stripe-element-field">
+                                        <label for="stripe-card-cvc">
+                                            <i class="fas fa-lock"></i>
+                                            CVC
+                                        </label>
+                                        <div id="stripe-card-cvc"
+                                             class="stripe-card-shell"
+                                             data-stripe-card-cvc
+                                             aria-label="Card CVC"></div>
+                                    </div>
+                                </div>
+                                <div class="payment-card-errors" data-stripe-errors role="alert" aria-live="polite"></div>
+                            }
+                            else
+                            {
+                                <div class="payment-config-warning">
+                                    <i class="fas fa-key"></i>
+                                    <div>
+                                        <strong>Stripe keys are not configured yet.</strong>
+                                        <span>Add your publishable and secret keys in User Secrets to enable card payment.</span>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="payment-security-grid" aria-label="Payment security">
+                                <span><i class="fas fa-lock"></i> PCI-ready flow</span>
+                                <span><i class="fas fa-bolt"></i> Instant confirmation</span>
+                                <span><i class="fas fa-receipt"></i> Order saved after payment</span>
+                            </div>
                         </div>
                     </section>
                 </div>
@@ -168,9 +250,9 @@
                     </div>
 
                     <div class="cart-summary-actions">
-                        <button type="submit" class="store-button-primary cart-checkout-button">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Place Order</span>
+                        <button type="submit" class="store-button-primary cart-checkout-button" data-stripe-submit>
+                            <i class="fas fa-lock"></i>
+                            <span>@(stripeConfigured ? "Pay Securely" : "Place Order")</span>
                         </button>
                         <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
                             <i class="fas fa-store"></i>
@@ -180,7 +262,7 @@
 
                     <div class="checkout-secure-note">
                         <i class="fas fa-shield-alt"></i>
-                        <span>Your order will be linked to your customer account.</span>
+                        <span>@(stripeConfigured ? "Your card is handled by Stripe and your order is created after payment succeeds." : "Your order will be linked to your customer account.")</span>
                     </div>
                 </aside>
             </form>

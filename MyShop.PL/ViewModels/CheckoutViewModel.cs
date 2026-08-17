@@ -15,5 +15,7 @@ namespace MyShop.PL.ViewModels
 
         [Required]
         public string Phone { get; set; } = string.Empty;
+
+        public string? PaymentIntentId { get; set; }
     }
 }

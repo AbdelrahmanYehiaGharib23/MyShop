@@ -91,6 +91,11 @@
         root.setAttribute('data-store-theme', theme);
         localStorage.setItem('myshop-theme', theme);
         updateThemeIcon(theme);
+        window.dispatchEvent(new CustomEvent('store-theme-change', {
+            detail: {
+                theme: theme
+            }
+        }));
     }
 
     function applyProductFilters() {
@@ -419,6 +424,289 @@
                 button.classList.remove('is-added');
                 button.innerHTML = originalHtml;
             }, 1600);
+        });
+    }
+
+    function loadStripeLibrary() {
+        if (window.Stripe) {
+            return Promise.resolve(window.Stripe);
+        }
+
+        return new Promise(function (resolve, reject) {
+            var existingScript = document.querySelector('script[data-stripe-js]');
+
+            if (existingScript) {
+                existingScript.addEventListener('load', function () {
+                    resolve(window.Stripe);
+                }, { once: true });
+                existingScript.addEventListener('error', reject, { once: true });
+                return;
+            }
+
+            var script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/';
+            script.async = true;
+            script.setAttribute('data-stripe-js', 'true');
+            script.addEventListener('load', function () {
+                if (window.Stripe) {
+                    resolve(window.Stripe);
+                } else {
+                    reject(new Error('Stripe could not be loaded.'));
+                }
+            }, { once: true });
+            script.addEventListener('error', function () {
+                reject(new Error('Stripe could not be loaded.'));
+            }, { once: true });
+            document.head.appendChild(script);
+        });
+    }
+
+    function initStripeCheckout() {
+        var form = document.querySelector('[data-stripe-checkout]');
+
+        if (!form || form.getAttribute('data-stripe-enabled') !== 'true') {
+            return;
+        }
+
+        var publishableKey = form.getAttribute('data-stripe-publishable-key');
+        var intentUrl = form.getAttribute('data-payment-intent-url');
+        var cardNumberMount = form.querySelector('[data-stripe-card-number]');
+        var cardExpiryMount = form.querySelector('[data-stripe-card-expiry]');
+        var cardCvcMount = form.querySelector('[data-stripe-card-cvc]');
+        var errorBox = form.querySelector('[data-stripe-errors]');
+        var button = form.querySelector('[data-stripe-submit]');
+        var paymentIntentInput = form.querySelector('[data-payment-intent-id]');
+        var originalButtonHtml = button ? button.innerHTML : '';
+        var stripe = null;
+        var cardNumber = null;
+        var cardExpiry = null;
+        var cardCvc = null;
+
+        function setPaymentError(message) {
+            if (errorBox) {
+                errorBox.textContent = message || '';
+            }
+        }
+
+        function fieldValue(name) {
+            var input = form.querySelector('[name="' + name + '"]');
+            return input ? input.value.trim() : '';
+        }
+
+        function requestPaymentIntent() {
+            var token = form.querySelector('input[name="__RequestVerificationToken"]');
+            var headers = {
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+
+            if (token) {
+                headers.RequestVerificationToken = token.value;
+            }
+
+            return fetch(intentUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: headers
+            }).then(function (response) {
+                return response.text().then(function (text) {
+                    var payload = null;
+
+                    if (text) {
+                        try {
+                            payload = JSON.parse(text);
+                        } catch (parseError) {
+                            payload = null;
+                        }
+                    }
+
+                    if (!response.ok) {
+                        throw new Error((payload && payload.message) || 'Could not start the payment.');
+                    }
+
+                    return payload || {};
+                });
+            });
+        }
+
+        function setPaymentLoading() {
+            if (!button) {
+                return;
+            }
+
+            button.disabled = true;
+            button.classList.remove('is-paid');
+            button.classList.add('is-loading');
+            button.innerHTML = '<span class="store-button-loader" aria-hidden="true"></span><span>Processing...</span>';
+        }
+
+        function resetPaymentButton() {
+            if (!button) {
+                return;
+            }
+
+            button.disabled = false;
+            button.classList.remove('is-loading', 'is-paid');
+            button.innerHTML = originalButtonHtml;
+        }
+
+        function submitConfirmedOrder() {
+            form.dataset.stripePaymentConfirmed = 'true';
+            HTMLFormElement.prototype.submit.call(form);
+        }
+
+        function stripeElementStyle() {
+            var styles = window.getComputedStyle(root);
+            var stripeText = styles.getPropertyValue('--store-ink').trim() || '#142033';
+            var stripeMuted = styles.getPropertyValue('--store-muted').trim() || '#75849a';
+            var stripePrimary = styles.getPropertyValue('--store-primary').trim() || '#0ea5e9';
+            var stripeDanger = styles.getPropertyValue('--store-danger').trim() || '#ef5b5b';
+
+            return {
+                base: {
+                    color: stripeText,
+                    fontFamily: 'Poppins, system-ui, sans-serif',
+                    fontSize: '16px',
+                    fontSmoothing: 'antialiased',
+                    iconColor: stripePrimary,
+                    '::placeholder': {
+                        color: stripeMuted
+                    }
+                },
+                invalid: {
+                    color: stripeDanger,
+                    iconColor: stripeDanger
+                }
+            };
+        }
+
+        if (!publishableKey || !intentUrl || !cardNumberMount || !cardExpiryMount || !cardCvcMount || !button || !window.fetch) {
+            return;
+        }
+
+        form.addEventListener('submit', function (event) {
+            if (form.dataset.stripePaymentConfirmed === 'true') {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (form.dataset.stripeProcessing === 'true') {
+                return;
+            }
+
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                showToast('info', 'Delivery details needed', 'Add your phone and address before payment.');
+                return;
+            }
+
+            if (!stripe || !cardNumber || !cardExpiry || !cardCvc) {
+                setPaymentError('Payment form is still loading. Please try again in a moment.');
+                showToast('info', 'Payment loading', 'Stripe is preparing the secure payment form.');
+                return;
+            }
+
+            form.dataset.stripeProcessing = 'true';
+            setPaymentError('');
+            setPaymentLoading();
+
+            requestPaymentIntent()
+                .then(function (payload) {
+                    if (!payload.clientSecret) {
+                        throw new Error('Payment client secret was not returned.');
+                    }
+
+                    if (!payload.paymentIntentId) {
+                        throw new Error('Payment intent id was not returned.');
+                    }
+
+                    return stripe.confirmCardPayment(payload.clientSecret, {
+                        payment_method: {
+                            card: cardNumber,
+                            billing_details: {
+                                phone: fieldValue('Phone'),
+                                address: {
+                                    line1: fieldValue('Address')
+                                }
+                            }
+                        }
+                    }).then(function (result) {
+                        return {
+                            result: result,
+                            paymentIntentId: payload.paymentIntentId
+                        };
+                    });
+                })
+                .then(function (payload) {
+                    if (payload.result.error) {
+                        throw new Error(payload.result.error.message || 'Payment was not completed.');
+                    }
+
+                    if (paymentIntentInput) {
+                        paymentIntentInput.value = payload.paymentIntentId;
+                    }
+
+                    button.classList.remove('is-loading');
+                    button.classList.add('is-paid');
+                    button.innerHTML = '<i class="fas fa-check"></i><span>Payment Complete</span>';
+                    showToast('success', 'Payment complete', 'Your payment was accepted. Creating your order now.');
+
+                    window.setTimeout(submitConfirmedOrder, prefersReducedMotion ? 50 : 700);
+                })
+                .catch(function (error) {
+                    form.dataset.stripeProcessing = 'false';
+                    resetPaymentButton();
+                    setPaymentError(error.message || 'Payment failed. Please try again.');
+                    showToast('danger', 'Payment failed', error.message || 'Please check your card details and try again.');
+                });
+        });
+
+        loadStripeLibrary()
+            .then(function (StripeConstructor) {
+                var elements = null;
+
+                stripe = StripeConstructor(publishableKey);
+                elements = stripe.elements();
+
+                cardNumber = elements.create('cardNumber', {
+                    showIcon: true,
+                    placeholder: '4242 4242 4242 4242',
+                    style: stripeElementStyle()
+                });
+                cardExpiry = elements.create('cardExpiry', {
+                    style: stripeElementStyle()
+                });
+                cardCvc = elements.create('cardCvc', {
+                    style: stripeElementStyle()
+                });
+
+                cardNumber.mount(cardNumberMount);
+                cardExpiry.mount(cardExpiryMount);
+                cardCvc.mount(cardCvcMount);
+
+                [cardNumber, cardExpiry, cardCvc].forEach(function (element) {
+                    element.on('change', function (event) {
+                        setPaymentError(event.error ? event.error.message : '');
+                    });
+                });
+
+                cardNumber.on('ready', function () {
+                    setPaymentError('');
+                });
+            })
+            .catch(function (error) {
+                setPaymentError(error.message || 'Stripe could not be loaded.');
+                showToast('danger', 'Payment unavailable', 'Could not load the secure payment form.');
+            });
+
+        window.addEventListener('store-theme-change', function () {
+            [cardNumber, cardExpiry, cardCvc].forEach(function (element) {
+                if (element) {
+                    element.update({
+                        style: stripeElementStyle()
+                    });
+                }
+            });
         });
     }
 
@@ -937,6 +1225,7 @@
     initCountAnimations();
     enhanceCartForms();
     initCheckoutPreview();
+    initStripeCheckout();
     initReviewWidgets();
 
     productCards.forEach(function (card, index) {

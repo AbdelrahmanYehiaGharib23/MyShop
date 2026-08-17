@@ -2,12 +2,14 @@ using System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MyShop.BLL.Mapping;
+using MyShop.BLL.Models.Common;
 using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.CurrentUserServices;
 using MyShop.BLL.Services.IdentityServices;
 using MyShop.BLL.Services.OrderServices;
+using MyShop.BLL.Services.PaymentServices;
 using MyShop.BLL.Services.ProductServices;
 using MyShop.BLL.Services.ReviewServices;
 using MyShop.DAL;
@@ -53,6 +55,10 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
+builder.Services.Configure<StripeSettings>(
+    builder.Configuration.GetSection("Stripe"));
+
+builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddMemoryCache();
