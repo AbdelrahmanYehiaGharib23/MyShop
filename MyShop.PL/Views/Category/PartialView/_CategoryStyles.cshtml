@@ -174,14 +174,14 @@
 
     .catalog-primary-action {
         padding: 0 16px;
-        background: var(--admin-primary);
-        color: var(--admin-text-strong);
-        box-shadow: 0 10px 24px rgba(29, 140, 248, .25);
+        background: var(--admin-action);
+        color: #fff;
+        box-shadow: 0 5px 14px rgba(37, 99, 235, .18);
     }
 
     .catalog-primary-action:hover {
-        color: var(--admin-text-strong);
-        background: var(--admin-primary-hover);
+        color: #fff;
+        background: var(--admin-action-hover);
         transform: translateY(-1px);
     }
 
@@ -199,13 +199,15 @@
 
     .catalog-danger-action {
         padding: 0 16px;
-        background: #e11d48;
-        color: var(--admin-text-strong);
-        border: 0;
+        background: var(--admin-badge-danger-bg);
+        color: var(--admin-danger);
+        border-color: var(--admin-badge-danger-bg);
     }
 
     .catalog-danger-action:hover {
-        background: #be123c;
+        color: #fff;
+        background: var(--admin-danger);
+        border-color: var(--admin-danger);
     }
 
     .catalog-metrics {
@@ -335,7 +337,7 @@
 
     .catalog-icon-action.danger {
         color: var(--admin-danger);
-        background: rgba(244, 63, 94, .12);
+        background: var(--admin-badge-danger-bg);
     }
 
     .catalog-form-panel {

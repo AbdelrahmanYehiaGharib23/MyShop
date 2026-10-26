@@ -2,8 +2,6 @@
     var pageTitle = ViewData["Title"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
-    var contentTitle = ViewBag.PageTitle as string ?? pageTitle ?? "Admin Console";
-    var cardTitle = ViewBag.CardTitle as string ?? pageTitle ?? "Overview";
     var roleName = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Customer") ? "Customer":"Customer";
 }
 
@@ -38,29 +36,6 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 
     <style>
-        :root {
-            --admin-ink: #17202a;
-            --admin-sidebar: #1f2a35;
-            --admin-sidebar-deep: #121a22;
-            --admin-sidebar-soft: #2d4050;
-            --admin-accent: #0f9f8f;
-            --admin-accent-warm: #f59e0b;
-            --admin-bg: #f5f7fb;
-            --admin-surface: #ffffff;
-            --admin-border: #dfe5ed;
-            --admin-muted: #6b7785;
-            --sidebar-panel-bg: rgba(18, 26, 34, .82);
-            --sidebar-panel-border: rgba(255, 255, 255, .12);
-            --sidebar-text-dim: rgba(255, 255, 255, .64);
-        }
-
-        body,
-        .nav-link,
-        .brand-text,
-        .content-wrapper {
-            font-family: 'Poppins', sans-serif;
-        }
-
         .main-sidebar {
             display: flex;
             flex-direction: column;
@@ -138,57 +113,6 @@
 
         .nav-sidebar .nav-icon {
             width: 1.35rem;
-        }
-
-        .content-wrapper {
-            background: var(--admin-bg);
-        }
-
-        .content-header {
-            padding: 20px 1rem 10px;
-        }
-
-        .content-header h1 {
-            color: var(--admin-ink);
-            font-size: 1.55rem;
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .admin-card {
-            border: 1px solid var(--admin-border);
-            border-radius: 8px;
-            box-shadow: 0 14px 35px rgba(23, 32, 42, .08);
-            overflow: hidden;
-        }
-
-        .admin-card > .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 56px;
-            background: var(--admin-surface);
-            border-bottom: 1px solid var(--admin-border);
-            color: var(--admin-ink);
-        }
-
-        .admin-card .card-title {
-            color: var(--admin-ink);
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        .admin-card .btn-tool {
-            color: var(--admin-muted);
-        }
-
-        .admin-card .btn-tool:hover {
-            color: var(--admin-accent);
-        }
-
-        .admin-card > .card-body {
-            background: var(--admin-surface);
-            padding: 1.25rem;
         }
 
         .footer-dark {
@@ -483,32 +407,10 @@
         </aside>
 
         <div class="content-wrapper">
-            <section class="content-header">
-                <div class="container-fluid">
-                    <h1>@contentTitle</h1>
-                </div>
-            </section>
-
             <section class="content">
                 <div class="container-fluid">
-                    <div class="card admin-card">
-                        <div class="card-header">
-                            <h3 class="card-title">@cardTitle</h3>
-                            <div class="card-tools">
-                                <button type="button"
-                                        class="btn btn-tool"
-                                        data-card-widget="collapse"
-                                        aria-label="Collapse card">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="card-body">
-                            <partial name="_Toaster" />
-                            @RenderBody()
-                        </div>
-                    </div>
+                    <partial name="_Toaster" />
+                    @RenderBody()
                 </div>
             </section>
         </div>
