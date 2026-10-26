@@ -10,6 +10,7 @@
         var dark = theme === 'dark';
         root.setAttribute('data-theme', dark ? 'dark' : 'light');
         root.setAttribute('data-store-theme', dark ? 'dark' : 'light');
+        if (document.body) document.body.setAttribute('data-theme', dark ? 'dark' : 'light');
         localStorage.setItem('myshop-theme', dark ? 'dark' : 'light');
         document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
             button.setAttribute('aria-pressed', dark ? 'true' : 'false');
@@ -34,6 +35,41 @@
             }));
         });
     });
+
+    var sidebarToggle = document.querySelector('[data-admin-sidebar-toggle]');
+    if (sidebarToggle) {
+        function setSidebarOpen(open) {
+            document.body.classList.toggle('admin-sidebar-open', open);
+            sidebarToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            sidebarToggle.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
+        }
+
+        sidebarToggle.addEventListener('click', function () {
+            if (window.matchMedia('(max-width: 767.98px)').matches) {
+                setSidebarOpen(!document.body.classList.contains('admin-sidebar-open'));
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') setSidebarOpen(false);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (document.body.classList.contains('admin-sidebar-open')
+                && !event.target.closest('#admin-sidebar')
+                && !event.target.closest('[data-admin-sidebar-toggle]')) {
+                setSidebarOpen(false);
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            if (!window.matchMedia('(max-width: 767.98px)').matches) setSidebarOpen(false);
+        });
+
+        document.querySelectorAll('#admin-sidebar .admin-nav-link').forEach(function (link) {
+            link.addEventListener('click', function () { setSidebarOpen(false); });
+        });
+    }
 
     function syncThemeEvent(event) {
         if (event.detail && event.detail.theme) paint(event.detail.theme);
