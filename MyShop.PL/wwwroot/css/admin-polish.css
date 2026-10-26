@@ -20,7 +20,10 @@
     --admin-input: #0b1527;
     --admin-primary: #38bdf8;
     --admin-primary-hover: #60a5fa;
+    --admin-action: #2563eb;
+    --admin-action-hover: #1d4ed8;
     --admin-accent-soft: #113653;
+    --admin-media-surface: #111a2e;
     --admin-success: #34d399;
     --admin-danger: #fb7185;
     --admin-danger-soft-text: #fecdd3;
@@ -65,7 +68,10 @@
     --admin-input: #ffffff;
     --admin-primary: #2563eb;
     --admin-primary-hover: #1d4ed8;
+    --admin-action: #2563eb;
+    --admin-action-hover: #1d4ed8;
     --admin-accent-soft: #e8f1ff;
+    --admin-media-surface: #f1f5f9;
     --admin-success: #15803d;
     --admin-danger: #b42318;
     --admin-danger-soft-text: #9f1239;
@@ -426,4 +432,40 @@ body.hold-transition :focus-visible {
         animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
     }
+}
+
+html[data-theme="dark"] body.hold-transition .main-header.navbar,
+html[data-theme="dark"] body.hold-transition .navbar-white.navbar-light {
+    background-color: var(--admin-page) !important;
+    background-image: none !important;
+    border-color: var(--admin-border) !important;
+    color: var(--admin-text) !important;
+}
+
+html[data-theme="dark"] body.hold-transition .main-header .nav-link,
+html[data-theme="dark"] body.hold-transition .admin-navbar-title,
+html[data-theme="dark"] body.hold-transition .admin-user-chip {
+    color: var(--admin-text-strong) !important;
+}
+
+html[data-theme="dark"] body.hold-transition .admin-navbar-subtitle {
+    color: var(--admin-muted) !important;
+}
+
+html[data-theme="light"] body.hold-transition .main-header.navbar,
+html[data-theme="light"] body.hold-transition .navbar-white.navbar-light {
+    background-color: var(--admin-page) !important;
+    background-image: none !important;
+    border-color: var(--admin-border) !important;
+    color: var(--admin-text) !important;
+}
+
+html[data-theme="light"] body.hold-transition .main-header .nav-link,
+html[data-theme="light"] body.hold-transition .admin-navbar-title,
+html[data-theme="light"] body.hold-transition .admin-user-chip {
+    color: var(--admin-text-strong) !important;
+}
+
+html[data-theme="light"] body.hold-transition .admin-navbar-subtitle {
+    color: var(--admin-muted) !important;
 }
