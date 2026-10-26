@@ -2,6 +2,8 @@
     var pageTitle = ViewData["Title"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var contentTitle = ViewBag.PageTitle as string ?? pageTitle ?? "Admin Console";
+    var cardTitle = ViewBag.CardTitle as string ?? pageTitle ?? "Overview";
     var roleName = User.IsInRole("Admin") ? "Admin" : User.IsInRole("Customer") ? "Customer":"Customer";
 }
 
@@ -22,9 +24,6 @@
                     ? savedTheme
                     : (prefersDark ? 'dark' : 'light');
                 document.documentElement.setAttribute('data-theme', theme);
-                document.documentElement.classList.toggle(
-                    'admin-sidebar-collapsed',
-                    localStorage.getItem('myshop-admin-sidebar') === 'collapsed');
             } catch { }
         })();
     </script>
@@ -39,15 +38,32 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true">
 
     <style>
-        html {
-            scrollbar-gutter: stable;
-            scroll-behavior: auto;
+        :root {
+            --admin-ink: #17202a;
+            --admin-sidebar: #1f2a35;
+            --admin-sidebar-deep: #121a22;
+            --admin-sidebar-soft: #2d4050;
+            --admin-accent: #0f9f8f;
+            --admin-accent-warm: #f59e0b;
+            --admin-bg: #f5f7fb;
+            --admin-surface: #ffffff;
+            --admin-border: #dfe5ed;
+            --admin-muted: #6b7785;
+            --sidebar-panel-bg: rgba(18, 26, 34, .82);
+            --sidebar-panel-border: rgba(255, 255, 255, .12);
+            --sidebar-text-dim: rgba(255, 255, 255, .64);
+        }
+
+        body,
+        .nav-link,
+        .brand-text,
+        .content-wrapper {
+            font-family: 'Poppins', sans-serif;
         }
 
         .main-sidebar {
             display: flex;
             flex-direction: column;
-            height: 100vh;
             min-height: 100vh;
             background: linear-gradient(180deg, var(--admin-sidebar-deep) 0%, var(--admin-sidebar) 46%, var(--admin-sidebar-soft) 100%);
         }
@@ -99,6 +115,91 @@
 
         .admin-user-chip i {
             color: var(--admin-accent);
+        }
+
+        .nav-sidebar > .nav-item > .nav-link {
+            border-radius: 8px;
+            margin-bottom: 6px;
+            color: rgba(255, 255, 255, .82);
+            transition: background-color .2s ease, color .2s ease, transform .2s ease;
+        }
+
+        .nav-sidebar > .nav-item > .nav-link:hover {
+            background: rgba(255, 255, 255, .1);
+            color: #fff;
+            transform: translateX(2px);
+        }
+
+        .nav-sidebar > .nav-item > .nav-link.active {
+            background: linear-gradient(90deg, var(--admin-accent), var(--admin-accent-warm));
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(15, 159, 143, .22);
+        }
+
+        .nav-sidebar .nav-icon {
+            width: 1.35rem;
+        }
+
+        .content-wrapper {
+            background: var(--admin-bg);
+        }
+
+        .content-header {
+            padding: 20px 1rem 10px;
+        }
+
+        .content-header h1 {
+            color: var(--admin-ink);
+            font-size: 1.55rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .admin-card {
+            border: 1px solid var(--admin-border);
+            border-radius: 8px;
+            box-shadow: 0 14px 35px rgba(23, 32, 42, .08);
+            overflow: hidden;
+        }
+
+        .admin-card > .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 56px;
+            background: var(--admin-surface);
+            border-bottom: 1px solid var(--admin-border);
+            color: var(--admin-ink);
+        }
+
+        .admin-card .card-title {
+            color: var(--admin-ink);
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .admin-card .btn-tool {
+            color: var(--admin-muted);
+        }
+
+        .admin-card .btn-tool:hover {
+            color: var(--admin-accent);
+        }
+
+        .admin-card > .card-body {
+            background: var(--admin-surface);
+            padding: 1.25rem;
+        }
+
+        .footer-dark {
+            background: #17202a;
+            border-top: 0;
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .footer-dark strong,
+        .footer-dark b {
+            color: #fff;
         }
 
         .user-panel img {
@@ -233,334 +334,17 @@
         }
     </style>
     <link rel="stylesheet" href="~/css/admin-polish.css" asp-append-version="true">
-    <style>
-        body.hold-transition .wrapper,
-        body.hold-transition .main-sidebar > .sidebar,
-        body.hold-transition .content,
-        body.hold-transition .admin-nav-link {
-            transition: none !important;
-        }
-
-        body.hold-transition .main-header,
-        body.hold-transition .main-sidebar,
-        body.hold-transition .content-wrapper,
-        body.hold-transition .main-footer {
-            transition: width .18s ease, margin-left .18s ease, transform .18s ease, background-color .18s ease !important;
-        }
-
-        body.hold-transition .main-sidebar {
-            width: 250px !important;
-        }
-
-        body.hold-transition .main-header,
-        body.hold-transition .content-wrapper,
-        body.hold-transition .main-footer {
-            margin-left: 250px !important;
-        }
-
-        body.hold-transition .main-sidebar > .sidebar {
-            background: var(--admin-sidebar, #101a2c) !important;
-            color: var(--admin-text, #fff) !important;
-        }
-
-        body.hold-transition .admin-sidebar-nav {
-            display: block !important;
-            width: 100%;
-            margin: 0 !important;
-            padding: 10px 8px 16px;
-        }
-
-        body.hold-transition .admin-nav-list {
-            display: flex !important;
-            flex-direction: column;
-            gap: 5px;
-            width: 100%;
-            margin: 0 !important;
-            padding: 0 !important;
-            list-style: none !important;
-        }
-
-        body.hold-transition .admin-nav-item {
-            display: block !important;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            list-style: none !important;
-        }
-
-        body.hold-transition .admin-nav-item::marker {
-            content: none;
-        }
-
-        body.hold-transition .admin-nav-link {
-            display: flex !important;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-            min-height: 44px;
-            margin: 0;
-            padding: 10px 12px;
-            border: 1px solid transparent;
-            border-radius: 9px;
-            background: transparent;
-            color: var(--admin-muted, #fff) !important;
-            text-decoration: none !important;
-            transform: none !important;
-            transition: none !important;
-            cursor: pointer;
-        }
-
-        body.hold-transition .admin-nav-icon {
-            flex: 0 0 20px;
-            width: 20px;
-            margin: 0;
-            color: var(--admin-primary, #fff) !important;
-            text-align: center;
-        }
-
-        body.hold-transition .admin-nav-label {
-            display: block;
-            color: inherit !important;
-        }
-
-        body.hold-transition .admin-sidebar-toggle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 40px;
-            min-height: 40px;
-            padding: 8px;
-            border: 1px solid var(--admin-border, #dce4ee);
-            border-radius: 8px;
-            background: var(--admin-surface, #fff) !important;
-            color: var(--admin-text-strong, #fff) !important;
-            box-shadow: none !important;
-            cursor: pointer;
-        }
-
-        body.hold-transition .admin-sidebar-toggle:hover {
-            background: var(--admin-surface-hover, #1b2b45) !important;
-        }
-
-        body.hold-transition .admin-nav-icon {
-            color: #2563eb !important;
-        }
-
-        @@media (min-width: 768px) {
-            html.admin-sidebar-collapsed body.hold-transition .main-sidebar {
-                width: 76px !important;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .main-header,
-            html.admin-sidebar-collapsed body.hold-transition .content-wrapper,
-            html.admin-sidebar-collapsed body.hold-transition .main-footer {
-                margin-left: 76px !important;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .brand-link {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-                padding-right: 0;
-                padding-left: 0;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .brand-link .brand-image {
-                float: none;
-                width: 34px;
-                max-height: 34px;
-                margin: 0;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .brand-text,
-            html.admin-sidebar-collapsed body.hold-transition .admin-nav-label,
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-name,
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-role,
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-logout-divider,
-            html.admin-sidebar-collapsed body.hold-transition .btn-logout span,
-            html.admin-sidebar-collapsed body.hold-transition .btn-login-sidebar span {
-                display: none !important;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .admin-sidebar-nav {
-                padding-right: 8px;
-                padding-left: 8px;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .admin-nav-link {
-                justify-content: center;
-                gap: 0;
-                padding-right: 0;
-                padding-left: 0;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-panel {
-                padding: 12px 8px !important;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-card {
-                padding: 8px 4px;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-card .d-flex {
-                justify-content: center;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .sidebar-account-avatar-wrap img {
-                width: 34px;
-                height: 34px;
-            }
-
-            html.admin-sidebar-collapsed body.hold-transition .btn-logout,
-            html.admin-sidebar-collapsed body.hold-transition .btn-login-sidebar {
-                width: 40px;
-                min-width: 40px;
-                height: 40px;
-                min-height: 40px;
-                margin-right: auto;
-                margin-left: auto;
-                padding: 0;
-            }
-        }
-        }
-
-        html[data-theme="dark"] body.hold-transition .main-header.navbar,
-        html[data-theme="dark"] body.hold-transition .main-sidebar,
-        html[data-theme="dark"] body.hold-transition .main-sidebar > .sidebar,
-        html[data-theme="dark"] body.hold-transition .brand-link,
-        html[data-theme="dark"] body.hold-transition .sidebar-account-panel,
-        html[data-theme="dark"] body.hold-transition .main-footer.admin-footer {
-            background: #0b1220 !important;
-            color: #fff !important;
-            border-color: #2b3b57 !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .content-wrapper,
-        html[data-theme="dark"] body.hold-transition .content {
-            background: #0f172a !important;
-            color: #fff !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .main-header .nav-link,
-        html[data-theme="dark"] body.hold-transition .admin-navbar-title,
-        html[data-theme="dark"] body.hold-transition .admin-navbar-subtitle,
-        html[data-theme="dark"] body.hold-transition .admin-user-chip,
-        html[data-theme="dark"] body.hold-transition .sidebar-account-name,
-        html[data-theme="dark"] body.hold-transition .sidebar-account-role,
-        html[data-theme="dark"] body.hold-transition .admin-nav-link,
-        html[data-theme="dark"] body.hold-transition .admin-nav-icon {
-            color: #fff !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .admin-nav-icon {
-            color: #93c5fd !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .admin-nav-link:hover {
-            background: #1b2b45 !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .admin-nav-link.active {
-            background: #1a2d4b !important;
-            border-left: 3px solid #60a5fa !important;
-        }
-
-        html[data-theme="dark"] body.hold-transition .content-wrapper .btn-outline-primary {
-            color: #fff !important;
-            border-color: #fff !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .main-header.navbar,
-        html[data-theme="light"] body.hold-transition .main-sidebar,
-        html[data-theme="light"] body.hold-transition .main-sidebar > .sidebar,
-        html[data-theme="light"] body.hold-transition .brand-link,
-        html[data-theme="light"] body.hold-transition .sidebar-account-panel,
-        html[data-theme="light"] body.hold-transition .main-footer.admin-footer {
-            background: #fff !important;
-            color: #0f172a !important;
-            border-color: #dce4ee !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .content-wrapper,
-        html[data-theme="light"] body.hold-transition .content {
-            background: #f4f7fb !important;
-            color: #0f172a !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .main-header .nav-link,
-        html[data-theme="light"] body.hold-transition .admin-navbar-title,
-        html[data-theme="light"] body.hold-transition .admin-navbar-subtitle,
-        html[data-theme="light"] body.hold-transition .admin-user-chip,
-        html[data-theme="light"] body.hold-transition .sidebar-account-name,
-        html[data-theme="light"] body.hold-transition .sidebar-account-role,
-        html[data-theme="light"] body.hold-transition .admin-nav-link,
-        html[data-theme="light"] body.hold-transition .admin-nav-label {
-            color: #0f172a !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .admin-nav-icon {
-            color: #2563eb !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .admin-nav-link:hover {
-            background: #edf3fa !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .admin-nav-link.active {
-            background: #e8f1ff !important;
-            border-left: 3px solid #2563eb !important;
-        }
-
-        html[data-theme="light"] body.hold-transition .content-wrapper .btn-outline-primary {
-            color: #0f172a !important;
-            border-color: #0f172a !important;
-        }
-
-        @@media (max-width: 767.98px) {
-            body.hold-transition .main-header,
-            body.hold-transition .content-wrapper,
-            body.hold-transition .main-footer {
-                margin-left: 0 !important;
-            }
-
-            body.hold-transition .main-sidebar {
-                z-index: 1040;
-                width: 250px !important;
-                transform: translateX(-100%);
-                transition: transform .2s ease !important;
-            }
-
-            body.hold-transition.admin-sidebar-open .main-sidebar {
-                transform: translateX(0);
-            }
-
-            body.hold-transition.admin-sidebar-open::before {
-                position: fixed;
-                z-index: 1039;
-                inset: 0;
-                background: rgba(2, 6, 23, .56);
-                content: "";
-            }
-        }
-    </style>
 </head>
 
 
 <body class="hold-transition sidebar-mini">
     <div class="wrapper">
-        <nav class="main-header navbar navbar-expand shadow-sm">
+        <nav class="main-header navbar navbar-expand navbar-white navbar-light shadow-sm">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <button type="button"
-                            class="nav-link admin-sidebar-toggle"
-                            data-admin-sidebar-toggle
-                            aria-controls="admin-sidebar"
-                            aria-expanded="true"
-                            aria-label="Collapse navigation"
-                            title="Collapse navigation">
+                    <a class="nav-link" data-widget="pushmenu" href="#" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
-                    </button>
+                    </a>
                 </li>
                 <li class="nav-item d-none d-sm-flex flex-column justify-content-center ml-2">
                     <span class="admin-navbar-title">Admin Console</span>
@@ -589,8 +373,8 @@
             </ul>
         </nav>
 
-        <aside id="admin-sidebar" class="main-sidebar elevation-4">
-            <a asp-area="" asp-controller="Product" asp-action="Index" class="brand-link">
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
+            <a asp-controller="Product" asp-action="Index" class="brand-link">
                 <img src="~/img/AdminLTELogo.png"
                      class="brand-image img-circle elevation-3"
                      style="opacity:.9"
@@ -599,118 +383,137 @@
             </a>
 
             <div class="sidebar d-flex flex-column">
-                <nav class="admin-sidebar-nav mt-3" aria-label="Admin navigation">
-                    <ul class="admin-nav-list" style="list-style:none;margin:0;padding:0;">
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Orders" asp-area="" asp-controller="OrderManagement"
+                <nav class="mt-3">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                        <li class="nav-item">
+                            <a asp-controller="OrderManagement"
                                asp-action="Index"
-                               class="admin-nav-link @(string.Equals(currentController, "OrderManagement", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-receipt" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Orders</span>
+                               class="nav-link @(string.Equals(currentController, "OrderManagement", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-receipt"></i>
+                                <p>Orders</p>
                             </a>
                         </li>
 
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Products" asp-area="" asp-controller="Product"
+                        <li class="nav-item">
+                            <a asp-controller="Product"
                                asp-action="Index"
-                               class="admin-nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && !string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-box-open" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Products</span>
+                               class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && !string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-box-open"></i>
+                                <p>Products</p>
                             </a>
                         </li>
 
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Categories" asp-controller="Category"
-                               asp-area=""
-                               asp-action="Index"
-                               class="admin-nav-link @(string.Equals(currentController, "Category", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-tags" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Categories</span>
-                            </a>
-                        </li>
-
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Deleted Products" asp-area=""
-                               asp-controller="Product"
+                        <li class="nav-item">
+                            <a asp-controller="Product"
                                asp-action="DeletedProducts"
-                               class="admin-nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-trash-restore" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Deleted Products</span>
+                               class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-trash-restore"></i>
+                                <p>Deleted Products</p>
                             </a>
                         </li>
 
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Users" asp-area="" asp-controller="User"
+                        <li class="nav-item">
+                            <a asp-controller="Category"
                                asp-action="Index"
-                               class="admin-nav-link @(string.Equals(currentController, "User", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-users" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Users</span>
+                               class="nav-link @(string.Equals(currentController, "Category", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-tags"></i>
+                                <p>Categories</p>
                             </a>
                         </li>
 
-                        <li class="admin-nav-item" style="list-style:none;margin:0;padding:0;">
-                            <a title="Roles" asp-area="" asp-controller="Roles"
+                        <li class="nav-item">
+                            <a asp-controller="User"
                                asp-action="Index"
-                               class="admin-nav-link @(string.Equals(currentController, "Roles", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                <i class="admin-nav-icon fas fa-user-shield" aria-hidden="true"></i>
-                                <span class="admin-nav-label">Roles</span>
+                               class="nav-link @(string.Equals(currentController, "User", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-users"></i>
+                                <p>Users</p>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a asp-controller="Roles"
+                               asp-action="Index"
+                               class="nav-link @(string.Equals(currentController, "Roles", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
+                                <i class="nav-icon fas fa-user-shield"></i>
+                                <p>Roles</p>
                             </a>
                         </li>
                     </ul>
                 </nav>
 
-            </div>
+                <div class="mt-auto p-3 sidebar-account-panel">
+                    <div class="sidebar-account-card">
+                        <div class="d-flex align-items-center">
+                            <div class="sidebar-account-avatar-wrap">
+                                <img src="~/img/user2-160x160.jpg"
+                                     class="img-circle elevation-2"
+                                     width="42"
+                                     height="42"
+                                     alt="Admin user">
+                                <span class="sidebar-account-status-dot" title="Online"></span>
+                            </div>
 
-            <div class="p-3 sidebar-account-panel">
-                <div class="sidebar-account-card">
-                    <div class="d-flex align-items-center">
-                        <div class="sidebar-account-avatar-wrap">
-                            <img src="~/img/user2-160x160.jpg"
-                                 class="img-circle elevation-2"
-                                 width="42"
-                                 height="42"
-                                 alt="Admin user">
-                            <span class="sidebar-account-status-dot" title="Online"></span>
-                        </div>
-                        <div class="ml-3">
-                            <div class="sidebar-account-name">@(User.Identity?.Name ?? "Administrator")</div>
-                            <div class="sidebar-account-role">@roleName account</div>
-                        </div>
+                            <div class="ml-3"> <div class="sidebar-account-name"> @(User.Identity?.Name ?? "Administrator") </div>
+                          <div class="sidebar-account-role"> @roleName account </div>
+                          </div>
+                          </div>
+
+                        <hr class="sidebar-logout-divider">
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-logout">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Logout</span>
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="btn-login-sidebar">
+                                <i class="fas fa-sign-in-alt"></i>
+                                <span>Login</span>
+                            </a>
+                        }
                     </div>
-
-                    <hr class="sidebar-logout-divider">
-
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <form asp-controller="Account" asp-action="Logout" method="post">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn-logout" title="Log out">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span>Logout</span>
-                            </button>
-                        </form>
-                    }
-                    else
-                    {
-                        <a asp-controller="Account" asp-action="Login" class="btn-login-sidebar" title="Log in">
-                            <i class="fas fa-sign-in-alt"></i>
-                            <span>Login</span>
-                        </a>
-                    }
                 </div>
             </div>
         </aside>
 
         <div class="content-wrapper">
+            <section class="content-header">
+                <div class="container-fluid">
+                    <h1>@contentTitle</h1>
+                </div>
+            </section>
+
             <section class="content">
                 <div class="container-fluid">
-                    <partial name="_Toaster" />
-                    @RenderBody()
+                    <div class="card admin-card">
+                        <div class="card-header">
+                            <h3 class="card-title">@cardTitle</h3>
+                            <div class="card-tools">
+                                <button type="button"
+                                        class="btn btn-tool"
+                                        data-card-widget="collapse"
+                                        aria-label="Collapse card">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <partial name="_Toaster" />
+                            @RenderBody()
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
 
-        <footer class="main-footer admin-footer">
+        <footer class="main-footer footer-dark">
             <strong>&copy; @DateTime.Now.Year myShop.</strong>
             All rights reserved.
         </footer>
