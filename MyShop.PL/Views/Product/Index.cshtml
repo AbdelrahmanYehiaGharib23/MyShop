@@ -63,7 +63,7 @@
         </div>
         <div>
             <span>Average price</span>
-            <strong>@(products.Any() ? products.Average(product => product.Price).ToString("C") : "0")</strong>
+            <strong>@(products.Any() ? CurrencyFormatter.ToEgp(products.Average(product => product.Price)) : CurrencyFormatter.ToEgp(0))</strong>
         </div>
     </div>
 
@@ -94,7 +94,7 @@
                     <div class="product-card-body">
                         <h3>@product.Name</h3>
                         <div class="product-card-meta">
-                            <strong>@product.Price.ToString("C")</strong>
+                            <strong>@CurrencyFormatter.ToEgp(product.Price)</strong>
                             <span>@product.CategoryName</span>
                         </div>
                         <div class="product-card-actions">

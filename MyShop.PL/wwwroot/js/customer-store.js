@@ -89,6 +89,7 @@
 
     function setTheme(theme) {
         root.setAttribute('data-store-theme', theme);
+        root.setAttribute('data-theme', theme);
         localStorage.setItem('myshop-theme', theme);
         updateThemeIcon(theme);
         window.dispatchEvent(new CustomEvent('store-theme-change', {
@@ -330,9 +331,9 @@
 
         function formatValue(value) {
             if (format === 'currency') {
-                return new Intl.NumberFormat(undefined, {
+                return new Intl.NumberFormat('en-EG', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: 'EGP',
                     maximumFractionDigits: 2
                 }).format(value);
             }
@@ -470,12 +471,14 @@
 
         var publishableKey = form.getAttribute('data-stripe-publishable-key');
         var intentUrl = form.getAttribute('data-payment-intent-url');
+        var confirmUrl = form.getAttribute('data-payment-confirm-url');
+        var orderId = form.getAttribute('data-order-id');
+        var ordersUrl = form.getAttribute('data-orders-url') || '/Orders/MyOrders';
         var cardNumberMount = form.querySelector('[data-stripe-card-number]');
         var cardExpiryMount = form.querySelector('[data-stripe-card-expiry]');
         var cardCvcMount = form.querySelector('[data-stripe-card-cvc]');
         var errorBox = form.querySelector('[data-stripe-errors]');
         var button = form.querySelector('[data-stripe-submit]');
-        var paymentIntentInput = form.querySelector('[data-payment-intent-id]');
         var originalButtonHtml = button ? button.innerHTML : '';
         var stripe = null;
         var cardNumber = null;
@@ -495,16 +498,20 @@
 
         function requestPaymentIntent() {
             var token = form.querySelector('input[name="__RequestVerificationToken"]');
+            var body = new FormData();
             var headers = {
                 'X-Requested-With': 'XMLHttpRequest'
             };
 
+            body.set('orderId', orderId);
+
             if (token) {
-                headers.RequestVerificationToken = token.value;
+                body.set(token.name, token.value);
             }
 
             return fetch(intentUrl, {
                 method: 'POST',
+                body: body,
                 credentials: 'same-origin',
                 headers: headers
             }).then(function (response) {
@@ -521,6 +528,45 @@
 
                     if (!response.ok) {
                         throw new Error((payload && payload.message) || 'Could not start the payment.');
+                    }
+
+                    return payload || {};
+                });
+            });
+        }
+
+        function confirmPaymentOnServer(paymentIntentId) {
+            var token = form.querySelector('input[name="__RequestVerificationToken"]');
+            var body = new FormData();
+
+            body.set('orderId', orderId);
+            body.set('paymentIntentId', paymentIntentId);
+
+            if (token) {
+                body.set(token.name, token.value);
+            }
+
+            return fetch(confirmUrl, {
+                method: 'POST',
+                body: body,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(function (response) {
+                return response.text().then(function (text) {
+                    var payload = null;
+
+                    if (text) {
+                        try {
+                            payload = JSON.parse(text);
+                        } catch (parseError) {
+                            payload = null;
+                        }
+                    }
+
+                    if (!response.ok) {
+                        throw new Error((payload && payload.message) || 'Could not finalize the order.');
                     }
 
                     return payload || {};
@@ -549,11 +595,6 @@
             button.innerHTML = originalButtonHtml;
         }
 
-        function submitConfirmedOrder() {
-            form.dataset.stripePaymentConfirmed = 'true';
-            HTMLFormElement.prototype.submit.call(form);
-        }
-
         function stripeElementStyle() {
             var styles = window.getComputedStyle(root);
             var stripeText = styles.getPropertyValue('--store-ink').trim() || '#142033';
@@ -579,15 +620,11 @@
             };
         }
 
-        if (!publishableKey || !intentUrl || !cardNumberMount || !cardExpiryMount || !cardCvcMount || !button || !window.fetch) {
+        if (!publishableKey || !intentUrl || !confirmUrl || !orderId || !cardNumberMount || !cardExpiryMount || !cardCvcMount || !button || !window.fetch) {
             return;
         }
 
         form.addEventListener('submit', function (event) {
-            if (form.dataset.stripePaymentConfirmed === 'true') {
-                return;
-            }
-
             event.preventDefault();
 
             if (form.dataset.stripeProcessing === 'true') {
@@ -642,16 +679,17 @@
                         throw new Error(payload.result.error.message || 'Payment was not completed.');
                     }
 
-                    if (paymentIntentInput) {
-                        paymentIntentInput.value = payload.paymentIntentId;
-                    }
-
+                    return confirmPaymentOnServer(payload.paymentIntentId);
+                })
+                .then(function (payload) {
                     button.classList.remove('is-loading');
                     button.classList.add('is-paid');
                     button.innerHTML = '<i class="fas fa-check"></i><span>Payment Complete</span>';
-                    showToast('success', 'Payment complete', 'Your payment was accepted. Creating your order now.');
+                    showToast('success', 'Payment complete', 'Your payment was accepted. Opening your orders now.');
 
-                    window.setTimeout(submitConfirmedOrder, prefersReducedMotion ? 50 : 700);
+                    window.setTimeout(function () {
+                        window.location.assign(payload.redirectUrl || ordersUrl);
+                    }, prefersReducedMotion ? 50 : 900);
                 })
                 .catch(function (error) {
                     form.dataset.stripeProcessing = 'false';
@@ -721,6 +759,374 @@
 
         var pascalName = camelName.charAt(0).toUpperCase() + camelName.slice(1);
         return Object.prototype.hasOwnProperty.call(source, pascalName) ? source[pascalName] : null;
+    }
+
+    function initPaymobCheckout() {
+        var button = document.querySelector('[data-paymob-start]');
+        var form = button && button.closest('form');
+
+        if (!button || !form || !window.fetch) {
+            return;
+        }
+
+        var errorBox = document.querySelector('[data-paymob-errors]');
+        var pixelErrorBox = document.querySelector('[data-paymob-pixel-errors]');
+        var providerSelection = document.querySelector('[data-payment-provider-selection]');
+        var providerNote = document.querySelector('[data-payment-provider-selection-note]');
+        var pixelView = document.querySelector('[data-paymob-pixel-view]');
+        var pixelHost = document.querySelector('[data-paymob-pixel-host]');
+        var pixelLoading = document.querySelector('[data-paymob-loading]');
+        var backButton = document.querySelector('[data-paymob-back]');
+        var heroTitle = document.querySelector('[data-checkout-hero-title]');
+        var heroSubtitle = document.querySelector('[data-checkout-hero-subtitle]');
+        var paymobSummaryCharge = document.querySelector('[data-paymob-summary-charge]');
+        var originalHtml = button.innerHTML;
+        var paymobInstance = null;
+        var activeClientSecret = null;
+        var pixelReadyObserver = null;
+        var pixelReadyTimeout = 0;
+
+        function stopPixelReadinessCheck() {
+            if (pixelReadyObserver) {
+                pixelReadyObserver.disconnect();
+                pixelReadyObserver = null;
+            }
+            if (pixelReadyTimeout) {
+                window.clearTimeout(pixelReadyTimeout);
+                pixelReadyTimeout = 0;
+            }
+        }
+
+        function restoreCheckoutHeading() {
+            if (heroTitle) {
+                heroTitle.textContent = heroTitle.getAttribute('data-checkout-default-title') || heroTitle.textContent;
+            }
+            if (heroSubtitle) {
+                heroSubtitle.textContent = heroSubtitle.getAttribute('data-checkout-default-subtitle') || heroSubtitle.textContent;
+            }
+        }
+
+        function loadPaymobSdk() {
+            if (typeof window.Pixel === 'function') {
+                return Promise.resolve();
+            }
+
+            return new Promise(function (resolve, reject) {
+                var existingScript = document.querySelector('script[data-paymob-pixel-sdk]');
+                if (existingScript) {
+                    if (existingScript.dataset.loaded === 'true') {
+                        reject(new Error('Paymob secure fields could not be initialized.'));
+                        return;
+                    }
+                    existingScript.addEventListener('load', function () {
+                        if (typeof window.Pixel === 'function') {
+                            resolve();
+                        } else {
+                            reject(new Error('Paymob checkout could not be initialized.'));
+                        }
+                    }, { once: true });
+                    existingScript.addEventListener('error', function () {
+                        reject(new Error('Could not load Paymob secure checkout.'));
+                    }, { once: true });
+                    return;
+                }
+
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/paymob-pixel@1.2.7/main.js';
+                script.type = 'module';
+                script.async = true;
+                script.setAttribute('data-paymob-pixel-sdk', 'true');
+                script.onload = function () {
+                    script.dataset.loaded = 'true';
+                    if (typeof window.Pixel === 'function') {
+                        resolve();
+                    } else {
+                        reject(new Error('Paymob checkout could not be initialized.'));
+                    }
+                };
+                script.onerror = function () {
+                    script.remove();
+                    reject(new Error('Could not load Paymob secure checkout. Check your connection and try again.'));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        function showPixelView() {
+            if (providerSelection) {
+                providerSelection.hidden = true;
+            }
+            if (providerNote) {
+                providerNote.hidden = true;
+            }
+            if (pixelView) {
+                pixelView.hidden = false;
+                pixelView.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+            }
+            if (heroTitle) {
+                heroTitle.textContent = heroTitle.getAttribute('data-paymob-title') || heroTitle.textContent;
+            }
+            if (heroSubtitle) {
+                heroSubtitle.textContent = heroSubtitle.getAttribute('data-paymob-subtitle') || heroSubtitle.textContent;
+            }
+            if (paymobSummaryCharge) {
+                paymobSummaryCharge.hidden = false;
+            }
+        }
+
+        function showProviderSelection() {
+            stopPixelReadinessCheck();
+            if (pixelView) {
+                pixelView.hidden = true;
+            }
+            if (pixelHost) {
+                pixelHost.classList.remove('is-loading');
+            }
+            if (pixelLoading) {
+                pixelLoading.hidden = true;
+            }
+            if (paymobSummaryCharge) {
+                paymobSummaryCharge.hidden = true;
+            }
+            restoreCheckoutHeading();
+            if (providerSelection) {
+                providerSelection.hidden = false;
+            }
+            if (providerNote) {
+                providerNote.hidden = false;
+            }
+            button.disabled = false;
+            button.classList.remove('is-loading');
+            button.innerHTML = originalHtml;
+        }
+
+        function mountPaymobPixel(clientSecret) {
+            var publicKey = form.getAttribute('data-paymob-public-key');
+            var returnUrl = form.getAttribute('data-paymob-return-url');
+
+            if (!publicKey || !clientSecret || !pixelHost) {
+                throw new Error('Paymob checkout details are incomplete. Return to payment methods and try again.');
+            }
+
+            stopPixelReadinessCheck();
+            var oldMount = pixelHost.querySelector('#paymob-pixel-checkout');
+            if (oldMount) {
+                oldMount.remove();
+            }
+            var pixelMount = document.createElement('div');
+            pixelMount.id = 'paymob-pixel-checkout';
+            pixelHost.insertBefore(pixelMount, pixelLoading || null);
+            pixelLoading = pixelHost.querySelector('[data-paymob-loading]');
+            pixelHost.classList.add('is-loading');
+            if (pixelLoading) {
+                pixelLoading.hidden = false;
+            }
+            if (pixelErrorBox) {
+                pixelErrorBox.textContent = '';
+            }
+
+            var themeStyles = window.getComputedStyle(root);
+            var themeColor = function (property, fallback) {
+                return themeStyles.getPropertyValue(property).trim() || fallback;
+            };
+
+            paymobInstance = new window.Pixel({
+                publicKey: publicKey,
+                clientSecret: clientSecret,
+                paymentMethods: ['card'],
+                elementId: 'paymob-pixel-checkout',
+                showSaveCard: false,
+                hideCardHolderName: false,
+                customStyle: {
+                    Width_of_Container: '100%',
+                    Container_Padding: '0',
+                    Color_Container: themeColor('--surface', '#111A2E'),
+                    Color_Input_Fields: themeColor('--surface-2', '#18233B'),
+                    Text_Color_For_Input_Fields: themeColor('--text', '#E6EBF5'),
+                    Text_Color_For_Label: themeColor('--text', '#E6EBF5'),
+                    Color_For_Text_Placeholder: themeColor('--text-muted', '#A7B4C8'),
+                    Color_Border_Input_Fields: themeColor('--border', '#24314D'),
+                    Color_Primary: themeColor('--primary', '#3B82F6'),
+                    Color_Disabled: root.getAttribute('data-theme') === 'light' ? '#64748B' : '#475569',
+                    Text_Color_For_Payment_Button: '#FFFFFF',
+                    Color_Error: themeColor('--danger', '#F87171'),
+                    Radius_Border: '12',
+                    Font_Family: themeColor('--font-sans', 'Inter, system-ui, sans-serif'),
+                    Font_Size_Label: '14',
+                    Font_Size_Input_Fields: '16',
+                    Font_Size_Payment_Button: '15',
+                    Direction: 'ltr',
+                    Placeholder_Text: {
+                        holderName: 'Name exactly as printed on your card (English)'
+                    },
+                    Vertical_Spacing_between_components: '14'
+                },
+                afterPaymentComplete: function () {
+                    showToast('success', 'Payment submitted', 'Paymob is confirming your payment.');
+                    window.setTimeout(function () {
+                        window.location.assign(returnUrl || '/Payment/PaymobReturn');
+                    }, 900);
+                },
+                onPaymentCancel: function () {
+                    if (pixelErrorBox) {
+                        pixelErrorBox.textContent = 'Payment was cancelled. Your order is still pending.';
+                    }
+                }
+            });
+
+            if (pixelLoading && pixelHost) {
+                var hideLoadingWhenReady = function () {
+                    if (!pixelHost.querySelector('iframe, input')) {
+                        return false;
+                    }
+                    stopPixelReadinessCheck();
+                    pixelLoading.hidden = true;
+                    pixelHost.classList.remove('is-loading');
+                    return true;
+                };
+
+                pixelReadyObserver = new MutationObserver(hideLoadingWhenReady);
+                pixelReadyObserver.observe(pixelHost, { childList: true, subtree: true });
+                if (!hideLoadingWhenReady()) {
+                    pixelReadyTimeout = window.setTimeout(function () {
+                        if (!hideLoadingWhenReady()) {
+                            showPixelError(new Error('Paymob secure fields did not load in time. Check your connection and retry.'), clientSecret);
+                        }
+                    }, 10000);
+                }
+            }
+        }
+
+        function showPixelError(error, clientSecret) {
+            stopPixelReadinessCheck();
+            showPixelView();
+            if (pixelLoading) {
+                pixelLoading.hidden = true;
+            }
+            if (pixelHost) {
+                pixelHost.classList.remove('is-loading');
+            }
+            if (pixelErrorBox) {
+                pixelErrorBox.textContent = error.message || 'Paymob secure card fields could not be loaded.';
+                var retryButton = document.createElement('button');
+                retryButton.type = 'button';
+                retryButton.className = 'checkout-edit-link paymob-retry-button';
+                retryButton.textContent = 'Retry secure form';
+                retryButton.addEventListener('click', function () {
+                    retryButton.disabled = true;
+                    pixelErrorBox.textContent = '';
+                    if (pixelLoading) {
+                        pixelLoading.hidden = false;
+                    }
+                    if (pixelHost) {
+                        pixelHost.classList.add('is-loading');
+                    }
+                    loadPaymobSdk().then(function () {
+                        mountPaymobPixel(clientSecret);
+                    }).catch(function (retryError) {
+                        showPixelError(retryError, clientSecret);
+                    });
+                });
+                pixelErrorBox.appendChild(document.createTextNode(' '));
+                pixelErrorBox.appendChild(retryButton);
+            }
+            button.disabled = false;
+            button.classList.remove('is-loading');
+            button.innerHTML = originalHtml;
+        }
+
+        if (backButton) {
+            backButton.addEventListener('click', showProviderSelection);
+        }
+
+        window.addEventListener('store-theme-change', function () {
+            if (!activeClientSecret || !paymobInstance || !pixelView || pixelView.hidden || typeof window.Pixel !== 'function') {
+                return;
+            }
+
+            if (pixelLoading) {
+                pixelLoading.hidden = false;
+            }
+            mountPaymobPixel(activeClientSecret);
+            showToast('info', 'Payment form refreshed', 'Re-enter your card details to continue securely.');
+        });
+
+        button.addEventListener('click', function () {
+            if (button.disabled) {
+                return;
+            }
+
+            var token = form.querySelector('input[name="__RequestVerificationToken"]');
+            var orderInput = form.querySelector('input[name="OrderId"]');
+            var body = new FormData();
+            var endpoint = form.getAttribute('data-paymob-url');
+
+            if (errorBox) {
+                errorBox.textContent = '';
+            }
+
+            if (!endpoint || !orderInput || !orderInput.value) {
+                if (errorBox) {
+                    errorBox.textContent = 'This order could not be prepared. Return to checkout and try again.';
+                }
+                return;
+            }
+
+            body.set('orderId', orderInput.value);
+            if (token) {
+                body.set(token.name, token.value);
+            }
+
+            button.disabled = true;
+            button.classList.add('is-loading');
+            button.innerHTML = '<span class="store-button-loader" aria-hidden="true"></span><span>Connecting to Paymob...</span>';
+
+            fetch(endpoint, {
+                method: 'POST',
+                body: body,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).then(function (response) {
+                return response.text().then(function (text) {
+                    var payload = null;
+
+                    if (text) {
+                        try {
+                            payload = JSON.parse(text);
+                        } catch (parseError) {
+                            payload = null;
+                        }
+                    }
+
+                    if (!response.ok) {
+                        throw new Error((payload && payload.message) || 'Paymob could not start checkout. Please try again.');
+                    }
+
+                    var clientSecret = readValue(payload, 'clientSecret');
+                    if (!clientSecret) {
+                        throw new Error('Paymob did not return a secure checkout session.');
+                    }
+
+                    activeClientSecret = clientSecret;
+                    showPixelView();
+                    return loadPaymobSdk().then(function () {
+                        mountPaymobPixel(clientSecret);
+                    });
+                });
+            }).catch(function (error) {
+                var message = error.message || 'Please try again in a moment.';
+
+                if (pixelView && !pixelView.hidden) {
+                    showPixelError(error, activeClientSecret);
+                } else {
+                    showProviderSelection();
+                    if (errorBox) {
+                        errorBox.textContent = message;
+                    }
+                }
+                showToast('danger', 'Paymob unavailable', message);
+            });
+        });
     }
 
     function reviewErrorMessage(payload, fallback) {
@@ -1226,6 +1632,7 @@
     enhanceCartForms();
     initCheckoutPreview();
     initStripeCheckout();
+    initPaymobCheckout();
     initReviewWidgets();
 
     productCards.forEach(function (card, index) {

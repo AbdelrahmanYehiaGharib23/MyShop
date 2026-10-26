@@ -27,6 +27,9 @@ namespace MyShop.DAL.Presistence.Data.DbInitializer
             builder.Entity<Category>()
                 .HasQueryFilter(c => !c.IsDeleted);
 
+            builder.Entity<Review>()
+                .HasQueryFilter(r => !r.IsDeleted && !r.Product.IsDeleted);
+
             builder.Entity<ApplicationUser>()
                         .HasIndex(u => u.NormalizedEmail)
                         .IsUnique();

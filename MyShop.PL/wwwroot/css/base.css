@@ -1,0 +1,34 @@
+html {
+    scroll-behavior: smooth;
+    background: var(--bg);
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--type-md);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color var(--ease-ui), color var(--ease-ui);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html [hidden] { display: none; }
+
+:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 3px;
+}
+
+img { max-width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    html[data-theme] *, html[data-theme] *::before, html[data-theme] *::after {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+    }
+}

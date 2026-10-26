@@ -23,6 +23,10 @@ namespace MyShop.DAL.Presistence.Data.Configurations
                 .HasMaxLength(20)
                 .IsRequired();
 
+            builder.Property(o => o.CustomerEmail)
+                .HasMaxLength(256)
+                .IsRequired();
+
             builder.Property(o => o.OrderDate)
                 .HasDefaultValueSql("GETDATE()");
 

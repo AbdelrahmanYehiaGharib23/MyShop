@@ -84,7 +84,7 @@
                     }
                 </div>
                 <strong>@(string.IsNullOrWhiteSpace(Model.Name) ? "Product name" : Model.Name)</strong>
-                <small>@(Model.Price > 0 ? Model.Price.ToString("C") : "Price preview")</small>
+                <small>@(Model.Price > 0 ? CurrencyFormatter.ToEgp(Model.Price) : "Price preview")</small>
             </aside>
         </div>
 

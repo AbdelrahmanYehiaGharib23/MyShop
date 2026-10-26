@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
 using AutoMapper;
+using Microsoft.Extensions.Caching.Hybrid;
 using MyShop.BLL.Models.Common;
 using MyShop.BLL.Models.Dto.ProductDto;
 using MyShop.BLL.Services.AttachmentServices;
@@ -16,45 +14,78 @@ namespace MyShop.BLL.Services.ProductServices
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IAttachmentServices _attachmentServices;
+        private readonly HybridCache _cache;
 
-        public ProductService(IUnitOfWork unitOfWork,IMapper map,IAttachmentServices attachmentServices)
+        private const string ProductsListCacheKey = "products:list";
+        private const string ProductsListTag = "products:list";
+        private const string ProductTagPrefix = "product:";
+
+        public ProductService(IUnitOfWork unitOfWork, IMapper mapper,IAttachmentServices attachmentServices, HybridCache cache)
         {
             _unitOfWork = unitOfWork;
-            _mapper = map;
+            _mapper = mapper;
             _attachmentServices = attachmentServices;
+            _cache = cache;
         }
+
         public async Task<int> CreateProductAsync(CreateProductDto product)
         {
             var productToCreate = _mapper.Map<Product>(product);
+
             _unitOfWork.ProductRepository.Add(productToCreate);
-            return await _unitOfWork.CompleteAsync();
+
+            var result = await _unitOfWork.CompleteAsync();
+
+            if (result > 0)
+            {
+                await _cache.RemoveByTagAsync(ProductsListTag);
+            }
+
+            return result;
         }
+
         public async Task<IEnumerable<ProductDto>> GetProductAsync()
         {
-            var spec = new ProductWithCategorySpecification();
+            return await _cache.GetOrCreateAsync(
+                ProductsListCacheKey,
+                async cancellationToken =>
+                {
+                    var spec = new ProductWithCategorySpecification();
 
-            var products = await _unitOfWork.ProductRepository
-                .GetAllWithSpecAsync(spec);
+                    var products = await _unitOfWork.ProductRepository
+                        .GetAllWithSpecAsync(spec);
 
-            return _mapper.Map<IEnumerable<ProductDto>>(products);
+                    return _mapper.Map<IEnumerable<ProductDto>>(products);
+                },
+                tags: new[] { ProductsListTag });
         }
 
         public async Task<ProductDetailsDto?> GetProductByIdAsync(int id)
         {
-            var spec = new ProductByIdSpecification(id);
+            var cacheKey = $"product:{id}";
+            var productTag = $"{ProductTagPrefix}{id}";
 
-            var product = await _unitOfWork.ProductRepository
-                .GetEntityWithSpecAsync(spec);
+            return await _cache.GetOrCreateAsync(
+                cacheKey,
+                async cancellationToken =>
+                {
+                    var spec = new ProductByIdSpecification(id);
 
-            if (product is null)
-                return null;
+                    var product = await _unitOfWork.ProductRepository
+                        .GetEntityWithSpecAsync(spec);
 
-            return _mapper.Map<ProductDetailsDto>(product);
+                    if (product is null)
+                        return null;
+
+                    return _mapper.Map<ProductDetailsDto>(product);
+                },
+                tags: new[] { productTag });
         }
 
         public async Task<int> UpdateProductAsync(UpdateProductDto product)
         {
-            var existingProduct = await _unitOfWork.ProductRepository.GetByIdAsync(product.Id);
+            var existingProduct = await _unitOfWork.ProductRepository
+                .GetByIdAsync(product.Id);
 
             if (existingProduct == null)
                 return 0;
@@ -76,23 +107,50 @@ namespace MyShop.BLL.Services.ProductServices
 
             _unitOfWork.ProductRepository.Update(existingProduct);
 
-            return await _unitOfWork.CompleteAsync();
+            var result = await _unitOfWork.CompleteAsync();
+
+            if (result > 0)
+            {
+                await _cache.RemoveByTagAsync(ProductsListTag);
+                await _cache.RemoveByTagAsync($"{ProductTagPrefix}{product.Id}");
+            }
+
+            return result;
         }
 
         public async Task<bool> DeleteProductAsync(int? id)
         {
-            if (id == null) return false;
-            var product = await _unitOfWork.ProductRepository.GetByIdAsync(id.Value);
-            if (product is null) return false;
+            if (id == null)
+                return false;
+
+            var product = await _unitOfWork.ProductRepository
+                .GetByIdAsync(id.Value);
+
+            if (product is null)
+                return false;
+
             if (!string.IsNullOrWhiteSpace(product.ImageUrl))
             {
-               await _attachmentServices.DeleteAsync(product.ImageUrl);
+                await _attachmentServices.DeleteAsync(product.ImageUrl);
             }
-            _unitOfWork.ProductRepository.Remove(product);
-            return await _unitOfWork.CompleteAsync() > 0;
 
+            _unitOfWork.ProductRepository.Remove(product);
+
+            var result = await _unitOfWork.CompleteAsync();
+
+            if (result > 0)
+            {
+                await _cache.RemoveByTagAsync(ProductsListTag);
+                await _cache.RemoveByTagAsync($"{ProductTagPrefix}{id.Value}");
+
+                return true;
+            }
+
+            return false;
         }
-        public async Task<Pagination<ProductDto>> SearchProductsAsync(ProductSpecParams specParams)
+
+        public async Task<Pagination<ProductDto>> SearchProductsAsync(
+            ProductSpecParams specParams)
         {
             var spec = new ProductSpecification(specParams);
 
@@ -142,10 +200,17 @@ namespace MyShop.BLL.Services.ProductServices
             product.DeletedAt = null;
             product.DeletedBy = null;
 
-            await _unitOfWork.CompleteAsync();
+            var result = await _unitOfWork.CompleteAsync();
 
-            return true;
+            if (result > 0)
+            {
+                await _cache.RemoveByTagAsync(ProductsListTag);
+                await _cache.RemoveByTagAsync($"{ProductTagPrefix}{id}");
+
+                return true;
+            }
+
+            return false;
         }
-       
     }
 }

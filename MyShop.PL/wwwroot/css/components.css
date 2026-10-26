@@ -1,0 +1,38 @@
+.store-button-primary, .store-button-secondary, .store-button-ghost,
+.store-cart-button, .store-icon-button, .store-user-button, .category-chip,
+.store-page-link, .cart-quantity-button, .cart-remove-button {
+    transition: transform var(--ease-ui), background-color var(--ease-ui), color var(--ease-ui), border-color var(--ease-ui), box-shadow var(--ease-ui);
+}
+
+.store-button-primary, .store-button-secondary, .store-button-ghost,
+.store-cart-button, .store-icon-button, .store-user-button {
+    border-radius: var(--radius-md);
+}
+
+.store-button-primary:hover, .store-button-secondary:hover, .store-cart-button:hover,
+.category-chip:hover, .store-page-link:hover { transform: translateY(-1px); }
+
+.store-button-primary:active, .store-button-secondary:active, .store-icon-button:active { transform: scale(.98); }
+
+.store-search-input:focus, .store-sort-form select:focus, .cart-coupon input:focus,
+.checkout-page input:focus, .checkout-page select:focus, .auth-form input:focus {
+    outline: 3px solid color-mix(in srgb, var(--primary) 24%, transparent);
+    outline-offset: 1px;
+}
+
+.store-empty, .cart-empty {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.store-toast, .store-alert { border-radius: var(--radius-md); box-shadow: var(--shadow-md); }
+
+.store-skeleton {
+    background: linear-gradient(90deg, var(--surface-2), var(--surface), var(--surface-2));
+    background-size: 200% 100%;
+    animation: store-skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes store-skeleton-shimmer { to { background-position: -200% 0; } }

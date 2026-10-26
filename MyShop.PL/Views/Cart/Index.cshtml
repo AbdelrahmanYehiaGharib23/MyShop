@@ -55,7 +55,7 @@
                             <div>
                                 <h3>@item.ProductName</h3>
                                 <div class="cart-item-meta">
-                                    <span>Unit price: @item.Price.ToString("C")</span>
+                                    <span>Unit price: @CurrencyFormatter.ToEgp(item.Price)</span>
                                     <span>Product #@item.ProductId</span>
                                 </div>
                                 <div class="cart-quantity-tools">
@@ -86,7 +86,7 @@
 
                             <div class="cart-item-total">
                                 <span>Line total</span>
-                                <strong>@item.TotalPrice.ToString("C")</strong>
+                                <strong>@CurrencyFormatter.ToEgp(item.TotalPrice)</strong>
                             </div>
                         </article>
                     }
@@ -105,7 +105,7 @@
                     </div>
                     <div class="cart-summary-row">
                         <span>Subtotal</span>
-                        <strong>@totalPrice.ToString("C")</strong>
+                        <strong>@CurrencyFormatter.ToEgp(totalPrice)</strong>
                     </div>
                     <div class="cart-summary-row">
                         <span>Shipping</span>
@@ -113,7 +113,7 @@
                     </div>
                     <div class="cart-summary-row cart-summary-total">
                         <span>Total</span>
-                        <strong>@totalPrice.ToString("C")</strong>
+                        <strong>@CurrencyFormatter.ToEgp(totalPrice)</strong>
                     </div>
 
                     <div class="cart-summary-actions">

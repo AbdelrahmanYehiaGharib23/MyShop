@@ -14,18 +14,15 @@ namespace MyShop.PL.Controllers
     {
         private readonly ICartService _cartService;
         private readonly IOrderService _orderService;
-        private readonly IPaymentService _paymentService;
         private readonly StripeSettings _stripeSettings;
 
         public CartController(
             ICartService cartService,
             IOrderService orderService,
-            IPaymentService paymentService,
             IOptions<StripeSettings> stripeOptions)
         {
             _cartService = cartService;
             _orderService = orderService;
-            _paymentService = paymentService;
             _stripeSettings = stripeOptions.Value;
         }
 
@@ -43,9 +40,14 @@ namespace MyShop.PL.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
+        public async Task<IActionResult> AddToCart(
+            int productId,
+            int quantity = 1)
         {
-            await _cartService.AddToCart(productId, quantity);
+            await _cartService.AddToCart(
+                productId,
+                quantity);
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -83,20 +85,49 @@ namespace MyShop.PL.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult Checkout()
+        public async Task<IActionResult> Checkout(
+            int? orderId = null)
         {
             var cartItems = _cartService.GetCart();
 
-            if (cartItems == null || !cartItems.Any())
-            {
-                return RedirectToAction(nameof(Index));
-            }
-
             var model = new CheckoutViewModel
             {
-                Items = cartItems,
-                TotalPrice = _cartService.GetTotalPrice()
+                OrderId = orderId
             };
+
+            ViewBag.StripePublishableKey =
+                _stripeSettings.PublishableKey;
+
+            if (orderId.HasValue)
+            {
+                var order =
+                    await _orderService
+                        .GetOrderForPaymentAsync(
+                            orderId.Value);
+
+                if (order is null)
+                    return NotFound();
+
+                model.Items = order.OrderItems.Select(item => new MyShop.DAL.Entities.CartItem
+                {
+                    ProductId = item.ProductId ?? 0,
+                    ProductName = item.ProductName,
+                    ImageUrl = item.ProductImageUrl,
+                    Price = item.Price,
+                    Quantity = item.Quantity
+                }).ToList();
+                model.TotalPrice = order.TotalPrice;
+                model.Address = order.Address;
+                model.Phone = order.Phone;
+            }
+            else
+            {
+                if (cartItems is null || !cartItems.Any())
+                    return RedirectToAction(nameof(Index));
+
+                model.Items = cartItems;
+                model.TotalPrice = _cartService.GetTotalPrice();
+            }
 
             return View(model);
         }
@@ -104,51 +135,31 @@ namespace MyShop.PL.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Checkout(CheckoutViewModel model)
+        public async Task<IActionResult> Checkout(
+            CheckoutViewModel model)
         {
             var cartItems = _cartService.GetCart();
 
-            if (cartItems == null || !cartItems.Any())
+            if (model.OrderId.HasValue)
             {
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(
+                    nameof(Checkout),
+                    new { orderId = model.OrderId.Value });
             }
+
+            if (cartItems is null || !cartItems.Any())
+                return RedirectToAction(nameof(Index));
 
             if (!ModelState.IsValid)
             {
                 model.Items = cartItems;
-                model.TotalPrice = _cartService.GetTotalPrice();
+                model.TotalPrice =
+                    _cartService.GetTotalPrice();
+
+                ViewBag.StripePublishableKey =
+                    _stripeSettings.PublishableKey;
 
                 return View(model);
-            }
-
-            var totalPrice = _cartService.GetTotalPrice();
-            var stripeIsConfigured =
-                !string.IsNullOrWhiteSpace(_stripeSettings.PublishableKey)
-                && !string.IsNullOrWhiteSpace(_stripeSettings.SecretKey);
-
-            if (stripeIsConfigured)
-            {
-                if (string.IsNullOrWhiteSpace(model.PaymentIntentId))
-                {
-                    ModelState.AddModelError(string.Empty, "Please complete the Stripe payment before placing your order.");
-                    model.Items = cartItems;
-                    model.TotalPrice = totalPrice;
-
-                    return View(model);
-                }
-
-                var paymentSucceeded = await _paymentService.IsPaymentIntentSucceededAsync(
-                    model.PaymentIntentId,
-                    totalPrice);
-
-                if (!paymentSucceeded)
-                {
-                    ModelState.AddModelError(string.Empty, "Payment was not confirmed by Stripe. Please try again.");
-                    model.Items = cartItems;
-                    model.TotalPrice = totalPrice;
-
-                    return View(model);
-                }
             }
 
             var dto = new CreateOrderDto
@@ -157,14 +168,15 @@ namespace MyShop.PL.Controllers
                 Phone = model.Phone
             };
 
-            await _orderService.CreateOrderAsync(dto);
+            var orderId =
+                await _orderService
+                    .CreatePendingOrderAsync(dto);
 
             _cartService.ClearCart();
-            TempData["SuccessMessage"] = stripeIsConfigured
-                ? "Payment successful. Order placed and confirmation email sent."
-                : "Order placed successfully.";
 
-            return RedirectToAction("MyOrders", "Orders");
+            return RedirectToAction(
+                nameof(Checkout),
+                new { orderId });
         }
     }
 }

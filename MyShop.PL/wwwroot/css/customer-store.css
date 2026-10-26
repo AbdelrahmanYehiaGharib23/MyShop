@@ -26,6 +26,89 @@
     --store-radius-lg: 28px;
 }
 
+[data-store-theme="light"] .checkout-page .checkout-progress-card {
+    border-color: rgba(255, 255, 255, .68);
+    background: rgba(255, 255, 255, .78);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .12);
+}
+
+[data-store-theme="light"] .checkout-page .checkout-step {
+    color: #64748b;
+}
+
+[data-store-theme="light"] .checkout-page .checkout-step.active {
+    color: #142033;
+}
+
+[data-store-theme="light"] .checkout-page .checkout-step span {
+    border-color: rgba(20, 32, 51, .12);
+    background: rgba(20, 32, 51, .04);
+}
+
+[data-store-theme="light"] .checkout-page .checkout-step.active span {
+    border-color: transparent;
+    background: linear-gradient(135deg, #5eead4, #38bdf8);
+}
+
+[data-store-theme="light"] .checkout-page .checkout-step-line {
+    background: linear-gradient(90deg, rgba(13, 148, 136, .55), rgba(100, 116, 139, .18));
+}
+
+[data-store-theme="light"] .checkout-page .payment-provider-stripe {
+    --provider-color: #5b5bd6;
+    --provider-glow: rgba(91, 91, 214, .1);
+}
+
+[data-store-theme="light"] .checkout-page .payment-provider-paymob {
+    --provider-color: #087f70;
+    --provider-glow: rgba(8, 127, 112, .1);
+}
+
+[data-store-theme="light"] .checkout-page .stripe-logo {
+    --provider-color: #5b5bd6;
+}
+
+[data-store-theme="light"] .checkout-page .paymob-logo {
+    --provider-color: #087f70;
+}
+
+[data-store-theme="light"] .checkout-page .payment-provider-card:hover {
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .12);
+}
+
+[data-store-theme="light"] .checkout-page .stripe-mode-badge {
+    border-color: rgba(13, 148, 136, .24);
+    color: #087f70;
+    background: rgba(13, 148, 136, .07);
+}
+
+[data-store-theme="light"] .checkout-page .stripe-payment-card {
+    border-color: #d7e2ed;
+    background:
+        radial-gradient(circle at 96% 0, rgba(13, 148, 136, .07), transparent 34%),
+        linear-gradient(145deg, #ffffff, #f8fbff);
+    box-shadow: 0 16px 36px rgba(20, 32, 51, .08);
+}
+
+[data-store-theme="light"] .checkout-page .stripe-card-shell {
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(20, 32, 51, .06);
+}
+
+[data-store-theme="light"] .checkout-page .checkout-method.active,
+[data-store-theme="light"] .checkout-page .checkout-method:has(input:checked) {
+    border-color: rgba(8, 127, 112, .45);
+    background:
+        radial-gradient(circle at 100% 0, rgba(13, 148, 136, .09), transparent 34%),
+        linear-gradient(135deg, #f0fdfa, #ffffff);
+}
+
+@media (max-width: 640px) {
+    [data-store-theme="light"] .checkout-page .checkout-progress-card {
+        background: rgba(255, 255, 255, .88);
+    }
+}
+
 [data-store-theme="dark"] {
     --store-bg: #08111f;
     --store-bg-2: #0c1728;
@@ -67,7 +150,7 @@ body {
         radial-gradient(circle at 92% 8%, rgba(45, 212, 191, .12), transparent 32%),
         linear-gradient(180deg, var(--store-bg-2), var(--store-bg) 340px);
     color: var(--store-text);
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-sans, Inter, system-ui, sans-serif);
     overflow-x: hidden;
 }
 
@@ -2635,6 +2718,32 @@ button.category-chip {
     font-size: 1.28rem;
 }
 
+.stripe-converted-total {
+    margin: 8px -12px 0;
+    padding: 14px 12px;
+    border: 1px solid color-mix(in srgb, var(--store-accent) 32%, var(--store-border));
+    border-radius: 14px;
+    color: var(--store-ink);
+    background: color-mix(in srgb, var(--store-accent) 9%, var(--store-surface));
+}
+
+.stripe-converted-total span {
+    display: grid;
+    gap: 3px;
+}
+
+.stripe-converted-total small {
+    color: var(--store-muted);
+    font-size: .76rem;
+    font-weight: 600;
+}
+
+.stripe-converted-total strong {
+    color: var(--store-accent);
+    font-size: 1.08rem;
+    white-space: nowrap;
+}
+
 .cart-summary-actions {
     display: grid;
     gap: 12px;
@@ -2908,6 +3017,492 @@ button.category-chip {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+}
+
+.payment-provider-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.payment-provider-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: clamp(20px, 3vw, 28px);
+    overflow: hidden;
+    border: 1px solid var(--store-border);
+    border-radius: 24px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--store-surface-2) 86%, transparent), var(--store-surface));
+    box-shadow: var(--store-shadow-sm);
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+
+.payment-provider-card::after {
+    position: absolute;
+    top: -62px;
+    right: -58px;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: var(--provider-glow, rgba(94, 234, 212, .10));
+    content: "";
+    pointer-events: none;
+}
+
+.payment-provider-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--provider-color) 45%, var(--store-border));
+    box-shadow: 0 22px 50px rgba(0, 0, 0, .19);
+}
+
+.payment-provider-stripe {
+    --provider-color: #8b8cf6;
+    --provider-glow: rgba(99, 102, 241, .13);
+}
+
+.payment-provider-paymob {
+    --provider-color: #21c7a8;
+    --provider-glow: rgba(45, 212, 191, .15);
+}
+
+.payment-provider-topline,
+.payment-provider-selected {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.payment-provider-logo {
+    display: inline-flex;
+    width: 50px;
+    height: 50px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid color-mix(in srgb, var(--provider-color) 36%, transparent);
+    border-radius: 16px;
+    color: var(--provider-color);
+    background: color-mix(in srgb, var(--provider-color) 13%, var(--store-surface));
+    font-size: 1.55rem;
+}
+
+.stripe-logo {
+    --provider-color: #a5b4fc;
+}
+
+.paymob-logo {
+    --provider-color: #5eead4;
+}
+
+.payment-provider-status {
+    position: relative;
+    z-index: 1;
+    padding: 6px 10px;
+    border: 1px solid var(--store-line);
+    border-radius: 999px;
+    color: var(--store-muted);
+    background: color-mix(in srgb, var(--store-surface) 78%, transparent);
+    font-size: .7rem;
+    font-weight: 800;
+}
+
+.payment-provider-brand {
+    position: relative;
+    z-index: 1;
+    margin-top: 20px;
+    color: var(--provider-color);
+    font-size: .72rem;
+    font-weight: 900;
+    letter-spacing: .12em;
+}
+
+.payment-provider-card h3 {
+    position: relative;
+    z-index: 1;
+    margin: 5px 0 7px;
+    color: var(--store-ink);
+    font-size: 1.2rem;
+    font-weight: 900;
+}
+
+.payment-provider-card p {
+    position: relative;
+    z-index: 1;
+    min-height: 48px;
+    margin: 0;
+    color: var(--store-muted);
+    font-size: .88rem;
+    line-height: 1.65;
+}
+
+.payment-provider-tags {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 20px;
+}
+
+.payment-provider-tags span {
+    display: inline-flex;
+    min-height: 30px;
+    align-items: center;
+    gap: 7px;
+    padding: 0 10px;
+    border: 1px solid var(--store-line);
+    border-radius: 999px;
+    color: var(--store-muted);
+    background: color-mix(in srgb, var(--store-surface) 66%, transparent);
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.payment-provider-tags i {
+    color: var(--provider-color);
+}
+
+.payment-provider-action {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-inline: 17px;
+    color: #06111f;
+    text-decoration: none;
+}
+
+.payment-provider-stripe .payment-provider-action {
+    background: linear-gradient(120deg, #a5b4fc, #67e8f9);
+}
+
+.payment-provider-paymob .payment-provider-action {
+    background: linear-gradient(120deg, #5eead4, #38bdf8);
+}
+
+.payment-provider-action:hover {
+    color: #06111f;
+    filter: brightness(1.06);
+}
+
+.payment-provider-unavailable {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    gap: 9px;
+    margin-top: auto;
+    padding: 10px 13px;
+    border: 1px solid color-mix(in srgb, var(--store-warning) 34%, var(--store-border));
+    border-radius: 14px;
+    color: var(--store-warning);
+    background: color-mix(in srgb, var(--store-warning) 8%, var(--store-surface));
+    font-size: .8rem;
+    font-weight: 800;
+}
+
+.payment-provider-backnote {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+    color: var(--store-muted);
+    font-size: .8rem;
+    font-weight: 700;
+    line-height: 1.6;
+}
+
+.payment-provider-backnote i {
+    margin-top: 3px;
+    color: var(--store-primary);
+}
+
+.paymob-pixel-view {
+    margin-top: 20px;
+    padding: clamp(18px, 3vw, 28px);
+    border: 1px solid color-mix(in srgb, #25c9aa 36%, var(--store-border));
+    border-radius: 24px;
+    background:
+        radial-gradient(ellipse at 95% 0, rgba(45, 212, 191, .11), transparent 35%),
+        linear-gradient(145deg, var(--store-surface-2), var(--store-surface));
+    box-shadow: var(--store-shadow-sm);
+    animation: paymob-view-enter .32s ease both;
+}
+
+.paymob-pixel-view[hidden],
+.paymob-pixel-loading[hidden] {
+    display: none !important;
+}
+
+.paymob-pixel-heading {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.paymob-pixel-heading > .checkout-edit-link {
+    justify-self: start;
+    cursor: pointer;
+}
+
+.paymob-brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.paymob-brand-lockup h2 {
+    margin: 4px 0 0;
+    color: var(--store-ink);
+    font-size: 1.25rem;
+    font-weight: 900;
+}
+
+.paymob-payment-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+}
+
+.paymob-form-shell {
+    min-width: 0;
+    padding: clamp(16px, 2vw, 22px);
+    border: 1px solid var(--store-border);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--store-surface) 92%, transparent);
+}
+
+.paymob-form-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-bottom: 18px;
+}
+
+.paymob-form-topline h3 {
+    margin: 7px 0 0;
+    color: var(--store-ink);
+    font-size: 1.08rem;
+    font-weight: 900;
+}
+
+.paymob-card-brands {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--store-ink);
+    font-size: 1.7rem;
+}
+
+.paymob-card-brands .fa-cc-visa {
+    color: #4f7df3;
+}
+
+.paymob-card-brands .fa-cc-mastercard {
+    color: #eb695f;
+}
+
+.paymob-pixel-host {
+    padding: 12px;
+    overflow: visible;
+    border: 1px solid var(--store-line);
+    border-radius: 16px;
+    background: var(--store-surface-2);
+}
+
+.paymob-pixel-loading {
+    display: flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--store-muted);
+    font-size: .84rem;
+    font-weight: 750;
+}
+
+.paymob-pixel-loading .store-button-loader {
+    border-color: color-mix(in srgb, var(--store-accent) 28%, transparent);
+    border-top-color: var(--store-accent);
+}
+
+.paymob-security-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 15px 0 0;
+    color: var(--store-muted);
+    font-size: .76rem;
+    line-height: 1.6;
+}
+
+.paymob-security-note i {
+    margin-top: 3px;
+    color: var(--store-accent);
+}
+
+.paymob-card-aside {
+    display: grid;
+    grid-template-columns: minmax(230px, 290px) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 14px;
+    order: -1;
+}
+
+.paymob-card-preview {
+    position: relative;
+    display: grid;
+    width: 100%;
+    aspect-ratio: 1.586 / 1;
+    align-content: space-between;
+    gap: 10px;
+    padding: clamp(16px, 2vw, 22px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .2);
+    border-radius: 19px;
+    color: #f5f7fb;
+    background:
+        radial-gradient(ellipse at 100% 0, rgba(255, 255, 255, .14), transparent 38%),
+        radial-gradient(ellipse at 5% 110%, rgba(78, 94, 117, .32), transparent 45%),
+        linear-gradient(145deg, #080a0f 0%, #171b23 52%, #050609 100%);
+    box-shadow: 0 20px 38px rgba(0, 0, 0, .38), inset 0 1px rgba(255, 255, 255, .16);
+}
+
+.paymob-card-preview::after {
+    position: absolute;
+    right: -52px;
+    bottom: -116px;
+    width: 250px;
+    height: 250px;
+    border: 1px solid rgba(255, 255, 255, .09);
+    border-radius: 50%;
+    content: "";
+}
+
+.paymob-card-preview-top,
+.paymob-card-preview-bottom {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.paymob-card-preview-top {
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.paymob-card-preview-top small {
+    margin-left: 4px;
+    color: rgba(235, 250, 247, .72);
+    font-size: .65rem;
+    font-weight: 750;
+}
+
+.paymob-card-preview-top i {
+    font-size: 1.1rem;
+    transform: rotate(90deg);
+}
+
+.paymob-card-chip {
+    width: 44px;
+    height: 33px;
+    border: 1px solid rgba(30, 48, 50, .3);
+    border-radius: 8px;
+    background:
+        linear-gradient(90deg, transparent 47%, rgba(91, 72, 31, .32) 49%, rgba(91, 72, 31, .32) 51%, transparent 53%),
+        linear-gradient(0deg, transparent 47%, rgba(91, 72, 31, .32) 49%, rgba(91, 72, 31, .32) 51%, transparent 53%),
+        linear-gradient(135deg, #f7e9b4, #b6a46c);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .62), 0 2px 5px rgba(0, 0, 0, .24);
+}
+
+.paymob-card-number {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    font-size: clamp(.78rem, 1.3vw, .98rem);
+    font-weight: 750;
+    letter-spacing: .04em;
+    white-space: nowrap;
+}
+
+.paymob-card-preview-bottom span {
+    color: rgba(235, 250, 247, .78);
+    font-size: .62rem;
+    font-weight: 800;
+}
+
+.paymob-visa-wordmark {
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.82rem;
+    font-style: italic;
+    font-weight: 950;
+    letter-spacing: .01em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, .25), 0 2px 8px rgba(0, 0, 0, .5);
+}
+
+.paymob-amount-summary {
+    display: grid;
+    align-content: center;
+    gap: 7px;
+    padding: 20px;
+    border: 1px solid var(--store-border);
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--store-surface-2) 82%, transparent);
+}
+
+.paymob-amount-summary span,
+.paymob-amount-summary small {
+    color: var(--store-muted);
+    font-size: .77rem;
+    font-weight: 700;
+}
+
+.paymob-amount-summary strong {
+    color: var(--store-ink);
+    font-size: 1.18rem;
+    font-weight: 900;
+}
+
+.paymob-pixel-errors {
+    color: var(--store-danger);
+}
+
+@keyframes paymob-view-enter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.checkout-provider-heading {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.checkout-provider-heading > .checkout-edit-link {
+    align-self: flex-start;
+}
+
+.checkout-provider-selected {
+    justify-content: flex-start;
+}
+
+.checkout-provider-selected h2 {
+    margin: 3px 0 0;
 }
 
 .checkout-method {
@@ -3408,6 +4003,25 @@ button.category-chip {
     font-weight: 800;
 }
 
+.order-status.pending {
+    border-color: color-mix(in srgb, var(--store-warning) 34%, var(--store-border));
+    color: var(--store-warning);
+    background: color-mix(in srgb, var(--store-warning) 12%, transparent);
+}
+
+.order-status.paid {
+    border-color: rgba(45, 212, 191, .25);
+    color: var(--store-accent-2);
+    background: rgba(45, 212, 191, .09);
+}
+
+.order-status.failed,
+.order-status.cancelled {
+    border-color: color-mix(in srgb, var(--store-danger) 34%, var(--store-border));
+    color: var(--store-danger);
+    background: color-mix(in srgb, var(--store-danger) 12%, transparent);
+}
+
 .order-meta-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -3641,6 +4255,32 @@ button.category-chip {
         width: min(100% - 24px, 1240px);
     }
 
+    .paymob-pixel-view {
+        padding: 16px;
+        border-radius: 18px;
+    }
+
+    .paymob-payment-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .paymob-card-aside {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: stretch;
+    }
+
+    .paymob-pixel-host { padding: 12px; }
+
+    .paymob-form-topline {
+        align-items: flex-start;
+    }
+
+    .paymob-card-preview {
+        max-width: 390px;
+        width: 100%;
+        justify-self: center;
+    }
+
     .store-top-strip .store-container,
     .store-footer-bottom {
         align-items: flex-start;
@@ -3744,6 +4384,7 @@ button.category-chip {
 
     .checkout-form-grid,
     .checkout-method-grid,
+    .payment-provider-grid,
     .stripe-elements-grid,
     .payment-security-grid {
         grid-template-columns: 1fr;

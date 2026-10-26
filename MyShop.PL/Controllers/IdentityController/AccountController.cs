@@ -118,10 +118,12 @@ namespace MyShop.PL.Controllers.IdentityController
                 await EnsureRoleAsync(roleName);
                 await _userManager.AddToRoleAsync(user, roleName);
 
-                await _emailSender.SendEmailAsync(
-                    user.Email!,
-                    "Welcome to MyShop",
-                    $"""
+                try
+                {
+                    await _emailSender.SendEmailAsync(
+                        user.Email!,
+                        "Welcome to MyShop",
+                        $"""
         <h2>Welcome to MyShop, {user.FirstName}!</h2>
 
         <p>Your account has been created successfully.</p>
@@ -130,7 +132,14 @@ namespace MyShop.PL.Controllers.IdentityController
 
         <p>We hope you enjoy your shopping experience.</p>
         """
-   );
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        ex,
+                        "Failed to send welcome email; registration will continue.");
+                }
 
                 await _signInManager.SignInAsync(
                     user,

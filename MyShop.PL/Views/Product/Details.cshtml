@@ -43,7 +43,7 @@
                 <dl>
                     <div>
                         <dt>Price</dt>
-                        <dd>@Model.Price.ToString("C")</dd>
+                        <dd>@CurrencyFormatter.ToEgp(Model.Price)</dd>
                     </div>
                     <div>
                         <dt>Category</dt>
@@ -111,7 +111,7 @@ else
                     <div class="detail-facts">
                         <div class="detail-fact">
                             <span>Price</span>
-                            <strong class="price">@Model.Price.ToString("C")</strong>
+                            <strong class="price">@CurrencyFormatter.ToEgp(Model.Price)</strong>
                         </div>
                         <div class="detail-fact">
                             <span>Category</span>
@@ -131,6 +131,7 @@ else
                             <span>Back to Products</span>
                         </a>
                         <form asp-controller="Cart" asp-action="AddToCart" method="post" class="store-cart-form">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="productId" value="@Model.Id" />
                             <input type="hidden" name="quantity" value="1" />
                             <button type="submit" class="store-button-primary">

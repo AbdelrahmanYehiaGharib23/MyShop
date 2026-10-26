@@ -54,5 +54,10 @@ namespace MyShop.PL.Controllers
 
             return View(product);
         }
+
+        public IActionResult Favorites()
+        {
+            return View();
+        }
     }
 }

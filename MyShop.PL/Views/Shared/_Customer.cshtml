@@ -2,6 +2,7 @@
 @{
     var pageTitle = ViewData["Title"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
     var displayName = User.Identity?.Name ?? "Guest";
     var createToast = TempData["Create"]?.ToString();
     var updateToast = TempData["Update"]?.ToString();
@@ -25,7 +26,7 @@
 }
 
 <!DOCTYPE html>
-<html lang="en" data-store-theme="dark">
+<html lang="en" data-theme="dark" data-store-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,24 +34,38 @@
 
     <script>
             (function () {
-                var theme = localStorage.getItem('myshop-theme') || 'dark';
+                var storedTheme = localStorage.getItem('myshop-theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = storedTheme === 'dark' || storedTheme === 'light'
+                    ? storedTheme
+                    : (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-store-theme', theme);
             })();
     </script>
 
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/customer-store.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/base.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/store.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/cart.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/checkout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/orders.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/experience.css" asp-append-version="true" />
+    <link rel="icon" type="image/svg+xml" href="~/Images/myshop-mark.svg" asp-append-version="true" />
 </head>
 <body>
     <div class="store-app">
         <div class="store-top-strip">
-            <div class="store-container">
-                <span><i class="fas fa-shipping-fast"></i> Fast session cart</span>
-                <span><i class="fas fa-shield-alt"></i> Premium shopping experience</span>
-                <span><i class="fas fa-headset"></i> Support ready</span>
+            <div class="store-container" aria-label="Store benefits">
+                <span><i class="fas fa-shipping-fast" aria-hidden="true"></i> Free shipping <span aria-hidden="true">·</span> Secure checkout <span aria-hidden="true">·</span> Support ready</span>
             </div>
         </div>
 
@@ -78,6 +93,16 @@
                                asp-action="Index"
                                class="store-nav-link @(string.Equals(currentController, "Store", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 Products
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Store"
+                               asp-action="Favorites"
+                               class="store-nav-link store-favorites-link @(string.Equals(currentAction, "Favorites", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)"
+                               aria-label="Favorites">
+                                <i class="far fa-heart" aria-hidden="true"></i>
+                                <span>Favorites</span>
+                                <span class="store-favorites-badge" data-favorites-count hidden>0</span>
                             </a>
                         </li>
                         <li>
@@ -112,7 +137,7 @@
                     </form>
 
                     <div class="store-nav-actions">
-                        <button type="button" class="store-icon-button" data-store-theme-toggle aria-label="Toggle color theme">
+                        <button type="button" class="store-icon-button" data-store-theme-toggle data-theme-toggle aria-label="Switch to light theme" aria-pressed="true">
                             <i class="fas fa-moon"></i>
                         </button>
 
@@ -256,6 +281,13 @@
                     <h2>Contact</h2>
                     <span><i class="fas fa-envelope"></i> support@myshop.local</span>
                     <span><i class="fas fa-phone"></i> +20 100 000 0000</span>
+                    <div class="store-payment-providers" aria-label="Payment providers">
+                        <h3>Payments</h3>
+                        <div class="store-payment-provider-list">
+                            <span class="store-payment-provider stripe-wordmark"><i class="fab fa-stripe-s" aria-hidden="true"></i> stripe</span>
+                            <span class="store-payment-provider paymob-wordmark">paymob</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -267,11 +299,14 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     @if (loadStripeJs)
     {
         <script src="https://js.stripe.com/v3/" data-stripe-js></script>
     }
     <script src="~/js/customer-store.js" asp-append-version="true"></script>
+    <script src="~/js/experience.js" asp-append-version="true"></script>
+    <script src="~/js/orders.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

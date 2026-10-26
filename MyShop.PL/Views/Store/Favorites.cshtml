@@ -1,0 +1,29 @@
+@{
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = "Favorites";
+    var addToCartUrl = Url.Action("AddToCart", "Cart") ?? "/Cart/AddToCart";
+}
+
+<section class="store-favorites-page" data-favorites-page data-add-to-cart-url="@addToCartUrl">
+    <div class="store-container">
+        <header class="favorites-heading scroll-reveal is-revealed">
+            <div>
+                <span class="section-eyebrow"><i class="fas fa-heart" aria-hidden="true"></i> YOUR COLLECTION</span>
+                <h1>Saved favorites</h1>
+                <p>Keep the products you love close, then pick up right where you left off.</p>
+            </div>
+            <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i><span>Continue shopping</span>
+            </a>
+        </header>
+
+        <div class="favorites-grid" data-favorites-grid aria-live="polite"></div>
+        <div class="store-empty favorites-empty" data-favorites-empty>
+            <span class="store-empty-visual"><i class="far fa-heart" aria-hidden="true"></i></span>
+            <h2>Your favorites start here</h2>
+            <p>Tap the heart on any product to save it to this list.</p>
+            <a asp-controller="Store" asp-action="Index" class="store-button-primary"><i class="fas fa-store" aria-hidden="true"></i><span>Explore products</span></a>
+        </div>
+        <form class="favorites-token-source" hidden aria-hidden="true">@Html.AntiForgeryToken()</form>
+    </div>
+</section>

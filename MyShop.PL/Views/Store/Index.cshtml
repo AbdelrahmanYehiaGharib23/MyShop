@@ -25,7 +25,7 @@
         .Where(category => !string.IsNullOrWhiteSpace(category))
         .Distinct()
         .ToList();
-    var heroProducts = products.Take(3).ToList();
+    var heroProducts = products.Take(2).ToList();
 
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "Products";
@@ -87,7 +87,7 @@
                             }
                             <div class="hero-product-info">
                                 <strong>@product.Name</strong>
-                                <span>@product.Price.ToString("C")</span>
+                                <span>@CurrencyFormatter.ToEgp(product.Price)</span>
                             </div>
                         </article>
                     }
@@ -209,7 +209,7 @@
                         <strong data-store-count
                                 data-count-to="@((products.Any() ? products.Average(product => product.Price) : 0m).ToString(System.Globalization.CultureInfo.InvariantCulture))"
                                 data-count-format="currency">
-                            @(products.Any() ? products.Average(product => product.Price).ToString("C") : "0")
+                            @(products.Any() ? CurrencyFormatter.ToEgp(products.Average(product => product.Price)) : CurrencyFormatter.ToEgp(0))
                         </strong>
                     </div>
                 </div>
@@ -224,12 +224,23 @@
                             ? null
                             : Url.Content($"~/{product.ImageUrl.TrimStart('/')}");
 
+                        var detailsUrl = Url.Action("Details", "Store", new { id = product.Id }) ?? $"/Store/Details/{product.Id}";
+                        var addToCartUrl = Url.Action("AddToCart", "Cart") ?? "/Cart/AddToCart";
+
                         <article class="store-product-card store-fade-in"
                                  data-product-card
                                  data-product-name="@product.Name"
-                                 data-product-category="@product.CategoryName">
+                                 data-product-category="@product.CategoryName"
+                                 data-product-id="@product.Id"
+                                 data-product-price="@CurrencyFormatter.ToEgp(product.Price)"
+                                 data-product-image="@(imageUrl ?? string.Empty)"
+                                 data-product-details-url="@detailsUrl"
+                                 data-add-to-cart-url="@addToCartUrl">
                             <div class="store-product-media">
-                                <button type="button" class="wishlist-button" aria-label="Add @product.Name to wishlist" data-wishlist-button>
+                                <button type="button" class="wishlist-button" aria-label="Add @product.Name to favorites" data-wishlist-button
+                                        data-product-id="@product.Id" data-product-name="@product.Name" data-product-category="@product.CategoryName"
+                                        data-product-price="@CurrencyFormatter.ToEgp(product.Price)" data-product-image="@(imageUrl ?? string.Empty)"
+                                        data-product-details-url="@detailsUrl" data-add-to-cart-url="@addToCartUrl">
                                     <i class="far fa-heart"></i>
                                 </button>
                                 @if (!string.IsNullOrWhiteSpace(imageUrl))
@@ -251,24 +262,17 @@
                             </div>
 
                             <div class="store-product-body">
-                                <div class="store-rating" aria-label="Rated 4.8 out of 5">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star-half-alt"></i>
-                                    <span>4.8</span>
-                                </div>
                                 <h3 class="store-product-title">@product.Name</h3>
                                 <p class="store-product-subtitle">
-                                    Premium pick from the @(string.IsNullOrWhiteSpace(product.CategoryName) ? "store" : product.CategoryName) collection.
+                                    @(string.IsNullOrWhiteSpace(product.CategoryName) ? "Explore this product in our catalog." : $"Explore the {product.CategoryName} collection.")
                                 </p>
                                 <div class="store-product-meta">
-                                    <span class="store-price">@product.Price.ToString("C")</span>
+                                    <span class="store-price">@CurrencyFormatter.ToEgp(product.Price)</span>
                                     <span>@product.CategoryName</span>
                                 </div>
                                 <div class="store-product-actions">
                                     <form asp-controller="Cart" asp-action="AddToCart" method="post" class="store-cart-form">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@product.Id" />
                                         <input type="hidden" name="quantity" value="1" />
                                         <button type="submit" class="store-button-primary">

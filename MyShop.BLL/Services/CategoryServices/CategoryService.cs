@@ -1,8 +1,8 @@
 using AutoMapper;
-using Microsoft.Extensions.Caching.Memory;
 using MyShop.BLL.Models.Dto.CategoryDto;
 using MyShop.DAL.Contracts.UnitOfWork;
 using MyShop.DAL.Entities;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MyShop.BLL.Services.CategoryServices
 {
@@ -10,13 +10,13 @@ namespace MyShop.BLL.Services.CategoryServices
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
         private const string CategoryCacheKey = "CategoryList";
-        public CategoryService(IUnitOfWork unitOfWork,IMapper mapper, IMemoryCache memoryCache)
+        public CategoryService( IUnitOfWork unitOfWork,IMapper mapper,HybridCache cache)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _memoryCache = memoryCache;
+            _cache = cache;
         }
 
         public async Task<int> CreateCategoryAsync(CreateCategoryDto category)
@@ -26,26 +26,22 @@ namespace MyShop.BLL.Services.CategoryServices
             var result = await _unitOfWork.CompleteAsync();
 
             if (result > 0)
-                _memoryCache.Remove(CategoryCacheKey);
+                await _cache.RemoveAsync(CategoryCacheKey);
 
             return result;
 
         }
         public async Task<IEnumerable<CategoryDto>> GetCategoryAsync()
         {
-            if (!_memoryCache.TryGetValue(CategoryCacheKey, out IEnumerable<CategoryDto>? categories))
-            {
-                var category = await _unitOfWork.CategoryRepository.GetAllAsync();
+            return await _cache.GetOrCreateAsync(
+                CategoryCacheKey,
+                async cancellationToken =>
+                {
+                    var categoriesFromDb =
+                        await _unitOfWork.CategoryRepository.GetAllAsync();
 
-                categories = _mapper.Map<IEnumerable<CategoryDto>>(category);
-
-                _memoryCache.Set(
-                    CategoryCacheKey,
-                    categories,
-                    TimeSpan.FromMinutes(30));
-            }
-
-            return categories!;
+                    return _mapper.Map<IEnumerable<CategoryDto>>(categoriesFromDb);
+                });
         }
 
         public async Task<CategoryDetailsDto?> GetCategoryByIdAsync(int id)
@@ -62,7 +58,7 @@ namespace MyShop.BLL.Services.CategoryServices
             var result = await _unitOfWork.CompleteAsync();
 
             if (result > 0)
-                _memoryCache.Remove(CategoryCacheKey);
+                await _cache.RemoveAsync(CategoryCacheKey);
 
             return result;
         }
@@ -76,7 +72,7 @@ namespace MyShop.BLL.Services.CategoryServices
 
             if (result > 0)
             {
-                _memoryCache.Remove(CategoryCacheKey);
+                await _cache.RemoveAsync(CategoryCacheKey);
                 return true;
             }
 

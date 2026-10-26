@@ -111,7 +111,7 @@
         </div>
         <div>
             <span>Deleted value</span>
-            <strong>@totalValue.ToString("C")</strong>
+            <strong>@CurrencyFormatter.ToEgp(totalValue)</strong>
         </div>
         <div>
             <span>Last deleted</span>
@@ -149,7 +149,7 @@
                     <div class="product-card-body">
                         <h3>@product.Name</h3>
                         <div class="product-card-meta">
-                            <strong>@product.Price.ToString("C")</strong>
+                            <strong>@CurrencyFormatter.ToEgp(product.Price)</strong>
                             <span>#@product.Id</span>
                         </div>
 

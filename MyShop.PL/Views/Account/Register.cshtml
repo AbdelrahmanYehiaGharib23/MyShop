@@ -5,48 +5,69 @@
     Layout = "~/Views/Shared/_AuthLayout.cshtml";
 }
 
-<div class="auth-card">
+<div class="auth-shell">
+    <partial name="~/Views/Shared/_AuthStory.cshtml" />
+    <div class="auth-content">
+<div class="auth-card auth-register">
 
     <h2 class="auth-title">Create Account</h2>
 
     <form asp-action="Register" method="post" asp-controller="Account" class="auth-form">
         <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-user"></i></span>
-            <input asp-for="FirstName" placeholder="First Name" required />
+        <div class="auth-field">
+            <label asp-for="FirstName">First name</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-user"></i></span>
+                <input asp-for="FirstName" placeholder="Enter your first name" required />
+            </div>
+            <span asp-validation-for="FirstName" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="FirstName" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-user"></i></span>
-            <input asp-for="LastName" placeholder="Last Name" required />
+        <div class="auth-field">
+            <label asp-for="LastName">Last name</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-user"></i></span>
+                <input asp-for="LastName" placeholder="Enter your last name" required />
+            </div>
+            <span asp-validation-for="LastName" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="LastName" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-user-tag"></i></span>
-            <input asp-for="UserName" placeholder="User Name" required />
+        <div class="auth-field">
+            <label asp-for="UserName">Username</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-user-tag"></i></span>
+                <input asp-for="UserName" placeholder="Choose a username" required />
+            </div>
+            <span asp-validation-for="UserName" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="UserName" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-envelope"></i></span>
-            <input asp-for="Email" placeholder="Email" required />
+        <div class="auth-field">
+            <label asp-for="Email">Email address</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                <input asp-for="Email" placeholder="you@example.com" required />
+            </div>
+            <span asp-validation-for="Email" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="Email" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-lock"></i></span>
-            <input asp-for="Password" placeholder="Password" type="password" required />
+        <div class="auth-field">
+            <label asp-for="Password">Password</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-lock"></i></span>
+                <input asp-for="Password" placeholder="Create a password" type="password" required />
+            </div>
+            <span asp-validation-for="Password" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="Password" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-lock"></i></span>
-            <input asp-for="ConfirmPassword" placeholder="Confirm Password" type="password" required />
+        <div class="auth-field">
+            <label asp-for="ConfirmPassword">Confirm password</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-lock"></i></span>
+                <input asp-for="ConfirmPassword" placeholder="Enter your password again" type="password" required />
+            </div>
+            <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="ConfirmPassword" class="field-validation-error"></span>
 
         <div class="checkbox-group">
             <label>
@@ -59,4 +80,6 @@
     </form>
 
     <p class="switch-form">Already have an account? <a asp-action="Login">Login Now!</a></p>
+</div>
+    </div>
 </div>

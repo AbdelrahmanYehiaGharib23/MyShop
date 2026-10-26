@@ -1,13 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using MyShop.BLL.Models.Dto.OrderDto;
+using MyShop.DAL.Entities;
 
 namespace MyShop.BLL.Services.OrderServices
 {
     public interface IOrderService
     {
-        Task CreateOrderAsync(CreateOrderDto dto);
+        Task<int> CreatePendingOrderAsync(CreateOrderDto dto);
+
+        Task<Order?> GetOrderForPaymentAsync(int orderId);
+
+        Task<Order?> GetOrderByPaymentIntentIdAsync(string paymentIntentId);
+
+        Task MarkAsPaidAsync(int orderId);
+
+        Task MarkAsFailedAsync(int orderId);
+
         Task<IEnumerable<OrderDto>> GetMyOrdersAsync();
     }
 }

@@ -1,19 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MyShop.BLL.Models.Dto.PaymentDto;
+using MyShop.BLL.Models.Dto.OrderDto;
 
 namespace MyShop.BLL.Services.PaymentServices
 {
     public interface IPaymentService
     {
-        Task<PaymentIntentResultDto> CreatePaymentIntentAsync(
+        Task<OrderPaymentResultDto> CreateOrUpdatePaymentIntentAsync(
+            int orderId,
             decimal amount,
-            string currency = "usd");
+            string currency = "egp");
 
-        Task<bool> IsPaymentIntentSucceededAsync(
+        Task<bool> ConfirmPaymentSucceededAsync(
+            int orderId,
             string paymentIntentId,
-            decimal expectedAmount,
-            string currency = "usd");
+            decimal amount,
+            string currency = "egp");
     }
 }

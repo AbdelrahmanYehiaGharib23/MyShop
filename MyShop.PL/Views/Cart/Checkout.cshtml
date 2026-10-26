@@ -2,6 +2,7 @@
 @using Microsoft.Extensions.Options
 @using MyShop.BLL.Models.Common
 @inject IOptions<StripeSettings> StripeOptions
+@inject IOptions<PaymobSettings> PaymobOptions
 
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
@@ -15,8 +16,30 @@
     var publishableKey = StripeOptions.Value?.PublishableKey ?? string.Empty;
     var stripeSecretConfigured = !string.IsNullOrWhiteSpace(StripeOptions.Value?.SecretKey);
     var stripeConfigured = !string.IsNullOrWhiteSpace(publishableKey) && stripeSecretConfigured;
-    var paymentIntentUrl = Url.Action("CreatePaymentIntent", "Payment") ?? "/Payment/CreatePaymentIntent";
-    var stripeEnabledValue = stripeConfigured.ToString().ToLowerInvariant();
+    var egpPerUsd = StripeOptions.Value?.EgpPerUsd ?? 51.83m;
+    var stripeTotalUsd = egpPerUsd > 0
+        ? Math.Round(total / egpPerUsd, 2, MidpointRounding.AwayFromZero)
+        : 0m;
+    var paymobSettings = PaymobOptions.Value;
+    var paymobCallbackConfigured = Uri.TryCreate(
+        paymobSettings?.CallbackBaseUrl,
+        UriKind.Absolute,
+        out var paymobCallbackUri)
+        && paymobCallbackUri.Scheme == Uri.UriSchemeHttps;
+    var paymobConfigured = !string.IsNullOrWhiteSpace(paymobSettings?.PublicKey)
+        && !string.IsNullOrWhiteSpace(paymobSettings?.SecretKey)
+        && paymobSettings.IntegrationId > 0
+        && paymobCallbackConfigured;
+    var pendingOrderId = Model?.OrderId ?? 0;
+    var hasPendingOrder = pendingOrderId > 0;
+    var selectedGateway = Context.Request.Query["gateway"].ToString();
+    var stripeSelected = hasPendingOrder && string.Equals(selectedGateway, "stripe", StringComparison.OrdinalIgnoreCase);
+    var paymentIntentUrl = Url.Action("CreateOrUpdatePaymentIntent", "Payment") ?? "/Payment/CreateOrUpdatePaymentIntent";
+    var confirmPaymentUrl = Url.Action("ConfirmPayment", "Payment") ?? "/Payment/ConfirmPayment";
+    var paymobPaymentUrl = Url.Action("CreatePaymobPayment", "Payment") ?? "/Payment/CreatePaymobPayment";
+    var paymobReturnUrl = Url.Action("PaymobReturn", "Payment") ?? "/Payment/PaymobReturn";
+    var ordersUrl = Url.Action("MyOrders", "Orders") ?? "/Orders/MyOrders";
+    var stripeEnabledValue = (stripeConfigured && stripeSelected).ToString().ToLowerInvariant();
     ViewData["LoadStripeJs"] = stripeEnabledValue;
 }
 
@@ -24,30 +47,28 @@
     <div class="store-container">
         <div class="checkout-hero store-fade-in">
             <div class="checkout-hero-copy">
-                <span class="section-eyebrow"><i class="fas fa-lock"></i> Secure Checkout</span>
-                <h1>Confirm your delivery details.</h1>
-                <p>Add the address and phone number for this order. Your cart items will be converted into a saved customer order.</p>
-
-                <div class="checkout-trust-row" aria-label="Checkout benefits">
-                    <span><i class="fas fa-shipping-fast"></i> Fast Delivery</span>
-                    <span><i class="fas fa-shield-alt"></i> Secure Checkout</span>
-                    <span><i class="fas fa-receipt"></i> Order Tracking</span>
-                </div>
+                <span class="section-eyebrow">Checkout</span>
+                <h1 data-checkout-hero-title
+                    data-checkout-default-title="@(stripeSelected ? "Pay securely with Stripe." : hasPendingOrder ? "Choose how to pay." : "Confirm your delivery details.")"
+                    data-paymob-title="Pay securely with Paymob.">@(stripeSelected ? "Pay securely with Stripe." : hasPendingOrder ? "Choose how to pay." : "Confirm your delivery details.")</h1>
+                <p data-checkout-hero-subtitle
+                   data-checkout-default-subtitle="@(stripeSelected ? "Your card details are encrypted and handled directly by Stripe." : hasPendingOrder ? "Select a payment provider to continue to its secure checkout." : "Add the address and phone number for this order. Your cart items will be converted into a saved customer order.")"
+                   data-paymob-subtitle="Your card details are encrypted and handled directly by Paymob.">@(stripeSelected ? "Your card details are encrypted and handled directly by Stripe." : hasPendingOrder ? "Select a payment provider to continue to its secure checkout." : "Add the address and phone number for this order. Your cart items will be converted into a saved customer order.")</p>
             </div>
 
-            <div class="checkout-progress-card" aria-label="Checkout progress">
-                <div class="checkout-step active">
-                    <span><i class="fas fa-shopping-bag"></i></span>
+            <div class="checkout-progress-card" aria-label="Checkout progress: Cart completed, Delivery @(hasPendingOrder ? "completed" : "current"), Payment @(hasPendingOrder ? "current" : "upcoming")">
+                <div class="checkout-step is-complete">
+                    <span><i class="fas fa-check" aria-hidden="true"></i></span>
                     <strong>Cart</strong>
                 </div>
-                <span class="checkout-step-line"></span>
-                <div class="checkout-step active">
-                    <span><i class="fas fa-truck"></i></span>
+                <span class="checkout-step-line is-complete" aria-hidden="true"></span>
+                <div class="checkout-step @(hasPendingOrder ? "is-complete" : "is-current")" aria-current="@(hasPendingOrder ? null : "step")">
+                    <span><i class="fas @(hasPendingOrder ? "fa-check" : "fa-truck")" aria-hidden="true"></i></span>
                     <strong>Delivery</strong>
                 </div>
-                <span class="checkout-step-line"></span>
-                <div class="checkout-step active">
-                    <span><i class="fas fa-credit-card"></i></span>
+                <span class="checkout-step-line @(hasPendingOrder ? "is-complete" : string.Empty)" aria-hidden="true"></span>
+                <div class="checkout-step @(hasPendingOrder ? "is-current" : string.Empty)" aria-current="@(hasPendingOrder ? "step" : null)">
+                    <span><i class="fas fa-credit-card" aria-hidden="true"></i></span>
                     <strong>Payment</strong>
                 </div>
             </div>
@@ -62,65 +83,286 @@
                   data-stripe-checkout
                   data-stripe-enabled="@stripeEnabledValue"
                   data-stripe-publishable-key="@publishableKey"
-                  data-payment-intent-url="@paymentIntentUrl">
+                  data-payment-intent-url="@paymentIntentUrl"
+                  data-payment-confirm-url="@confirmPaymentUrl"
+                  data-order-id="@pendingOrderId"
+                  data-paymob-url="@paymobPaymentUrl"
+                  data-paymob-public-key="@(paymobSettings?.PublicKey ?? string.Empty)"
+                  data-paymob-return-url="@paymobReturnUrl"
+                  data-orders-url="@ordersUrl">
                 @Html.AntiForgeryToken()
-                <input asp-for="PaymentIntentId" type="hidden" data-payment-intent-id />
+                <input asp-for="OrderId" type="hidden" />
+
+                <details class="checkout-summary store-fade-in" data-checkout-summary open>
+                    <summary class="checkout-summary-header">
+                        <span class="checkout-summary-title">
+                            <span class="section-eyebrow"><i class="fas fa-receipt" aria-hidden="true"></i> Order Summary</span>
+                            <strong>@totalItems item@(totalItems == 1 ? string.Empty : "s")</strong>
+                            <span class="checkout-summary-mobile-title">Order summary (@totalItems item@(totalItems == 1 ? string.Empty : "s")) — @CurrencyFormatter.ToEgp(total)</span>
+                        </span>
+                        <span class="checkout-summary-heading-end">
+                            <i class="fas fa-chevron-down checkout-summary-chevron" aria-hidden="true"></i>
+                        </span>
+                    </summary>
+                    <div class="checkout-summary-content">
+                        <div class="checkout-item-list">
+                            @foreach (var item in items)
+                            {
+                                var imageUrl = string.IsNullOrWhiteSpace(item.ImageUrl)
+                                    ? null
+                                    : Url.Content($"~/{item.ImageUrl.TrimStart('/')}");
+
+                                <article class="checkout-item">
+                                    <div class="checkout-item-media">
+                                        @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                        {
+                                            <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                        }
+                                        else
+                                        {
+                                            <span class="placeholder-illustration compact" aria-hidden="true">
+                                                <span class="placeholder-screen"></span>
+                                                <span class="placeholder-base"></span>
+                                                <span class="placeholder-spark one"></span>
+                                                <span class="placeholder-spark two"></span>
+                                            </span>
+                                        }
+                                    </div>
+
+                                    <div class="checkout-item-info">
+                                        <h3>@item.ProductName</h3>
+                                        <span>Qty @item.Quantity x @CurrencyFormatter.ToEgp(item.Price)</span>
+                                    </div>
+
+                                    <strong>@CurrencyFormatter.ToEgp(item.TotalPrice)</strong>
+                                </article>
+                            }
+                        </div>
+
+                        <div class="cart-summary-row">
+                            <span>Subtotal</span>
+                            <strong>@CurrencyFormatter.ToEgp(subtotal)</strong>
+                        </div>
+                        <div class="cart-summary-row">
+                            <span>Shipping</span>
+                            <strong>@(shipping == 0 ? "Free" : CurrencyFormatter.ToEgp(shipping))</strong>
+                        </div>
+                        <div class="cart-summary-row cart-summary-total">
+                            <span>Total</span>
+                            <strong>@CurrencyFormatter.ToEgp(total)</strong>
+                        </div>
+                        @if (stripeSelected)
+                        {
+                            <div class="cart-summary-row stripe-converted-total">
+                                <span>Stripe charge <small>1 USD = @egpPerUsd.ToString("N2") EGP</small></span>
+                                <strong>USD @stripeTotalUsd.ToString("N2")</strong>
+                            </div>
+                        }
+                        <div class="cart-summary-row stripe-converted-total" data-paymob-summary-charge hidden>
+                            <span>Paymob charge</span>
+                            <strong>@CurrencyFormatter.ToEgp(total)</strong>
+                        </div>
+
+                        <div class="cart-summary-actions">
+                            <a asp-controller="Cart" asp-action="Index" class="store-button-secondary cart-checkout-button">
+                                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                                <span>Return to Cart</span>
+                            </a>
+                            <a asp-controller="Store" asp-action="Index" class="checkout-shopping-link">Continue shopping</a>
+                        </div>
+                    </div>
+                </details>
 
                 <div class="checkout-main">
-                    <section class="checkout-panel store-fade-in" style="animation-delay: 80ms">
-                        <div class="checkout-panel-heading">
-                            <span class="checkout-panel-icon"><i class="fas fa-truck"></i></span>
-                            <div>
-                                <h2>Delivery Information</h2>
-                                <p>These two fields are used by the order service when creating your order.</p>
-                            </div>
-                        </div>
-
-                        <div asp-validation-summary="ModelOnly" class="checkout-validation"></div>
-
-                        <div class="checkout-form-grid">
-                            <div class="checkout-field">
-                                <label asp-for="Phone">Phone Number</label>
-                                <div class="checkout-input-wrap">
-                                    <i class="fas fa-phone-alt"></i>
-                                    <input asp-for="Phone" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" required />
+                    <section class="checkout-panel store-fade-in">
+                        @if (hasPendingOrder)
+                        {
+                            <div class="checkout-delivery-compact">
+                                <span class="checkout-panel-icon"><i class="fas fa-truck" aria-hidden="true"></i></span>
+                                <div class="checkout-delivery-copy">
+                                    <h2>Delivery details</h2>
+                                    <p><span><i class="fas fa-phone-alt" aria-hidden="true"></i> @Model?.Phone</span><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> @Model?.Address</span></p>
                                 </div>
-                                <span asp-validation-for="Phone" class="checkout-field-error"></span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="checkout-panel-heading">
+                                <span class="checkout-panel-icon"><i class="fas fa-truck"></i></span>
+                                <div>
+                                    <h2>Delivery Information</h2>
+                                    <p>These two fields are used by the order service when creating your order.</p>
+                                </div>
                             </div>
 
-                            <div class="checkout-field checkout-field-wide">
-                                <label asp-for="Address">Delivery Address</label>
-                                <div class="checkout-input-wrap">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <input asp-for="Address" type="text" autocomplete="street-address" placeholder="Street, building, apartment, city" required />
+                            <div asp-validation-summary="ModelOnly" class="checkout-validation"></div>
+
+                            <div class="checkout-form-grid">
+                                <div class="checkout-field">
+                                    <label asp-for="Phone">Phone Number</label>
+                                    <div class="checkout-input-wrap">
+                                        <i class="fas fa-phone-alt"></i>
+                                        <input asp-for="Phone" type="tel" autocomplete="tel" placeholder="+20 100 000 0000" required />
+                                    </div>
+                                    <span asp-validation-for="Phone" class="checkout-field-error"></span>
                                 </div>
-                                <span asp-validation-for="Address" class="checkout-field-error"></span>
+
+                                <div class="checkout-field">
+                                    <label asp-for="Address">Delivery Address</label>
+                                    <div class="checkout-input-wrap">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <input asp-for="Address" type="text" autocomplete="street-address" placeholder="Street, building, apartment, city" required />
+                                    </div>
+                                    <span asp-validation-for="Address" class="checkout-field-error"></span>
+                                </div>
                             </div>
-                        </div>
+                            <button type="submit" class="store-button-primary checkout-submit-button" data-checkout-continue>
+                                <span>Continue to Payment</span><i class="fas fa-arrow-right" aria-hidden="true"></i>
+                            </button>
+                        }
                     </section>
 
-                    <section class="checkout-panel checkout-methods checkout-payment-panel store-fade-in" style="animation-delay: 150ms">
-                        <div class="checkout-panel-heading">
-                            <span class="checkout-panel-icon"><i class="fab fa-stripe-s"></i></span>
-                            <div>
-                                <h2>Payment Method</h2>
-                                <p>Pay securely with Stripe, then your order will be saved to your customer account.</p>
+                    <section class="checkout-panel checkout-methods checkout-payment-panel store-fade-in">
+                        @if (!hasPendingOrder)
+                        {
+                            <div class="checkout-panel-heading">
+                                <span class="checkout-panel-icon"><i class="fas fa-clipboard-check"></i></span>
+                                <div>
+                                    <h2>Delivery comes first</h2>
+                                    <p>Save your delivery details to see the available payment providers for this order.</p>
+                                </div>
                             </div>
-                        </div>
+                        }
+                        else if (!stripeSelected)
+                        {
+                            <div class="checkout-panel-heading">
+                                <span class="checkout-panel-icon"><i class="fas fa-wallet"></i></span>
+                                <div>
+                                    <span class="section-eyebrow">Order #@pendingOrderId</span>
+                                    <h2>Select a payment provider</h2>
+                                    <p>Paymob charges in EGP; Stripe charges in USD.</p>
+                                </div>
+                            </div>
 
-                        <div class="checkout-method-grid">
-                            <label class="checkout-method">
-                                <input type="radio" name="PaymentMethod" value="stripe" checked />
-                                <span><i class="fas fa-credit-card"></i></span>
-                                <strong>Stripe Card</strong>
-                                <small>Encrypted card payment</small>
-                            </label>
+                            <div class="payment-provider-grid" role="group" aria-label="Select a payment provider" data-payment-provider-selection>
+                                <article class="payment-provider-card payment-provider-stripe">
+                                    <div class="payment-provider-topline">
+                                        <span class="payment-provider-brand-lockup stripe-brand-lockup">
+                                            <span class="payment-provider-logo stripe-logo" aria-hidden="true"><i class="fab fa-stripe-s"></i></span>
+                                            <span class="payment-provider-wordmark stripe-wordmark">stripe</span>
+                                        </span>
+                                        <span class="payment-provider-status">USD</span>
+                                    </div>
+                                    <div class="payment-provider-brand">STRIPE</div>
+                                    <h3>Pay by card</h3>
+                                    <p>Card payment in US dollars through Stripe.</p>
+                                    @if (stripeConfigured)
+                                    {
+                                        <a asp-controller="Cart" asp-action="Checkout" asp-route-orderId="@pendingOrderId" asp-route-gateway="stripe" class="store-button-primary payment-provider-action">
+                                            <span>Continue with Stripe</span><i class="fas fa-arrow-right"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <div class="payment-provider-unavailable"><i class="fas fa-circle-exclamation"></i> Stripe keys are not configured.</div>
+                                    }
+                                </article>
 
-                            <a asp-controller="Orders" asp-action="MyOrders" class="checkout-method checkout-method-link">
-                                <span><i class="fas fa-receipt"></i></span>
-                                <strong>My Orders</strong>
-                                <small>View previous orders</small>
+                                <article class="payment-provider-card payment-provider-paymob">
+                                    <div class="payment-provider-topline">
+                                        <span class="payment-provider-brand-lockup paymob-brand-lockup">
+                                            <span class="payment-provider-wordmark paymob-wordmark">paymob</span>
+                                        </span>
+                                        <span class="payment-provider-status">EGP</span>
+                                    </div>
+                                    <div class="payment-provider-brand">PAYMOB ACCEPT</div>
+                                    <h3>Pay with Paymob</h3>
+                                    <p>Card payment in Egyptian pounds through Paymob.</p>
+                                    @if (paymobConfigured)
+                                    {
+                                        <button type="button" class="store-button-primary payment-provider-action" data-paymob-start>
+                                            <span>Pay securely with Paymob</span><i class="fas fa-arrow-right"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <div class="payment-provider-unavailable"><i class="fas fa-circle-exclamation"></i> Paymob keys, integration ID, or public HTTPS callback URL are missing.</div>
+                                    }
+                                    <div class="payment-card-errors" data-paymob-errors role="alert" aria-live="polite"></div>
+                                </article>
+                            </div>
+
+                            <div class="checkout-secure-note payment-provider-backnote" data-payment-provider-selection-note>
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                <span>Card details are processed securely by the provider you choose. Your order is confirmed after payment verification.</span>
+                            </div>
+
+                            <section class="paymob-pixel-view" data-paymob-pixel-view hidden aria-labelledby="paymob-pixel-title">
+                                <div class="checkout-panel-heading checkout-provider-heading">
+                                    <button type="button" class="checkout-edit-link" data-paymob-back aria-label="Return to all payment methods">
+                                        <i class="fas fa-arrow-left" aria-hidden="true"></i><span>All payment methods</span>
+                                    </button>
+                                    <div class="checkout-provider-selected">
+                                        <span class="payment-provider-brand-lockup paymob-brand-lockup">
+                                            <span class="payment-provider-wordmark paymob-wordmark">paymob</span>
+                                        </span>
+                                        <div><span class="section-eyebrow">SECURE PAYMENT BY PAYMOB</span><h2 id="paymob-pixel-title">Card payment</h2></div>
+                                    </div>
+                                </div>
+
+                                <div class="stripe-payment-card paymob-payment-card">
+                                    <div class="stripe-payment-card-heading">
+                                        <div>
+                                            <span class="section-eyebrow"><i class="fas fa-shield-alt" aria-hidden="true"></i> Card Details</span>
+                                            <h3>Secure card payment</h3>
+                                        </div>
+                                        <div class="paymob-payment-badges">
+                                            <span class="stripe-mode-badge paymob-mode-badge">Paymob</span>
+                                            <aside class="paymob-card-aside" aria-label="Decorative Visa card preview">
+                                                <div class="paymob-card-preview" aria-hidden="true">
+                                                    <div class="paymob-card-preview-top"><span>myShop <small>PAY</small></span><i class="fas fa-wifi" aria-hidden="true"></i></div>
+                                                    <span class="paymob-card-chip"></span>
+                                                    <span class="paymob-card-number">•••• &nbsp; •••• &nbsp; •••• &nbsp; ••••</span>
+                                                    <div class="paymob-card-preview-bottom"><span>PAYMENT CARD</span><strong class="paymob-visa-wordmark">VISA</strong></div>
+                                                </div>
+                                            </aside>
+                                        </div>
+                                    </div>
+
+                                    <div class="paymob-payment-layout">
+                                        <div class="paymob-form-shell">
+                                            <div class="paymob-pixel-host is-loading" data-paymob-pixel-host>
+                                                <div id="paymob-pixel-checkout"></div>
+                                                <div class="paymob-pixel-loading" data-paymob-loading role="status">
+                                                    <span class="store-button-loader" aria-hidden="true"></span>
+                                                    <span>Preparing Paymob's secure card form...</span>
+                                                </div>
+                                            </div>
+                                            <div class="payment-card-errors" data-paymob-pixel-errors role="alert" aria-live="polite"></div>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="checkout-secure-note paymob-secure-note">
+                                        <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                        <span>Your card details are sent directly to Paymob. Your order is confirmed after payment verification.</span>
+                                    </div>
+                                </div>
+                            </section>
+                        }
+                        else
+                        {
+                        <div class="checkout-panel-heading checkout-provider-heading">
+                            <a asp-controller="Cart" asp-action="Checkout" asp-route-orderId="@pendingOrderId" class="checkout-edit-link" aria-label="Back to payment provider selection">
+                                <i class="fas fa-arrow-left" aria-hidden="true"></i><span>All payment methods</span>
                             </a>
+                            <div class="checkout-provider-selected">
+                                <span class="payment-provider-brand-lockup stripe-brand-lockup">
+                                    <span class="payment-provider-logo stripe-logo" aria-hidden="true"><i class="fab fa-stripe-s"></i></span>
+                                    <span class="payment-provider-wordmark stripe-wordmark">stripe</span>
+                                </span>
+                                <div><span class="section-eyebrow">SECURE PAYMENT BY STRIPE</span><h2>Card payment</h2></div>
+                            </div>
                         </div>
 
                         <div class="stripe-payment-card" data-stripe-payment-card>
@@ -169,6 +411,13 @@
                                     </div>
                                 </div>
                                 <div class="payment-card-errors" data-stripe-errors role="alert" aria-live="polite"></div>
+                                <button type="submit" class="store-button-primary checkout-submit-button" data-stripe-submit>
+                                    <span>Pay securely with Stripe</span><i class="fas fa-lock" aria-hidden="true"></i>
+                                </button>
+                                <div class="checkout-secure-note">
+                                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
+                                    <span>Your card details are sent directly to Stripe. Your order is confirmed after payment verification.</span>
+                                </div>
                             }
                             else
                             {
@@ -179,92 +428,15 @@
                                         <span>Add your publishable and secret keys in User Secrets to enable card payment.</span>
                                     </div>
                                 </div>
+                                <button type="submit" class="store-button-primary checkout-submit-button" data-stripe-submit disabled>
+                                    <span>Stripe Unavailable</span><i class="fas fa-lock" aria-hidden="true"></i>
+                                </button>
                             }
-
-                            <div class="payment-security-grid" aria-label="Payment security">
-                                <span><i class="fas fa-lock"></i> PCI-ready flow</span>
-                                <span><i class="fas fa-bolt"></i> Instant confirmation</span>
-                                <span><i class="fas fa-receipt"></i> Order saved after payment</span>
-                            </div>
                         </div>
+                        }
                     </section>
                 </div>
 
-                <aside class="checkout-summary store-fade-in" style="animation-delay: 220ms">
-                    <div class="checkout-summary-header">
-                        <div>
-                            <span class="section-eyebrow"><i class="fas fa-receipt"></i> Order Summary</span>
-                            <h2>@totalItems item@(totalItems == 1 ? string.Empty : "s")</h2>
-                        </div>
-                        <a asp-controller="Cart" asp-action="Index" class="checkout-edit-link">
-                            <i class="fas fa-pen"></i>
-                            <span>Edit</span>
-                        </a>
-                    </div>
-
-                    <div class="checkout-item-list">
-                        @foreach (var item in items)
-                        {
-                            var imageUrl = string.IsNullOrWhiteSpace(item.ImageUrl)
-                                ? null
-                                : Url.Content($"~/{item.ImageUrl.TrimStart('/')}");
-
-                            <article class="checkout-item">
-                                <div class="checkout-item-media">
-                                    @if (!string.IsNullOrWhiteSpace(imageUrl))
-                                    {
-                                        <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
-                                    }
-                                    else
-                                    {
-                                        <span class="placeholder-illustration compact" aria-hidden="true">
-                                            <span class="placeholder-screen"></span>
-                                            <span class="placeholder-base"></span>
-                                            <span class="placeholder-spark one"></span>
-                                            <span class="placeholder-spark two"></span>
-                                        </span>
-                                    }
-                                </div>
-
-                                <div class="checkout-item-info">
-                                    <h3>@item.ProductName</h3>
-                                    <span>Qty @item.Quantity x @item.Price.ToString("C")</span>
-                                </div>
-
-                                <strong>@item.TotalPrice.ToString("C")</strong>
-                            </article>
-                        }
-                    </div>
-
-                    <div class="cart-summary-row">
-                        <span>Subtotal</span>
-                        <strong>@subtotal.ToString("C")</strong>
-                    </div>
-                    <div class="cart-summary-row">
-                        <span>Shipping</span>
-                        <strong>@(shipping == 0 ? "Free" : shipping.ToString("C"))</strong>
-                    </div>
-                    <div class="cart-summary-row cart-summary-total">
-                        <span>Total</span>
-                        <strong>@total.ToString("C")</strong>
-                    </div>
-
-                    <div class="cart-summary-actions">
-                        <button type="submit" class="store-button-primary cart-checkout-button" data-stripe-submit>
-                            <i class="fas fa-lock"></i>
-                            <span>@(stripeConfigured ? "Pay Securely" : "Place Order")</span>
-                        </button>
-                        <a asp-controller="Store" asp-action="Index" class="store-button-secondary">
-                            <i class="fas fa-store"></i>
-                            <span>Continue Shopping</span>
-                        </a>
-                    </div>
-
-                    <div class="checkout-secure-note">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>@(stripeConfigured ? "Your card is handled by Stripe and your order is created after payment succeeds." : "Your order will be linked to your customer account.")</span>
-                    </div>
-                </aside>
             </form>
         }
         else
@@ -286,4 +458,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/checkout.js" asp-append-version="true"></script>
 }

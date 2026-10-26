@@ -1,28 +1,43 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8" />
     <title>@ViewData["Title"] - EMS Auth</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/Images/myshop-mark.svg" />
+    <script>
+        (function () {
+            var saved = localStorage.getItem('myshop-theme');
+            var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var valid = saved === 'dark' || saved === 'light';
+            document.documentElement.setAttribute('data-theme', valid ? saved : (dark ? 'dark' : 'light'));
+        })();
+    </script>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="/plugins/fontawesome-free/css/all.min.css" />
 
     <!-- Auth CSS -->
     <link rel="stylesheet" href="/css/auth.css" />
+    <link rel="stylesheet" href="/css/theme.css" />
+    <link rel="stylesheet" href="/css/base.css" />
+    <link rel="stylesheet" href="/css/components.css" />
+    <link rel="stylesheet" href="/css/auth-polish.css" />
 </head>
 <body>
     <div class="auth-wrapper">
         <div class="theme-toggle">
-            <button id="toggleTheme">
-                <i class="fas fa-moon"></i> Dark Mode
+            <button id="toggleTheme" type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="true">
+                <i class="fas fa-moon" aria-hidden="true"></i><span>Dark Mode</span>
             </button>
         </div>
 
@@ -34,21 +49,10 @@
     <script src="/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="/js/theme.js"></script>
+    <script src="/js/auth-ui.js"></script>
 
     @RenderSection("Scripts", required: false)
 
-    <script>
-        const toggleBtn = document.getElementById('toggleTheme');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                document.body.classList.toggle('dark-mode');
-                if (document.body.classList.contains('dark-mode')) {
-                    toggleBtn.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
-                } else {
-                    toggleBtn.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
-                }
-            });
-        }
-    </script>
 </body>
 </html>

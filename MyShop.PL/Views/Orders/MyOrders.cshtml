@@ -1,4 +1,5 @@
 @model IEnumerable<MyShop.BLL.Models.Dto.OrderDto.OrderDto>
+@using MyShop.DAL.Entities.Enum
 
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
@@ -26,89 +27,156 @@
 
         @if (orders.Any())
         {
+            <div class="orders-filter-bar" role="group" aria-label="Filter orders by status">
+                <button type="button" class="orders-filter active" data-order-filter="all" aria-pressed="true">All orders</button>
+                @foreach (var status in Enum.GetValues<OrderStatus>())
+                {
+                    <button type="button" class="orders-filter" data-order-filter="@status.ToString().ToLowerInvariant()" aria-pressed="false">@status</button>
+                }
+                <p class="orders-filter-count" data-orders-count aria-live="polite">@orders.Count orders</p>
+            </div>
             <div class="orders-grid">
                 @foreach (var order in orders)
                 {
                     var itemCount = order.Items?.Sum(item => item.Quantity) ?? 0;
+                    var statusClass = order.Status.ToString().ToLowerInvariant();
+                    var statusIcon = order.Status switch
+                    {
+                        OrderStatus.Paid => "fas fa-check-circle",
+                        OrderStatus.Failed => "fas fa-times-circle",
+                        OrderStatus.Cancelled => "fas fa-ban",
+                        _ => "fas fa-clock"
+                    };
+                    var paymentConfirmed = order.Status == OrderStatus.Paid;
+                    var terminalStatus = order.Status is OrderStatus.Cancelled or OrderStatus.Failed;
 
-                    <article class="order-card store-fade-in">
+                    <article class="order-card store-fade-in" data-order-status="@statusClass">
                         <div class="order-card-header">
                             <div>
                                 <span class="order-id">Order #@order.Id</span>
-                                <h2>@order.TotalPrice.ToString("C")</h2>
+                                <h2>@CurrencyFormatter.ToEgp(order.TotalPrice)</h2>
                             </div>
 
-                            <span class="order-status">
-                                <i class="fas fa-check-circle"></i>
-                                Created
+                            <span class="order-status @statusClass">
+                                <i class="@statusIcon"></i>
+                                @order.Status
                             </span>
                         </div>
 
-                        <div class="order-meta-grid">
-                            <div>
-                                <span>Date</span>
-                                <strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</strong>
+                        <div class="order-card-details">
+                            <div class="order-overview-column">
+                                <div class="order-meta-grid">
+                                    <div><span>Order date</span><strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</strong></div>
+                                    <div><span>Items</span><strong>@itemCount</strong></div>
+                                    <div><span>Phone</span><strong>@order.Phone</strong></div>
+                                </div>
+                                <div class="order-address">
+                                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                    <div><span class="order-detail-label">Delivery address</span><strong>@order.Address</strong></div>
+                                </div>
                             </div>
-                            <div>
-                                <span>Items</span>
-                                <strong>@itemCount</strong>
-                            </div>
-                            <div>
-                                <span>Phone</span>
-                                <strong>@order.Phone</strong>
-                            </div>
-                        </div>
 
-                        <div class="order-address">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>@order.Address</span>
-                        </div>
-
-                        @if (order.Items?.Any() == true)
-                        {
-                            <div class="order-items">
-                                @foreach (var item in order.Items)
-                                {
-                                    var imageUrl = string.IsNullOrWhiteSpace(item.ProductImageUrl)
-                                        ? null
-                                        : Url.Content($"~/{item.ProductImageUrl.TrimStart('/')}");
-
-                                    <div class="order-item-row">
-                                        <div class="order-item-media">
-                                            @if (!string.IsNullOrWhiteSpace(imageUrl))
-                                            {
-                                                <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
-                                            }
-                                            else
-                                            {
-                                                <span class="placeholder-illustration compact" aria-hidden="true">
-                                                    <span class="placeholder-screen"></span>
-                                                    <span class="placeholder-base"></span>
-                                                    <span class="placeholder-spark one"></span>
-                                                    <span class="placeholder-spark two"></span>
-                                                </span>
-                                            }
-                                        </div>
-
-                                        <div class="order-item-info">
-                                            <strong>@item.ProductName</strong>
-                                            <span>Qty @item.Quantity x @item.Price.ToString("C")</span>
-                                        </div>
-
-                                        <b>@item.TotalPrice.ToString("C")</b>
+                            <section class="order-delivery-tracking" aria-label="Delivery route and tracking for order @order.Id">
+                                <div class="order-delivery-heading">
+                                    <span class="order-delivery-icon"><i class="fas fa-truck" aria-hidden="true"></i></span>
+                                    <div>
+                                        <span class="order-detail-label">Delivery journey</span>
+                                        <h3>@(terminalStatus ? "Delivery paused" : paymentConfirmed ? "Waiting for preparation" : "Waiting for payment")</h3>
                                     </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="order-items-empty">
-                                <i class="fas fa-box-open"></i>
-                                <span>No products are attached to this order yet.</span>
-                            </div>
-                        }
+                                </div>
+                                <div class="delivery-route" aria-label="Planned delivery route">
+                                    <div class="delivery-route-stop is-origin">
+                                        <span class="delivery-route-marker"><i class="fas fa-store" aria-hidden="true"></i></span>
+                                        <div><strong>MyShop</strong><span>Order processing</span></div>
+                                    </div>
+                                    <span class="delivery-route-line" aria-hidden="true"><i class="fas fa-truck"></i></span>
+                                    <div class="delivery-route-stop is-destination">
+                                        <span class="delivery-route-marker"><i class="fas fa-location-dot" aria-hidden="true"></i></span>
+                                        <div><strong>Delivery address</strong><span>@order.Address</span></div>
+                                    </div>
+                                </div>
+                                <ol class="delivery-tracking-list">
+                                    <li class="@(terminalStatus ? "is-stopped" : "is-complete")">
+                                        <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas @(terminalStatus ? "fa-times" : "fa-check")"></i></span>
+                                        <div><strong>Order placed</strong><span>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy · h:mm tt")</span></div>
+                                    </li>
+                                    <li class="@(paymentConfirmed ? "is-complete" : terminalStatus ? "is-stopped" : "is-current")">
+                                        <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas @(paymentConfirmed ? "fa-check" : terminalStatus ? "fa-minus" : "fa-clock")"></i></span>
+                                        <div>
+                                            <strong>@(paymentConfirmed ? "Payment confirmed" : terminalStatus ? $"Order {order.Status}" : "Waiting for payment")</strong>
+                                            <span>@(paymentConfirmed ? "Your order is confirmed and waiting for preparation." : terminalStatus ? "No delivery updates are available for this order." : "Delivery preparation starts after payment succeeds.")</span>
+                                        </div>
+                                    </li>
+                                    <li class="@(terminalStatus ? "is-unavailable" : paymentConfirmed ? "is-current" : "is-upcoming")">
+                                        <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-box"></i></span>
+                                        <div><strong>Preparation</strong><span>@(terminalStatus ? "This order will not proceed to delivery." : paymentConfirmed ? "Your order is waiting to be prepared." : "Starts after payment confirmation.")</span></div>
+                                    </li>
+                                    <li class="@(terminalStatus ? "is-unavailable" : "is-upcoming")">
+                                        <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-shipping-fast"></i></span>
+                                        <div><strong>With the courier</strong><span>@(terminalStatus ? "Courier delivery is unavailable." : "Courier name and tracking number will appear after dispatch.")</span></div>
+                                    </li>
+                                    <li class="@(terminalStatus ? "is-unavailable" : "is-upcoming")">
+                                        <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-home"></i></span>
+                                        <div><strong>Delivered</strong><span>@(terminalStatus ? "Delivery is paused for this order." : "The delivery confirmation and time will appear here.")</span></div>
+                                    </li>
+                                </ol>
+                                <div class="delivery-tracking-facts">
+                                    <div><i class="fas fa-calendar-alt" aria-hidden="true"></i><span><strong>Estimated arrival</strong><small>Shown after courier assignment</small></span></div>
+                                    <div><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span><strong>Courier location</strong><small>Tracking starts after dispatch</small></span></div>
+                                </div>
+                                <div class="delivery-tracking-note">
+                                    <i class="fas fa-circle-info" aria-hidden="true"></i>
+                                    <span>This route shows the delivery stages. Live location and an accurate arrival estimate require courier tracking details.</span>
+                                </div>
+                            </section>
+                        </div>
+
+                        <section class="order-products-section" aria-label="Products in order @order.Id">
+                            <div class="order-products-heading"><h3>Order items</h3><span>@itemCount @(itemCount == 1 ? "item" : "items")</span></div>
+                            @if (order.Items?.Any() == true)
+                            {
+                                <div class="order-items">
+                                    @{ var itemIndex = 0; }
+                                    @foreach (var item in order.Items)
+                                    {
+                                        var extraItem = itemIndex >= 3;
+                                        itemIndex++;
+                                        var imageUrl = string.IsNullOrWhiteSpace(item.ProductImageUrl)
+                                            ? null
+                                            : Url.Content($"~/{item.ProductImageUrl.TrimStart('/')}");
+                                        <div class="order-item-row" data-order-extra="@extraItem.ToString().ToLowerInvariant()" hidden="@(extraItem ? "hidden" : null)">
+                                            <div class="order-item-media">
+                                                @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                                {
+                                                    <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                                }
+                                                else
+                                                {
+                                                    <span class="placeholder-illustration compact" aria-hidden="true"><span class="placeholder-screen"></span><span class="placeholder-base"></span><span class="placeholder-spark one"></span><span class="placeholder-spark two"></span></span>
+                                                }
+                                            </div>
+                                            <div class="order-item-info"><strong>@item.ProductName</strong><span>Qty @item.Quantity x @CurrencyFormatter.ToEgp(item.Price)</span></div>
+                                            <b>@CurrencyFormatter.ToEgp(item.TotalPrice)</b>
+                                        </div>
+                                    }
+                                    @if (order.Items.Count > 3)
+                                    {
+                                        <button type="button" class="orders-items-toggle" data-order-items-toggle aria-expanded="false">Show @(order.Items.Count - 3) more items</button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="order-items-empty"><i class="fas fa-box-open"></i><span>No products are attached to this order yet.</span></div>
+                            }
+                        </section>
                     </article>
                 }
+            </div>
+            <div class="orders-filter-empty store-empty" data-orders-empty hidden>
+                <span class="store-empty-visual"><i class="fas fa-filter" aria-hidden="true"></i></span>
+                <h2>No orders in this status</h2>
+                <p>Choose another status to see your orders.</p>
             </div>
         }
         else

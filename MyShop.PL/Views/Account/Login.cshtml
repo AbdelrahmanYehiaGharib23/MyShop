@@ -6,24 +6,33 @@
 }
 
 
-<div class="auth-card">
+<div class="auth-shell">
+    <partial name="~/Views/Shared/_AuthStory.cshtml" />
+    <div class="auth-content">
+<div class="auth-card auth-login">
 
     <h2 class="auth-title">Login</h2>
 
     <form asp-action="Login" method="post" asp-controller="Account" class="auth-form">
         <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-envelope"></i></span>
-            <input asp-for="Email" placeholder="Email" required />
+        <div class="auth-field">
+            <label asp-for="Email">Email address</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                <input asp-for="Email" placeholder="you@example.com" required />
+            </div>
+            <span asp-validation-for="Email" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="Email" class="field-validation-error"></span>
 
-        <div class="input-group">
-            <span class="input-icon"><i class="fas fa-lock"></i></span>
-            <input asp-for="Password" placeholder="Password" type="password" required />
+        <div class="auth-field">
+            <label asp-for="Password">Password</label>
+            <div class="input-group">
+                <span class="input-icon"><i class="fas fa-lock"></i></span>
+                <input asp-for="Password" placeholder="Enter your password" type="password" required />
+            </div>
+            <span asp-validation-for="Password" class="field-validation-error"></span>
         </div>
-        <span asp-validation-for="Password" class="field-validation-error"></span>
 
         <div class="checkbox-group">
             <label>
@@ -34,11 +43,11 @@
 
         <button type="submit" class="auth-btn">LOGIN</button>
     </form>
-    <br />
-    <!-- Forget Password Link -->
     <p class="forget-password1">
         <a asp-action="ForgotPassword" asp-controller="Account">Forgot Password?</a>
     </p>
 
     <p class="switch-form">Don't have an account? <a asp-action="Register">Register Now!</a></p>
+</div>
+    </div>
 </div>

@@ -8,6 +8,8 @@
     var imageUrl = string.IsNullOrWhiteSpace(Model.ImageUrl)
         ? null
         : Url.Content($"~/{Model.ImageUrl.TrimStart('/')}");
+    var detailsUrl = Url.Action("Details", "Store", new { id = Model.Id }) ?? $"/Store/Details/{Model.Id}";
+    var addToCartUrl = Url.Action("AddToCart", "Cart") ?? "/Cart/AddToCart";
 }
 
 <section class="detail-page">
@@ -34,7 +36,11 @@
             <div class="detail-panel">
                 <div class="detail-heading-row">
                     <span class="detail-category-badge">@Model.CategoryName</span>
-                    <button type="button" class="wishlist-button detail-wishlist" aria-label="Add @Model.Name to wishlist" data-wishlist-button>
+                    <button type="button" class="wishlist-button detail-wishlist" aria-label="Add @Model.Name to favorites" data-wishlist-button
+                            data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-category="@Model.CategoryName"
+                            data-product-price="@CurrencyFormatter.ToEgp(Model.Price)" data-product-image="@(imageUrl ?? string.Empty)"
+                            data-product-details-url="@detailsUrl"
+                            data-add-to-cart-url="@addToCartUrl">
                         <i class="far fa-heart"></i>
                     </button>
                 </div>
@@ -56,7 +62,7 @@
                 <div class="detail-facts">
                     <div class="detail-fact">
                         <span>Price</span>
-                        <strong class="price">@Model.Price.ToString("C")</strong>
+                        <strong class="price">@CurrencyFormatter.ToEgp(Model.Price)</strong>
                     </div>
                     <div class="detail-fact">
                         <span>Category</span>
@@ -76,6 +82,7 @@
                         <span>Back to Products</span>
                     </a>
                     <form asp-controller="Cart" asp-action="AddToCart" method="post" class="store-cart-form">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="productId" value="@Model.Id" />
                         <input type="hidden" name="quantity" value="1" />
                         <button type="submit" class="store-button-primary">

@@ -33,7 +33,7 @@
             <dl>
                 <div>
                     <dt>Price</dt>
-                    <dd>@Model.Price.ToString("C")</dd>
+                    <dd>@CurrencyFormatter.ToEgp(Model.Price)</dd>
                 </div>
                 <div>
                     <dt>Category</dt>
