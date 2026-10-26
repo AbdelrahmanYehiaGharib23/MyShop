@@ -94,6 +94,10 @@
     --sidebar-text-dim: var(--admin-muted);
 }
 
+html {
+    scrollbar-gutter: stable;
+}
+
 body.hold-transition,
 body.hold-transition .wrapper {
     background: var(--admin-deep-surface) !important;
@@ -133,6 +137,8 @@ body.hold-transition .main-sidebar > .sidebar {
     overflow-x: hidden;
     overflow-y: auto;
     padding-bottom: 12px;
+    background: var(--admin-sidebar) !important;
+    color: var(--admin-text) !important;
     scrollbar-color: var(--admin-muted-soft) transparent;
 }
 
@@ -175,7 +181,7 @@ body.hold-transition .admin-nav-link {
     background: transparent;
     color: var(--admin-muted) !important;
     text-decoration: none !important;
-    transition: background-color .18s ease, color .18s ease, transform .18s ease;
+    transition: background-color .18s ease, color .18s ease;
 }
 
 body.hold-transition .admin-nav-label {
@@ -193,7 +199,6 @@ body.hold-transition .admin-nav-icon {
 }
 
 body.hold-transition .admin-nav-link:hover {
-    transform: translateX(2px);
     background: var(--admin-surface-hover) !important;
     color: var(--admin-text-strong) !important;
 }
