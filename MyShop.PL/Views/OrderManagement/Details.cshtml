@@ -1,0 +1,130 @@
+@model MyShop.PL.ViewModels.OrderManagementDetailsVM
+@using MyShop.DAL.Entities.Enum
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = $"Order #{Model.Order.Id}";
+    ViewBag.PageTitle = "Order Management";
+    ViewBag.CardTitle = $"Order #{Model.Order.Id}";
+
+    var order = Model.Order;
+    var canFulfill = order.Status == OrderStatus.Paid;
+    var allowedStages = Enum.GetValues<OrderFulfillmentStatus>()
+        .Where(stage => stage == order.FulfillmentStatus || (int)stage == (int)order.FulfillmentStatus + 1)
+        .ToList();
+}
+
+<style>
+    .order-detail-shell { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .8fr); gap: 18px; }
+    .order-detail-panel { background: #fff; border: 1px solid #e4e9f1; border-radius: 14px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); overflow: hidden; }
+    .order-detail-panel-header { padding: 17px 20px; border-bottom: 1px solid #e4e9f1; color: #17202a; font-weight: 800; }
+    .order-detail-panel-body { padding: 20px; }
+    .order-detail-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .order-detail-summary span, .order-detail-item span { display: block; color: #718096; font-size: 12px; }
+    .order-detail-summary strong { display: block; margin-top: 4px; color: #17202a; overflow-wrap: anywhere; }
+    .order-detail-item { display: flex; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid #edf0f5; }
+    .order-detail-item:last-child { border-bottom: 0; }
+    .order-stage-note { margin: 14px 0 0; padding: 12px; border-radius: 8px; background: #f2f6fc; color: #526276; font-size: 13px; }
+    .order-status-readonly { padding: 12px; border-radius: 8px; background: #fff5dd; color: #825d00; }
+    @@media (max-width: 900px) { .order-detail-shell { grid-template-columns: 1fr; } }
+    @@media (max-width: 520px) { .order-detail-summary { grid-template-columns: 1fr; } }
+</style>
+
+<section class="order-detail-shell">
+    <div class="order-detail-panel">
+        <div class="order-detail-panel-header d-flex justify-content-between align-items-center">
+            <span>Order #@order.Id</span>
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left mr-1"></i>All orders</a>
+        </div>
+        <div class="order-detail-panel-body">
+            <div class="order-detail-summary mb-4">
+                <div><span>Customer email</span><strong>@order.CustomerEmail</strong></div>
+                <div><span>Phone</span><strong>@order.Phone</strong></div>
+                <div><span>Order date</span><strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</strong></div>
+                <div><span>Delivery address</span><strong>@order.Address</strong></div>
+                <div><span>Payment status</span><strong>@order.Status</strong></div>
+                <div><span>Order total</span><strong>@CurrencyFormatter.ToEgp(order.TotalPrice)</strong></div>
+            </div>
+
+            <h5 class="font-weight-bold">Items (@(order.Items?.Sum(item => item.Quantity) ?? 0))</h5>
+            @foreach (var item in order.Items ?? [])
+            {
+                <div class="order-detail-item">
+                    <div><strong>@item.ProductName</strong><span>Qty @item.Quantity · @CurrencyFormatter.ToEgp(item.Price) each</span></div>
+                    <strong>@CurrencyFormatter.ToEgp(item.TotalPrice)</strong>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="order-detail-panel">
+        <div class="order-detail-panel-header">Fulfillment and delivery</div>
+        <div class="order-detail-panel-body">
+            @if (TempData["SuccessMessage"] is string successMessage)
+            {
+                <div class="alert alert-success"><i class="fas fa-check-circle mr-1"></i>@successMessage</div>
+            }
+
+            @if (!canFulfill)
+            {
+                <div class="order-status-readonly">Payment must succeed before this order can be prepared or shipped. Current payment status: <strong>@order.Status</strong>.</div>
+            }
+            else
+            {
+                <form asp-action="UpdateFulfillment" asp-route-id="@order.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <input asp-for="Order.Id" type="hidden" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="form-group">
+                        <label asp-for="FulfillmentStatus"></label>
+                        <select asp-for="FulfillmentStatus" class="form-control">
+                            @foreach (var stage in allowedStages)
+                            {
+                                var label = stage switch
+                                {
+                                    OrderFulfillmentStatus.AwaitingPreparation => "Awaiting preparation",
+                                    OrderFulfillmentStatus.Preparing => "Preparing",
+                                    OrderFulfillmentStatus.Shipped => "With courier",
+                                    OrderFulfillmentStatus.Delivered => "Delivered",
+                                    _ => stage.ToString()
+                                };
+                                <option value="@stage">@label</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Move one step at a time. You can save the current stage again to edit delivery details.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="CourierName"></label>
+                        <input asp-for="CourierName" class="form-control" placeholder="Courier company or driver" />
+                        <span asp-validation-for="CourierName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="TrackingNumber"></label>
+                        <input asp-for="TrackingNumber" class="form-control" placeholder="Shipment tracking number" />
+                        <span asp-validation-for="TrackingNumber" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="EstimatedDeliveryDate"></label>
+                        <input asp-for="EstimatedDeliveryDate" type="date" class="form-control" />
+                        <span asp-validation-for="EstimatedDeliveryDate" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save order update</button>
+                </form>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(order.CourierName) || !string.IsNullOrWhiteSpace(order.TrackingNumber) || order.EstimatedDeliveryDate.HasValue)
+            {
+                <hr />
+                <h6 class="font-weight-bold">Current delivery details</h6>
+                @if (!string.IsNullOrWhiteSpace(order.CourierName)) { <p class="mb-1"><strong>Courier:</strong> @order.CourierName</p> }
+                @if (!string.IsNullOrWhiteSpace(order.TrackingNumber)) { <p class="mb-1"><strong>Tracking:</strong> @order.TrackingNumber</p> }
+                @if (order.EstimatedDeliveryDate is DateOnly arrival) { <p class="mb-1"><strong>Estimated arrival:</strong> @arrival.ToString("MMM dd, yyyy")</p> }
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,129 @@
+@model IEnumerable<MyShop.BLL.Models.Dto.OrderDto.AdminOrderDto>
+@using MyShop.DAL.Entities.Enum
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Orders";
+    ViewBag.PageTitle = "Order Management";
+    ViewBag.CardTitle = "Orders";
+
+    var orders = (Model ?? Enumerable.Empty<MyShop.BLL.Models.Dto.OrderDto.AdminOrderDto>()).ToList();
+    var paidOrders = orders.Where(order => order.Status == OrderStatus.Paid).ToList();
+    var awaitingPreparation = paidOrders.Count(order => order.FulfillmentStatus == OrderFulfillmentStatus.AwaitingPreparation);
+    var preparing = paidOrders.Count(order => order.FulfillmentStatus == OrderFulfillmentStatus.Preparing);
+    var shipped = paidOrders.Count(order => order.FulfillmentStatus == OrderFulfillmentStatus.Shipped);
+    var delivered = paidOrders.Count(order => order.FulfillmentStatus == OrderFulfillmentStatus.Delivered);
+}
+
+<style>
+    .order-admin-shell { display: grid; gap: 18px; }
+    .order-admin-intro, .order-admin-panel { background: #fff; border: 1px solid #e4e9f1; border-radius: 14px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); }
+    .order-admin-intro { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px 24px; }
+    .order-admin-intro h2 { margin: 0 0 5px; color: #17202a; font-weight: 700; }
+    .order-admin-intro p { margin: 0; color: #718096; }
+    .order-admin-stats { display: grid; grid-template-columns: repeat(5, minmax(130px, 1fr)); gap: 12px; }
+    .order-admin-stat { padding: 16px; background: #fff; border: 1px solid #e4e9f1; border-radius: 12px; }
+    .order-admin-stat span { display: block; color: #718096; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    .order-admin-stat strong { display: block; margin-top: 6px; color: #17202a; font-size: 24px; }
+    .order-admin-panel { overflow: hidden; }
+    .order-admin-panel-header { padding: 17px 20px; border-bottom: 1px solid #e4e9f1; font-weight: 700; }
+    .order-admin-table { margin: 0; min-width: 900px; }
+    .order-admin-table th { color: #718096; font-size: 11px; text-transform: uppercase; white-space: nowrap; }
+    .order-admin-table td { vertical-align: middle; }
+    .order-admin-id { color: #17202a; font-weight: 800; }
+    .order-admin-subtext { display: block; color: #718096; font-size: 12px; }
+    .order-admin-badge { display: inline-block; padding: 5px 9px; border-radius: 999px; background: #edf2f7; color: #425466; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .order-admin-badge.paid, .order-admin-badge.delivered { background: #e6f8ef; color: #18794e; }
+    .order-admin-badge.pending, .order-admin-badge.awaiting-preparation { background: #fff5dd; color: #9a6700; }
+    .order-admin-badge.failed, .order-admin-badge.cancelled { background: #fff0f0; color: #b42318; }
+    .order-admin-badge.preparing, .order-admin-badge.with-courier { background: #e9f2ff; color: #175cd3; }
+    .order-admin-empty { padding: 45px 20px; color: #718096; text-align: center; }
+    .order-admin-empty i { display: block; margin-bottom: 12px; color: #94a3b8; font-size: 34px; }
+    @@media (max-width: 900px) { .order-admin-stats { grid-template-columns: repeat(2, minmax(130px, 1fr)); } }
+    @@media (max-width: 600px) { .order-admin-intro { align-items: flex-start; flex-direction: column; } }
+</style>
+
+<section class="order-admin-shell">
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success mb-0"><i class="fas fa-check-circle mr-2"></i>@successMessage</div>
+    }
+
+    <div class="order-admin-intro">
+        <div>
+            <h2>Store orders</h2>
+            <p>Review payment status and move paid orders through preparation and delivery.</p>
+        </div>
+        <span class="badge badge-primary p-2">@orders.Count total</span>
+    </div>
+
+    <div class="order-admin-stats">
+        <div class="order-admin-stat"><span>Awaiting prep</span><strong>@awaitingPreparation</strong></div>
+        <div class="order-admin-stat"><span>Preparing</span><strong>@preparing</strong></div>
+        <div class="order-admin-stat"><span>With courier</span><strong>@shipped</strong></div>
+        <div class="order-admin-stat"><span>Delivered</span><strong>@delivered</strong></div>
+        <div class="order-admin-stat"><span>Awaiting payment</span><strong>@orders.Count(order => order.Status == OrderStatus.Pending)</strong></div>
+    </div>
+
+    <div class="order-admin-panel">
+        <div class="order-admin-panel-header">Recent orders</div>
+        @if (orders.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover order-admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Delivery</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in orders)
+                        {
+                            var fulfillmentLabel = order.Status != OrderStatus.Paid
+                                ? "Not started"
+                                : order.FulfillmentStatus switch
+                            {
+                                OrderFulfillmentStatus.AwaitingPreparation => "Awaiting preparation",
+                                OrderFulfillmentStatus.Preparing => "Preparing",
+                                OrderFulfillmentStatus.Shipped => "With courier",
+                                OrderFulfillmentStatus.Delivered => "Delivered",
+                                _ => order.FulfillmentStatus.ToString()
+                            };
+                            var fulfillmentClass = order.Status != OrderStatus.Paid
+                                ? "awaiting-preparation"
+                                : order.FulfillmentStatus switch
+                            {
+                                OrderFulfillmentStatus.AwaitingPreparation => "awaiting-preparation",
+                                OrderFulfillmentStatus.Preparing => "preparing",
+                                OrderFulfillmentStatus.Shipped => "with-courier",
+                                OrderFulfillmentStatus.Delivered => "delivered",
+                                _ => string.Empty
+                            };
+                            <tr>
+                                <td><span class="order-admin-id">#@order.Id</span><span class="order-admin-subtext">@order.Address</span></td>
+                                <td>@order.CustomerEmail<span class="order-admin-subtext">@order.Phone</span></td>
+                                <td>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")<span class="order-admin-subtext">@order.OrderDate.ToLocalTime().ToString("h:mm tt")</span></td>
+                                <td>@(order.Items?.Sum(item => item.Quantity) ?? 0)</td>
+                                <td><strong>@CurrencyFormatter.ToEgp(order.TotalPrice)</strong></td>
+                                <td><span class="order-admin-badge @order.Status.ToString().ToLowerInvariant()">@order.Status</span></td>
+                                <td><span class="order-admin-badge @fulfillmentClass">@fulfillmentLabel</span></td>
+                                <td class="text-right"><a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye mr-1"></i>Manage</a></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="order-admin-empty"><i class="fas fa-receipt"></i><strong>No orders have been placed yet.</strong></div>
+        }
+    </div>
+</section>

@@ -16,6 +16,14 @@ namespace MyShop.BLL.Models.Dto.OrderDto
 
         public OrderStatus Status { get; set; }
 
+        public OrderFulfillmentStatus FulfillmentStatus { get; set; }
+
+        public string? CourierName { get; set; }
+
+        public string? TrackingNumber { get; set; }
+
+        public DateOnly? EstimatedDeliveryDate { get; set; }
+
         public string? PaymentIntentId { get; set; }
 
         public List<OrderItemDto> Items { get; set; } = [];

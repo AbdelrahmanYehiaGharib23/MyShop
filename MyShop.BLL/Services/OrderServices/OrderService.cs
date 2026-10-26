@@ -192,6 +192,65 @@ namespace MyShop.BLL.Services.OrderServices
             await _unitOfWork.CompleteAsync();
         }
 
+        public async Task<IEnumerable<AdminOrderDto>> GetOrdersForAdminAsync()
+        {
+            var orders = await _unitOfWork.OrderRepository
+                .GetAllWithSpecAsync(new AdminOrderSpecification());
+
+            return orders.Select(MapAdminOrder);
+        }
+
+        public async Task<AdminOrderDto?> GetOrderForAdminAsync(int orderId)
+        {
+            var order = await _unitOfWork.OrderRepository
+                .GetEntityWithSpecAsync(new AdminOrderSpecification(orderId));
+
+            return order is null ? null : MapAdminOrder(order);
+        }
+
+        public async Task UpdateOrderFulfillmentAsync(
+            int orderId,
+            OrderFulfillmentStatus fulfillmentStatus,
+            string? courierName,
+            string? trackingNumber,
+            DateOnly? estimatedDeliveryDate)
+        {
+            var order = await _unitOfWork.OrderRepository.GetByIdAsync(orderId);
+
+            if (order is null)
+                throw new KeyNotFoundException($"Order {orderId} was not found.");
+
+            if (order.Status != OrderStatus.Paid)
+                throw new InvalidOperationException("Only paid orders can enter fulfillment.");
+
+            if (!Enum.IsDefined(fulfillmentStatus))
+                throw new InvalidOperationException("The selected fulfillment stage is invalid.");
+
+            var currentStage = (int)order.FulfillmentStatus;
+            var requestedStage = (int)fulfillmentStatus;
+
+            if (requestedStage < currentStage || requestedStage > currentStage + 1)
+                throw new InvalidOperationException("Move the order one fulfillment stage at a time.");
+
+            if ((fulfillmentStatus is OrderFulfillmentStatus.Shipped or OrderFulfillmentStatus.Delivered)
+                && (string.IsNullOrWhiteSpace(courierName)
+                    || string.IsNullOrWhiteSpace(trackingNumber)))
+            {
+                throw new InvalidOperationException(
+                    "Enter the courier and tracking number before shipping the order.");
+            }
+
+            if (courierName?.Length > 120 || trackingNumber?.Length > 120)
+                throw new InvalidOperationException("Courier and tracking details must be 120 characters or fewer.");
+
+            order.FulfillmentStatus = fulfillmentStatus;
+            order.CourierName = NormalizeOptionalText(courierName);
+            order.TrackingNumber = NormalizeOptionalText(trackingNumber);
+            order.EstimatedDeliveryDate = estimatedDeliveryDate;
+
+            await _unitOfWork.CompleteAsync();
+        }
+
         public async Task<IEnumerable<OrderDto>>
             GetMyOrdersAsync()
         {
@@ -217,6 +276,10 @@ namespace MyShop.BLL.Services.OrderServices
                 TotalPrice = order.TotalPrice,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
+                FulfillmentStatus = order.FulfillmentStatus,
+                CourierName = order.CourierName,
+                TrackingNumber = order.TrackingNumber,
+                EstimatedDeliveryDate = order.EstimatedDeliveryDate,
                 PaymentIntentId = order.PaymentIntentId,
 
                 Items = order.OrderItems.Select(item =>
@@ -239,6 +302,37 @@ namespace MyShop.BLL.Services.OrderServices
                         Quantity = item.Quantity
                     }).ToList()
             });
+        }
+
+        private static AdminOrderDto MapAdminOrder(Order order)
+        {
+            return new AdminOrderDto
+            {
+                Id = order.Id,
+                CustomerEmail = order.CustomerEmail,
+                Address = order.Address,
+                Phone = order.Phone,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                FulfillmentStatus = order.FulfillmentStatus,
+                CourierName = order.CourierName,
+                TrackingNumber = order.TrackingNumber,
+                EstimatedDeliveryDate = order.EstimatedDeliveryDate,
+                Items = order.OrderItems.Select(item => new OrderItemDto
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.ProductName,
+                    ProductImageUrl = item.ProductImageUrl,
+                    Price = item.Price,
+                    Quantity = item.Quantity
+                }).ToList()
+            };
+        }
+
+        private static string? NormalizeOptionalText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
     }
 }

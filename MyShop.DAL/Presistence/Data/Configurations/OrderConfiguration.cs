@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using MyShop.DAL.Entities.Enum;
 
 namespace MyShop.DAL.Presistence.Data.Configurations
 {
@@ -26,6 +27,18 @@ namespace MyShop.DAL.Presistence.Data.Configurations
             builder.Property(o => o.CustomerEmail)
                 .HasMaxLength(256)
                 .IsRequired();
+
+            builder.Property(o => o.FulfillmentStatus)
+                .HasDefaultValue(OrderFulfillmentStatus.AwaitingPreparation);
+
+            builder.Property(o => o.CourierName)
+                .HasMaxLength(120);
+
+            builder.Property(o => o.TrackingNumber)
+                .HasMaxLength(120);
+
+            builder.Property(o => o.EstimatedDeliveryDate)
+                .HasColumnType("date");
 
             builder.Property(o => o.OrderDate)
                 .HasDefaultValueSql("GETDATE()");

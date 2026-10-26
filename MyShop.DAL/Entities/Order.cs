@@ -20,6 +20,15 @@ namespace MyShop.DAL.Entities
         public string? PaymentIntentId { get; set; }
 
         public OrderStatus Status { get; set; }
+
+        public OrderFulfillmentStatus FulfillmentStatus { get; set; }
+
+        public string? CourierName { get; set; }
+
+        public string? TrackingNumber { get; set; }
+
+        public DateOnly? EstimatedDeliveryDate { get; set; }
+
         public string CustomerEmail { get; set; } = string.Empty;
 
         public virtual ICollection<OrderItem> OrderItems { get; set; }

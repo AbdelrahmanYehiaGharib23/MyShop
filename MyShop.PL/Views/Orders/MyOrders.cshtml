@@ -49,6 +49,36 @@
                     };
                     var paymentConfirmed = order.Status == OrderStatus.Paid;
                     var terminalStatus = order.Status is OrderStatus.Cancelled or OrderStatus.Failed;
+                    var fulfillmentStatus = order.FulfillmentStatus;
+                    var deliveryHeadline = !paymentConfirmed
+                        ? terminalStatus ? "Delivery paused" : "Waiting for payment"
+                        : fulfillmentStatus switch
+                        {
+                            OrderFulfillmentStatus.AwaitingPreparation => "Waiting for preparation",
+                            OrderFulfillmentStatus.Preparing => "Being prepared",
+                            OrderFulfillmentStatus.Shipped => "With the courier",
+                            OrderFulfillmentStatus.Delivered => "Delivered",
+                            _ => "Order confirmed"
+                        };
+                    var preparationClass = terminalStatus
+                        ? "is-unavailable"
+                        : !paymentConfirmed
+                            ? "is-upcoming"
+                            : fulfillmentStatus is OrderFulfillmentStatus.AwaitingPreparation or OrderFulfillmentStatus.Preparing
+                                ? "is-current"
+                                : "is-complete";
+                    var courierClass = terminalStatus
+                        ? "is-unavailable"
+                        : fulfillmentStatus == OrderFulfillmentStatus.Shipped
+                            ? "is-current"
+                            : fulfillmentStatus == OrderFulfillmentStatus.Delivered
+                                ? "is-complete"
+                                : "is-upcoming";
+                    var deliveredClass = terminalStatus
+                        ? "is-unavailable"
+                        : fulfillmentStatus == OrderFulfillmentStatus.Delivered
+                            ? "is-complete"
+                            : "is-upcoming";
 
                     <article class="order-card store-fade-in" data-order-status="@statusClass">
                         <div class="order-card-header">
@@ -81,7 +111,7 @@
                                     <span class="order-delivery-icon"><i class="fas fa-truck" aria-hidden="true"></i></span>
                                     <div>
                                         <span class="order-detail-label">Delivery journey</span>
-                                        <h3>@(terminalStatus ? "Delivery paused" : paymentConfirmed ? "Waiting for preparation" : "Waiting for payment")</h3>
+                                        <h3>@(terminalStatus ? "Delivery paused" : deliveryHeadline)</h3>
                                     </div>
                                 </div>
                                 <div class="delivery-route" aria-label="Planned delivery route">
@@ -104,29 +134,32 @@
                                         <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas @(paymentConfirmed ? "fa-check" : terminalStatus ? "fa-minus" : "fa-clock")"></i></span>
                                         <div>
                                             <strong>@(paymentConfirmed ? "Payment confirmed" : terminalStatus ? $"Order {order.Status}" : "Waiting for payment")</strong>
-                                            <span>@(paymentConfirmed ? "Your order is confirmed and waiting for preparation." : terminalStatus ? "No delivery updates are available for this order." : "Delivery preparation starts after payment succeeds.")</span>
+                                            <span>@(paymentConfirmed ? "Payment has been confirmed for this order." : terminalStatus ? "No delivery updates are available for this order." : "Delivery preparation starts after payment succeeds.")</span>
                                         </div>
                                     </li>
-                                    <li class="@(terminalStatus ? "is-unavailable" : paymentConfirmed ? "is-current" : "is-upcoming")">
+                                    <li class="@preparationClass">
                                         <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-box"></i></span>
-                                        <div><strong>Preparation</strong><span>@(terminalStatus ? "This order will not proceed to delivery." : paymentConfirmed ? "Your order is waiting to be prepared." : "Starts after payment confirmation.")</span></div>
+                                        <div><strong>Preparation</strong><span>@(terminalStatus ? "This order will not proceed to delivery." : !paymentConfirmed ? "Starts after payment confirmation." : fulfillmentStatus switch { OrderFulfillmentStatus.AwaitingPreparation => "Your order is waiting to be prepared.", OrderFulfillmentStatus.Preparing => "Your order is being prepared.", _ => "Your order has been prepared." })</span></div>
                                     </li>
-                                    <li class="@(terminalStatus ? "is-unavailable" : "is-upcoming")">
+                                    <li class="@courierClass">
                                         <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-shipping-fast"></i></span>
-                                        <div><strong>With the courier</strong><span>@(terminalStatus ? "Courier delivery is unavailable." : "Courier name and tracking number will appear after dispatch.")</span></div>
+                                        <div>
+                                            <strong>With the courier</strong>
+                                            <span>@(terminalStatus ? "Courier delivery is unavailable." : courierClass == "is-current" || courierClass == "is-complete" ? $"Courier: {order.CourierName ?? "Assigned"} · Tracking: {order.TrackingNumber ?? "Not provided"}" : "Courier and tracking details will appear after dispatch.")</span>
+                                        </div>
                                     </li>
-                                    <li class="@(terminalStatus ? "is-unavailable" : "is-upcoming")">
+                                    <li class="@deliveredClass">
                                         <span class="delivery-tracking-marker" aria-hidden="true"><i class="fas fa-home"></i></span>
-                                        <div><strong>Delivered</strong><span>@(terminalStatus ? "Delivery is paused for this order." : "The delivery confirmation and time will appear here.")</span></div>
+                                        <div><strong>Delivered</strong><span>@(terminalStatus ? "Delivery is paused for this order." : fulfillmentStatus == OrderFulfillmentStatus.Delivered ? "Your order has been delivered." : "Delivery confirmation will appear here.")</span></div>
                                     </li>
                                 </ol>
                                 <div class="delivery-tracking-facts">
-                                    <div><i class="fas fa-calendar-alt" aria-hidden="true"></i><span><strong>Estimated arrival</strong><small>Shown after courier assignment</small></span></div>
-                                    <div><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span><strong>Courier location</strong><small>Tracking starts after dispatch</small></span></div>
+                                    <div><i class="fas fa-calendar-alt" aria-hidden="true"></i><span><strong>Estimated arrival</strong><small>@(order.EstimatedDeliveryDate?.ToString("MMM dd, yyyy") ?? "Added by the store after dispatch")</small></span></div>
+                                    <div><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span><strong>Courier location</strong><small>@(courierClass == "is-current" || courierClass == "is-complete" ? "Live location is not available." : "Courier details appear after dispatch.")</small></span></div>
                                 </div>
                                 <div class="delivery-tracking-note">
                                     <i class="fas fa-circle-info" aria-hidden="true"></i>
-                                    <span>This route shows the delivery stages. Live location and an accurate arrival estimate require courier tracking details.</span>
+                                    <span>This page shows order stages and the courier details entered by the store. Live courier location requires a separate tracking integration.</span>
                                 </div>
                             </section>
                         </div>
