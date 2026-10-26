@@ -39,6 +39,7 @@
         .main-sidebar {
             display: flex;
             flex-direction: column;
+            height: 100vh;
             min-height: 100vh;
             background: linear-gradient(180deg, var(--admin-sidebar-deep) 0%, var(--admin-sidebar) 46%, var(--admin-sidebar-soft) 100%);
         }
@@ -365,43 +366,44 @@
                     </ul>
                 </nav>
 
-                <div class="mt-auto p-3 sidebar-account-panel">
-                    <div class="sidebar-account-card">
-                        <div class="d-flex align-items-center">
-                            <div class="sidebar-account-avatar-wrap">
-                                <img src="~/img/user2-160x160.jpg"
-                                     class="img-circle elevation-2"
-                                     width="42"
-                                     height="42"
-                                     alt="Admin user">
-                                <span class="sidebar-account-status-dot" title="Online"></span>
-                            </div>
-                     
-                            <div class="ml-3"> <div class="sidebar-account-name"> @(User.Identity?.Name ?? "Administrator") </div>
-                          <div class="sidebar-account-role"> @roleName account </div> 
-                          </div>
-                          </div>
+            </div>
 
-                        <hr class="sidebar-logout-divider">
-
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn-logout">
-                                    <i class="fas fa-sign-out-alt"></i>
-                                    <span>Logout</span>
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <a asp-controller="Account" asp-action="Login" class="btn-login-sidebar">
-                                <i class="fas fa-sign-in-alt"></i>
-                                <span>Login</span>
-                            </a>
-                        }
+            <div class="p-3 sidebar-account-panel">
+                <div class="sidebar-account-card">
+                    <div class="d-flex align-items-center">
+                        <div class="sidebar-account-avatar-wrap">
+                            <img src="~/img/user2-160x160.jpg"
+                                 class="img-circle elevation-2"
+                                 width="42"
+                                 height="42"
+                                 alt="Admin user">
+                            <span class="sidebar-account-status-dot" title="Online"></span>
+                        </div>
+                        <div class="ml-3">
+                            <div class="sidebar-account-name">@(User.Identity?.Name ?? "Administrator")</div>
+                            <div class="sidebar-account-role">@roleName account</div>
+                        </div>
                     </div>
+
+                    <hr class="sidebar-logout-divider">
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-logout">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="btn-login-sidebar">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <span>Login</span>
+                        </a>
+                    }
                 </div>
             </div>
         </aside>

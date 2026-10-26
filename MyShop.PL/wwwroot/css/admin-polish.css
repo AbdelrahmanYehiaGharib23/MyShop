@@ -119,8 +119,64 @@ body.hold-transition .brand-link {
 }
 
 body.hold-transition .main-sidebar {
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
     border-right: 1px solid var(--admin-border);
     box-shadow: 8px 0 30px rgba(18, 32, 54, .06);
+}
+
+body.hold-transition .main-sidebar > .sidebar {
+    display: block !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 12px;
+    scrollbar-color: var(--admin-muted-soft) transparent;
+}
+
+body.hold-transition .main-sidebar > .sidebar > nav,
+body.hold-transition .main-sidebar .nav-sidebar,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item {
+    display: block !important;
+    width: 100%;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link {
+    display: flex !important;
+    align-items: center;
+    width: calc(100% - 16px);
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link p {
+    color: var(--admin-muted) !important;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link p {
+    display: inline-block;
+    margin: 0;
+    white-space: normal;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link .nav-icon {
+    color: var(--admin-primary) !important;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link.active,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link.active p,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link.active .nav-icon,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link:hover,
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link:hover p {
+    color: var(--admin-text-strong) !important;
+}
+
+body.hold-transition .sidebar-account-panel {
+    flex: 0 0 auto;
+    margin-top: auto;
+    border-top: 1px solid var(--admin-border) !important;
+    background: var(--admin-sidebar);
 }
 
 body.hold-transition .brand-link {
@@ -161,9 +217,20 @@ body.hold-transition .main-header.navbar {
     backdrop-filter: blur(14px);
 }
 
+html[data-theme="dark"] body.hold-transition .main-header.navbar {
+    background: var(--admin-header) !important;
+    color: var(--admin-text) !important;
+}
+
 body.hold-transition .main-header .nav-link,
 body.hold-transition .admin-navbar-title,
 body.hold-transition .admin-user-chip {
+    color: var(--admin-text-strong) !important;
+}
+
+html[data-theme="dark"] body.hold-transition .main-header .nav-link,
+html[data-theme="dark"] body.hold-transition .admin-navbar-title,
+html[data-theme="dark"] body.hold-transition .admin-user-chip {
     color: var(--admin-text-strong) !important;
 }
 
@@ -252,15 +319,15 @@ body.hold-transition table {
 body.hold-transition .table,
 body.hold-transition .table td,
 body.hold-transition .table th {
-    color: var(--admin-text);
-    background-color: transparent;
+    color: var(--admin-text) !important;
+    background-color: transparent !important;
 }
 
 body.hold-transition .table thead th {
     border-top: 0;
     border-bottom: 1px solid var(--admin-border);
-    background: var(--admin-table-head);
-    color: var(--admin-muted);
+    background: var(--admin-table-head) !important;
+    color: var(--admin-muted) !important;
     font-size: .78rem;
     font-weight: 700;
     white-space: nowrap;
@@ -313,16 +380,20 @@ body.hold-transition .custom-select:focus {
 }
 
 body.hold-transition .admin-theme-toggle {
+    appearance: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 42px;
     height: 42px;
     margin-left: 8px;
+    padding: 0;
     border: 1px solid var(--admin-border);
-    border-radius: 10px;
+    border-radius: 10px !important;
     background: var(--admin-surface);
     color: var(--admin-text-strong);
+    cursor: pointer;
+    font: inherit;
     box-shadow: 0 4px 12px rgba(30, 48, 75, .08);
     transition: transform .18s ease, border-color .18s ease, background .18s ease;
 }
@@ -398,6 +469,48 @@ body.hold-transition .main-footer.footer-dark {
 
 body.hold-transition .main-footer strong {
     color: var(--admin-text-strong);
+}
+
+body.hold-transition .btn-logout,
+body.hold-transition .btn-login-sidebar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color .16s ease, background-color .16s ease, border-color .16s ease;
+}
+
+body.hold-transition .btn-logout {
+    border-color: var(--admin-badge-danger-bg);
+    background: var(--admin-badge-danger-bg);
+    color: var(--admin-danger) !important;
+}
+
+body.hold-transition .btn-logout:hover,
+body.hold-transition .btn-logout:focus {
+    border-color: var(--admin-danger);
+    background: var(--admin-danger);
+    color: #fff !important;
+}
+
+body.hold-transition .btn-login-sidebar {
+    border-color: var(--admin-badge-info-bg);
+    background: var(--admin-badge-info-bg);
+    color: var(--admin-primary) !important;
+}
+
+body.hold-transition .btn-login-sidebar:hover,
+body.hold-transition .btn-login-sidebar:focus {
+    border-color: var(--admin-action);
+    background: var(--admin-action);
+    color: #fff !important;
 }
 
 body.hold-transition :focus-visible {
