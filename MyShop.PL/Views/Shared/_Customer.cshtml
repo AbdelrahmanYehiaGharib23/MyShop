@@ -59,6 +59,7 @@
     <link rel="stylesheet" href="~/css/checkout.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/orders.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/experience.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/responsive-mobile.css" asp-append-version="true" />
     <link rel="icon" type="image/svg+xml" href="~/Images/myshop-mark.svg" asp-append-version="true" />
 </head>
 <body>
@@ -92,7 +93,7 @@
                             <a asp-controller="Store"
                                asp-action="Index"
                                class="store-nav-link @(string.Equals(currentController, "Store", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                Products
+                                <i class="fas fa-store d-md-none" aria-hidden="true"></i><span>Products</span>
                             </a>
                         </li>
                         <li>
@@ -109,14 +110,14 @@
                             <a asp-controller="Cart"
                                asp-action="Index"
                                class="store-nav-link @(string.Equals(currentController, "Cart", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                 Cart
+                                <i class="fas fa-shopping-bag d-md-none" aria-hidden="true"></i><span>Cart</span>
                             </a>
                         </li>
                         <li>
                             <a asp-controller="Orders"
                                asp-action="MyOrders"
                                class="store-nav-link @(string.Equals(currentController, "Orders", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
-                                Orders
+                                <i class="fas fa-receipt d-md-none" aria-hidden="true"></i><span>Orders</span>
                             </a>
                         </li>
                     </ul>

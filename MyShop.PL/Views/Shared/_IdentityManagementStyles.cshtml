@@ -46,6 +46,10 @@
         margin-bottom: 18px;
     }
 
+    .identity-stats:has(> .identity-stat:only-child) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .identity-stat,
     .identity-table-card,
     .identity-panel,
@@ -334,10 +338,20 @@
 
     @@media (max-width: 860px) {
         .identity-toolbar,
-        .identity-search,
         .identity-action-group {
             align-items: stretch;
             flex-direction: column;
+        }
+
+        .identity-search {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .identity-search .identity-input {
+            grid-column: 1 / -1;
+            width: 100%;
         }
 
         .identity-table-card {
@@ -352,6 +366,11 @@
         .identity-secondary-action,
         .identity-danger-action {
             width: 100%;
+        }
+
+        .identity-search :is(.identity-primary-action, .identity-secondary-action) {
+            min-height: 44px;
+            justify-content: center;
         }
     }
 </style>
