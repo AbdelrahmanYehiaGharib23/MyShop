@@ -16,16 +16,16 @@
 
 <style>
     .order-detail-shell { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .8fr); gap: 18px; }
-    .order-detail-panel { background: #fff; border: 1px solid #e4e9f1; border-radius: 14px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); overflow: hidden; }
-    .order-detail-panel-header { padding: 17px 20px; border-bottom: 1px solid #e4e9f1; color: #17202a; font-weight: 800; }
+    .order-detail-panel { background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); overflow: hidden; }
+    .order-detail-panel-header { padding: 17px 20px; border-bottom: 1px solid var(--admin-border); color: var(--admin-text-strong); font-weight: 800; }
     .order-detail-panel-body { padding: 20px; }
     .order-detail-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .order-detail-summary span, .order-detail-item span { display: block; color: #718096; font-size: 12px; }
-    .order-detail-summary strong { display: block; margin-top: 4px; color: #17202a; overflow-wrap: anywhere; }
-    .order-detail-item { display: flex; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid #edf0f5; }
+    .order-detail-summary span, .order-detail-item span { display: block; color: var(--admin-muted); font-size: 12px; }
+    .order-detail-summary strong { display: block; margin-top: 4px; color: var(--admin-text-strong); overflow-wrap: anywhere; }
+    .order-detail-item { display: flex; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--admin-border); }
     .order-detail-item:last-child { border-bottom: 0; }
-    .order-stage-note { margin: 14px 0 0; padding: 12px; border-radius: 8px; background: #f2f6fc; color: #526276; font-size: 13px; }
-    .order-status-readonly { padding: 12px; border-radius: 8px; background: #fff5dd; color: #825d00; }
+    .order-stage-note { margin: 14px 0 0; padding: 12px; border-radius: 8px; background: var(--admin-surface-soft); color: var(--admin-text); font-size: 13px; }
+    .order-status-readonly { padding: 12px; border-radius: 8px; background: var(--admin-badge-warning-bg); color: var(--admin-badge-warning-text); }
     @@media (max-width: 900px) { .order-detail-shell { grid-template-columns: 1fr; } }
     @@media (max-width: 520px) { .order-detail-summary { grid-template-columns: 1fr; } }
 </style>

@@ -21,7 +21,7 @@
         border-color: rgba(251, 113, 133, .28);
         background:
             radial-gradient(circle at 100% 0, rgba(251, 113, 133, .12), transparent 30%),
-            #111a2e;
+            var(--admin-surface);
     }
 
     .deleted-product-card .product-card-media::after {
@@ -43,7 +43,7 @@
         max-width: calc(100% - 24px);
         padding: 6px 10px;
         border-radius: 999px;
-        color: #fecdd3;
+        color: var(--admin-danger-soft-text);
         background: rgba(225, 29, 72, .24);
         border: 1px solid rgba(251, 113, 133, .35);
         font-size: 12px;
@@ -55,9 +55,9 @@
         gap: 9px;
         margin: 12px 0 16px;
         padding: 12px;
-        border: 1px solid #24314f;
+        border: 1px solid var(--admin-border);
         border-radius: 8px;
-        background: #0f172a;
+        background: var(--admin-page);
     }
 
     .deleted-product-meta span {
@@ -65,13 +65,13 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        color: #8ea0b8;
+        color: var(--admin-muted);
         font-size: 12px;
         font-weight: 700;
     }
 
     .deleted-product-meta strong {
-        color: #e5eefb;
+        color: var(--admin-text-strong);
         font-weight: 800;
         text-align: right;
     }
@@ -79,7 +79,7 @@
     .deleted-product-description {
         min-height: 42px;
         margin: 0;
-        color: #8ea0b8;
+        color: var(--admin-muted);
         font-size: 13px;
         line-height: 1.6;
     }

@@ -8,16 +8,30 @@
 }
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "myShop Admin" : $"{pageTitle} - myShop Admin")</title>
     <link rel="icon" type="image/svg+xml" href="~/Images/myshop-mark.svg" asp-append-version="true" />
 
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem('myshop-theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = savedTheme === 'dark' || savedTheme === 'light'
+                    ? savedTheme
+                    : (prefersDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch { }
+        })();
+    </script>
+
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css">
     <link rel="stylesheet" href="~/css/adminlte.min.css">
+    <link rel="stylesheet" href="~/css/theme.css" asp-append-version="true">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
     <link rel="stylesheet" href="//cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
@@ -345,6 +359,17 @@
                         @(User.Identity?.Name ?? "Guest")
                     </span>
                 </li>
+                <li class="nav-item d-flex align-items-center">
+                    <button type="button"
+                            class="admin-theme-toggle"
+                            data-theme-toggle
+                            aria-label="Switch theme"
+                            aria-pressed="true"
+                            title="Switch light or dark mode">
+                        <i class="fas fa-moon" aria-hidden="true"></i>
+                        <span class="sr-only">Switch theme</span>
+                    </button>
+                </li>
             </ul>
         </nav>
 
@@ -502,6 +527,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/theme.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
