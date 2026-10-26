@@ -438,11 +438,14 @@ namespace MyShop.PL.Controllers
                 transaction.Order?.MerchantOrderId;
 
             if (!int.TryParse(localOrderId, out var orderId))
+            {
+                _logger.LogWarning("Paymob callback transaction {TransactionId} has no valid merchant order reference.", transaction.Id);
                 return Ok();
+            }
 
             var order =
                 await _orderService
-                    .GetOrderForPaymentAsync(orderId);
+                    .GetOrderForPaymobCallbackAsync(orderId);
 
             if (order is null)
                 return Ok();

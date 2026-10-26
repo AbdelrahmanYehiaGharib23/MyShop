@@ -116,6 +116,11 @@ namespace MyShop.BLL.Services.OrderServices
 
             return order;
         }
+        public async Task<Order?> GetOrderForPaymobCallbackAsync(int orderId)
+        {
+            return await _unitOfWork.OrderRepository
+                .GetEntityWithSpecAsync(new OrderByIdSpecification(orderId));
+        }
 
         public async Task<Order?>
             GetOrderByPaymentIntentIdAsync(
