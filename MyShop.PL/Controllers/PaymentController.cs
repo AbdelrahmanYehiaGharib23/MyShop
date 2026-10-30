@@ -7,6 +7,7 @@ using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.OrderServices;
 using MyShop.BLL.Services.PaymentServices;
 using MyShop.DAL.Entities.Enum;
+using MyShop.PL.ViewModels;
 using Stripe;
 using System.Security.Claims;
 
@@ -46,9 +47,10 @@ namespace MyShop.PL.Controllers
         public async Task<IActionResult>
             CreateOrUpdatePaymentIntent(int orderId)
         {
-            var order =
-                await _orderService
-                    .GetOrderForPaymentAsync(orderId);
+            if (orderId <= 0)
+                return NotFound(new { message = "Order not found." });
+
+            var order = await _orderService.GetOrderForCustomerAsync(orderId);
 
             if (order is null)
                 return NotFound(new
@@ -56,14 +58,40 @@ namespace MyShop.PL.Controllers
                     message = "Order not found."
                 });
 
-            var result =
-                await _paymentService
-                    .CreateOrUpdatePaymentIntentAsync(
-                        order.Id,
-                        ConvertEgpToUsd(order.TotalPrice),
-                        "usd");
+            if (order.Status == OrderStatus.Paid)
+                return Ok(new
+                {
+                    completed = true,
+                    redirectUrl = Url.Action(nameof(Status), "Payment", new { orderId = order.Id })
+                });
 
-            return Ok(result);
+            if (order.Status != OrderStatus.Pending)
+                return Conflict(new { message = "This order is no longer awaiting payment." });
+
+            try
+            {
+                var result = await _paymentService.CreateOrUpdatePaymentIntentAsync(
+                    order.Id,
+                    ConvertEgpToUsd(order.TotalPrice),
+                    "usd");
+                return Ok(result);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe could not create a payment intent for order {OrderId}.", order.Id);
+                return StatusCode(StatusCodes.Status502BadGateway, new
+                {
+                    message = "Stripe could not prepare the payment. Please try again."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Stripe payment settings are invalid for order {OrderId}.", order.Id);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    message = "Stripe is temporarily unavailable. Please try another payment method or try again later."
+                });
+            }
         }
 
         [HttpPost]
@@ -108,17 +136,27 @@ namespace MyShop.PL.Controllers
 
                 return Ok(new
                 {
-                    redirectUrl = Url.Action("MyOrders", "Orders")
+                    redirectUrl = Url.Action(nameof(Status), "Payment", new { orderId = order.Id })
                 });
             }
 
-            var paymentSucceeded =
-                await _paymentService
-                    .ConfirmPaymentSucceededAsync(
-                        order.Id,
-                        paymentIntentId,
-                        ConvertEgpToUsd(order.TotalPrice),
-                        "usd");
+            bool paymentSucceeded;
+            try
+            {
+                paymentSucceeded = await _paymentService.ConfirmPaymentSucceededAsync(
+                    order.Id,
+                    paymentIntentId,
+                    ConvertEgpToUsd(order.TotalPrice),
+                    "usd");
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe could not verify payment for order {OrderId}.", order.Id);
+                return StatusCode(StatusCodes.Status502BadGateway, new
+                {
+                    message = "Stripe could not verify the payment yet. Check your order status before trying again."
+                });
+            }
 
             if (!paymentSucceeded)
             {
@@ -136,7 +174,46 @@ namespace MyShop.PL.Controllers
 
             return Ok(new
             {
-                redirectUrl = Url.Action("MyOrders", "Orders")
+                redirectUrl = Url.Action(nameof(Status), "Payment", new { orderId = order.Id })
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Status(int orderId)
+        {
+            if (orderId <= 0)
+                return NotFound();
+
+            var order = await _orderService.GetOrderForCustomerAsync(orderId);
+            if (order is null)
+                return NotFound();
+
+            return View(new PaymentStatusViewModel
+            {
+                OrderId = order.Id,
+                TotalPrice = order.TotalPrice,
+                OrderDate = order.OrderDate,
+                ItemCount = order.OrderItems.Sum(item => item.Quantity),
+                Status = order.Status
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> StatusCheck(int orderId)
+        {
+            Response.Headers.CacheControl = "no-store, no-cache";
+            if (orderId <= 0)
+                return NotFound();
+
+            var order = await _orderService.GetOrderForCustomerAsync(orderId);
+            if (order is null)
+                return NotFound();
+
+            return Json(new
+            {
+                status = order.Status.ToString().ToLowerInvariant(),
+                total = order.TotalPrice,
+                itemCount = order.OrderItems.Sum(item => item.Quantity)
             });
         }
 
@@ -252,11 +329,14 @@ namespace MyShop.PL.Controllers
                             .GetOrderByPaymentIntentIdAsync(
                                 paymentIntent.Id);
 
-                    if (order is null)
-                        return Ok();
-
-                    await _orderService
-                        .MarkAsFailedAsync(order.Id);
+                    if (order is not null)
+                    {
+                        // A declined attempt does not cancel the order. Keeping it
+                        // pending lets the customer correct the card and retry.
+                        _logger.LogInformation(
+                            "Order {OrderId} remains pending after a failed Stripe payment attempt.",
+                            order.Id);
+                    }
                 }
 
                 return Ok(new
@@ -333,6 +413,29 @@ namespace MyShop.PL.Controllers
         public async Task<IActionResult>
       CreatePaymobPayment(int orderId)
         {
+            if (orderId <= 0)
+                return NotFound(new { message = "Order not found." });
+
+            var order = await _orderService.GetOrderForCustomerAsync(orderId);
+
+            if (order is null)
+            {
+                return NotFound(new
+                {
+                    message = "Order not found."
+                });
+            }
+
+            if (order.Status == OrderStatus.Paid)
+                return Ok(new
+                {
+                    completed = true,
+                    redirectUrl = Url.Action(nameof(Status), "Payment", new { orderId = order.Id })
+                });
+
+            if (order.Status != OrderStatus.Pending)
+                return Conflict(new { message = "This order is no longer awaiting payment." });
+
             if (!Uri.TryCreate(
                     _paymobSettings.CallbackBaseUrl,
                     UriKind.Absolute,
@@ -341,19 +444,7 @@ namespace MyShop.PL.Controllers
             {
                 return StatusCode(StatusCodes.Status503ServiceUnavailable, new
                 {
-                    message = "Paymob is not ready: configure Paymob:CallbackBaseUrl with your public HTTPS URL (for example, your ngrok domain)."
-                });
-            }
-
-            var order =
-                await _orderService
-                    .GetOrderForPaymentAsync(orderId);
-
-            if (order is null)
-            {
-                return NotFound(new
-                {
-                    message = "Order not found."
+                    message = "Paymob is not ready: configure Paymob:CallbackBaseUrl with your public HTTPS URL."
                 });
             }
 
@@ -367,7 +458,7 @@ namespace MyShop.PL.Controllers
                             order.CustomerEmail,
                             order.Phone,
                             new Uri(callbackBaseUri, "/Payment/PaymobWebhook").AbsoluteUri,
-                            new Uri(callbackBaseUri, "/Payment/PaymobReturn").AbsoluteUri);
+                            new Uri(callbackBaseUri, $"/Payment/PaymobReturn?orderId={order.Id}").AbsoluteUri);
 
                 return Ok(result);
             }
@@ -379,7 +470,7 @@ namespace MyShop.PL.Controllers
                 _logger.LogError(ex, "Could not create Paymob intention for order {OrderId}.", order.Id);
                 return StatusCode(StatusCodes.Status502BadGateway, new
                 {
-                    message = ex.Message
+                    message = "Paymob could not prepare the payment. Check its configuration or try again."
                 });
             }
         }
@@ -489,13 +580,15 @@ namespace MyShop.PL.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
-        public IActionResult PaymobReturn()
+        public IActionResult PaymobReturn(int? orderId)
         {
-            TempData["InfoMessage"] =
-                "Paymob returned you to the store. Your order status will update after payment verification.";
+            if (!orderId.HasValue || orderId.Value <= 0)
+            {
+                TempData["Message"] = "Paymob returned you to the store. Check your orders for the latest payment status.";
+                return RedirectToAction("MyOrders", "Orders");
+            }
 
-            return RedirectToAction("MyOrders", "Orders");
+            return RedirectToAction(nameof(Status), new { orderId = orderId.Value });
         }
 
         private bool IsValidPaymobHmac(string rawBody, string receivedHmac)

@@ -30,6 +30,9 @@ namespace MyShop.DAL.Presistence.Data.DbInitializer
             builder.Entity<Review>()
                 .HasQueryFilter(r => !r.IsDeleted && !r.Product.IsDeleted);
 
+            builder.Entity<FavoriteProduct>()
+                .HasQueryFilter(favorite => !favorite.IsDeleted && !favorite.Product.IsDeleted);
+
             builder.Entity<ApplicationUser>()
                         .HasIndex(u => u.NormalizedEmail)
                         .IsUnique();
@@ -108,6 +111,7 @@ namespace MyShop.DAL.Presistence.Data.DbInitializer
 
         public virtual DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<FavoriteProduct> FavoriteProducts { get; set; }
     }
 }
 

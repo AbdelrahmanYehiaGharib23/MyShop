@@ -10,6 +10,8 @@ namespace MyShop.BLL.Services.OrderServices
 
         Task<Order?> GetOrderForPaymentAsync(int orderId);
 
+        Task<Order?> GetOrderForCustomerAsync(int orderId);
+
         // Use only for authenticated and HMAC-validated provider callbacks.
         Task<Order?> GetOrderForPaymobCallbackAsync(int orderId);
 

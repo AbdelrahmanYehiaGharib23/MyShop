@@ -1,0 +1,61 @@
+@model MyShop.PL.ViewModels.PaymentStatusViewModel
+@using MyShop.DAL.Entities.Enum
+
+@{
+    Layout = "~/Views/Shared/_Customer.cshtml";
+    ViewData["Title"] = "Payment Status";
+    ViewData["Robots"] = "noindex,follow";
+    var isPending = Model.Status == OrderStatus.Pending;
+    var isPaid = Model.Status == OrderStatus.Paid;
+    var state = Model.Status.ToString().ToLowerInvariant();
+}
+
+<section class="payment-status-page"
+         data-payment-status
+         data-order-id="@Model.OrderId"
+         data-status="@state"
+         data-status-url="@Url.Action("StatusCheck", "Payment", new { orderId = Model.OrderId })"
+         data-total="@Model.TotalPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+         data-item-count="@Model.ItemCount">
+    <div class="store-container">
+        <article class="payment-status-card" aria-labelledby="payment-status-title">
+            <span class="payment-status-icon @(isPaid ? "is-success" : isPending ? "is-pending" : "is-failed")" data-status-icon aria-hidden="true">
+                <i class="fas @(isPaid ? "fa-check" : isPending ? "fa-spinner fa-spin" : "fa-exclamation")"></i>
+            </span>
+            <span class="section-eyebrow">Order payment</span>
+            <h1 id="payment-status-title" data-status-title>
+                @(isPaid ? "Payment confirmed" : isPending ? "We’re verifying your payment" : Model.Status == OrderStatus.Cancelled ? "This order was cancelled" : "Payment was not confirmed")
+            </h1>
+            <p class="payment-status-message" data-status-message role="status" aria-live="polite">
+                @(isPaid ? "Your payment has been verified and your order is confirmed." : isPending ? "The payment provider is confirming your transaction. This can take a few moments." : Model.Status == OrderStatus.Cancelled ? "This order is no longer available for payment." : "Your payment was not confirmed. You can review the order status in your account.")
+            </p>
+
+            <dl class="payment-status-summary">
+                <div><dt>Order</dt><dd>#@Model.OrderId</dd></div>
+                <div><dt>Total</dt><dd>@CurrencyFormatter.ToEgp(Model.TotalPrice)</dd></div>
+                <div><dt>Items</dt><dd>@Model.ItemCount</dd></div>
+            </dl>
+
+            <p class="payment-status-help" data-status-help>
+                @(isPending ? "We’ll check for an update automatically. You can also check again manually." : isPaid ? "You can view delivery updates and order details in My Orders." : "If you need help with this order, check its details in My Orders.")
+            </p>
+
+            <div class="payment-status-actions">
+                <a class="store-button-primary" data-status-retry asp-controller="Cart" asp-action="Checkout" asp-route-orderId="@Model.OrderId" hidden="@(!isPending ? "hidden" : null)">
+                    <i class="fas fa-credit-card" aria-hidden="true"></i><span>Return to payment</span>
+                </a>
+                <button class="store-button-secondary" type="button" data-status-refresh hidden="@(!isPending ? "hidden" : null)">
+                    <i class="fas fa-rotate" aria-hidden="true"></i><span>Check status</span>
+                </button>
+                <a class="store-button-secondary" asp-controller="Orders" asp-action="MyOrders">
+                    <i class="fas fa-receipt" aria-hidden="true"></i><span>View my orders</span>
+                </a>
+                <a class="payment-status-shopping" asp-controller="Store" asp-action="Index">Continue shopping</a>
+            </div>
+        </article>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/js/payment-status.js" asp-append-version="true"></script>
+}

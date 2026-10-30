@@ -5,6 +5,7 @@
     var products = (Model?.Products ?? Enumerable.Empty<ProductDto>()).ToList();
     var searchTerm = Model?.SearchTerm ?? string.Empty;
     var sort = Model?.Sort ?? string.Empty;
+    var categoryId = Model?.CategoryId;
     var pageIndex = Model?.PageIndex ?? 1;
     var pageSize = Model?.PageSize ?? 9;
     var totalCount = Model?.Count ?? products.Count;
@@ -20,18 +21,23 @@
         ["priceDesc"] = "Price: High to Low"
     };
     var currentSortLabel = sortOptions.TryGetValue(sort, out var sortLabel) ? sortLabel : sortOptions[""];
-    var categories = products
-        .Select(product => product.CategoryName)
-        .Where(category => !string.IsNullOrWhiteSpace(category))
-        .Distinct()
-        .ToList();
+    var categories = (Model?.Categories ?? Enumerable.Empty<MyShop.BLL.Models.Dto.CategoryDto.CategoryDto>()).ToList();
     var heroProducts = products.Take(2).ToList();
 
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "Products";
+    ViewData["Description"] = string.IsNullOrWhiteSpace(searchTerm)
+        ? "Browse selected tech products, compare prices and save favorites at myShop."
+        : $"Browse products matching {searchTerm} at myShop.";
+    ViewData["CanonicalUrl"] = Url.Action("Index", "Store", categoryId.HasValue ? new { categoryId } : null, Context.Request.Scheme);
+    if (!string.IsNullOrWhiteSpace(searchTerm) || !string.IsNullOrWhiteSpace(sort) || pageIndex > 1)
+    {
+        ViewData["Robots"] = "noindex,follow";
+    }
     ViewData["SearchTerm"] = searchTerm;
     ViewData["Sort"] = sort;
     ViewData["PageSize"] = pageSize.ToString();
+    ViewData["CategoryId"] = categoryId?.ToString() ?? string.Empty;
 }
 
 <section class="shop-page">
@@ -51,11 +57,11 @@
                         <span>View Cart</span>
                     </a>
                 </div>
-                <div class="shop-trust-badges" aria-label="Store benefits">
-                    <span><i class="fas fa-check"></i> Free Shipping</span>
-                    <span><i class="fas fa-check"></i> Secure Checkout</span>
-                    <span><i class="fas fa-check"></i> Fast Delivery</span>
-                    <span><i class="fas fa-check"></i> 24/7 Support</span>
+                <div class="shop-trust-badges" aria-label="Store features">
+                    <span><i class="fas fa-check"></i> Clear pricing</span>
+                    <span><i class="fas fa-check"></i> Secure checkout</span>
+                    <span><i class="fas fa-check"></i> Account order history</span>
+                    <span><i class="fas fa-check"></i> Saved favorites</span>
                 </div>
             </div>
 
@@ -72,7 +78,7 @@
                         <article class="@cardClass">
                             @if (!string.IsNullOrWhiteSpace(imageUrl))
                             {
-                                <img src="@imageUrl" alt="@product.Name" loading="eager" decoding="async" />
+                                <img src="@imageUrl" alt="@product.Name" width="720" height="540" fetchpriority="high" decoding="async" />
                             }
                             else
                             {
@@ -86,7 +92,7 @@
                                 </div>
                             }
                             <div class="hero-product-info">
-                                <strong>@product.Name</strong>
+                                <strong data-no-translate>@product.Name</strong>
                                 <span>@CurrencyFormatter.ToEgp(product.Price)</span>
                             </div>
                         </article>
@@ -111,16 +117,16 @@
         @if (categories.Any())
         {
             <div class="category-strip" aria-label="Product categories">
-                <button type="button" class="category-chip active" data-category-filter="all">
+                <a asp-controller="Store" asp-action="Index" asp-route-searchTerm="@searchTerm" asp-route-sort="@sort" asp-route-pageSize="@pageSize" class="category-chip @(categoryId is null ? "active" : string.Empty)" aria-current="@(categoryId is null ? "page" : null)">
                     <i class="fas fa-layer-group"></i>
                     All products
-                </button>
+                </a>
                 @foreach (var category in categories)
                 {
-                    <button type="button" class="category-chip" data-category-filter="@category">
+                    <a asp-controller="Store" asp-action="Index" asp-route-searchTerm="@searchTerm" asp-route-sort="@sort" asp-route-categoryId="@category.Id" asp-route-pageSize="@pageSize" class="category-chip @(categoryId == category.Id ? "active" : string.Empty)" aria-current="@(categoryId == category.Id ? "page" : null)">
                         <i class="fas fa-tag"></i>
-                        @category
-                    </button>
+                        <span data-no-translate>@category.Name</span>
+                    </a>
                 }
             </div>
         }
@@ -150,6 +156,7 @@
                     }
                     <form asp-controller="Store" asp-action="Index" method="get" class="store-sort-form">
                         <input type="hidden" name="searchTerm" value="@searchTerm" />
+                        <input type="hidden" name="categoryId" value="@categoryId" />
                         <input type="hidden" name="pageIndex" value="1" />
                         <label for="storeSort">Sort</label>
                         <select id="storeSort" name="sort" aria-label="Sort products" onchange="this.form.submit()">
@@ -233,6 +240,7 @@
                                  data-product-category="@product.CategoryName"
                                  data-product-id="@product.Id"
                                  data-product-price="@CurrencyFormatter.ToEgp(product.Price)"
+                                 data-product-amount="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                  data-product-image="@(imageUrl ?? string.Empty)"
                                  data-product-details-url="@detailsUrl"
                                  data-add-to-cart-url="@addToCartUrl">
@@ -240,12 +248,13 @@
                                 <button type="button" class="wishlist-button" aria-label="Add @product.Name to favorites" data-wishlist-button
                                         data-product-id="@product.Id" data-product-name="@product.Name" data-product-category="@product.CategoryName"
                                         data-product-price="@CurrencyFormatter.ToEgp(product.Price)" data-product-image="@(imageUrl ?? string.Empty)"
+                                        data-product-amount="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                         data-product-details-url="@detailsUrl" data-add-to-cart-url="@addToCartUrl">
                                     <i class="far fa-heart"></i>
                                 </button>
                                 @if (!string.IsNullOrWhiteSpace(imageUrl))
                                 {
-                                    <img src="@imageUrl" alt="@product.Name" loading="lazy" decoding="async" />
+                                    <img src="@imageUrl" alt="@product.Name" width="640" height="480" loading="lazy" decoding="async" />
                                 }
                                 else
                                 {
@@ -258,11 +267,19 @@
                                         </span>
                                     </div>
                                 }
-                                <span class="product-category-badge">@product.CategoryName</span>
+                                <span class="product-category-badge" data-no-translate>@product.CategoryName</span>
                             </div>
 
                             <div class="store-product-body">
-                                <h3 class="store-product-title">@product.Name</h3>
+                                <div class="store-rating" aria-label="@(product.ReviewCount == 0 ? "No reviews yet" : $"Rated {product.AverageRating:0.0} out of 5 from {product.ReviewCount} reviews")">
+                                    @for (var star = 1; star <= 5; star++)
+                                    {
+                                        var starIcon = product.AverageRating >= star ? "fas fa-star" : product.AverageRating >= star - 0.5 ? "fas fa-star-half-alt" : "far fa-star";
+                                        <i class="@starIcon" aria-hidden="true"></i>
+                                    }
+                                    <span>@(product.ReviewCount == 0 ? "No reviews" : $"{product.AverageRating:0.0} ({product.ReviewCount})")</span>
+                                </div>
+                                <h3 class="store-product-title" data-no-translate>@product.Name</h3>
                                 <p class="store-product-subtitle">
                                     @(string.IsNullOrWhiteSpace(product.CategoryName) ? "Explore this product in our catalog." : $"Explore the {product.CategoryName} collection.")
                                 </p>
@@ -296,10 +313,11 @@
                         <div class="store-pagination">
                             @if (pageIndex > 1)
                             {
-                                <a asp-controller="Store"
+                                    <a asp-controller="Store"
                                    asp-action="Index"
                                    asp-route-searchTerm="@searchTerm"
                                    asp-route-sort="@sort"
+                                       asp-route-categoryId="@categoryId"
                                    asp-route-pageIndex="@(pageIndex - 1)"
                                    asp-route-pageSize="@pageSize"
                                    class="store-page-link store-page-nav">
@@ -327,6 +345,7 @@
                                        asp-action="Index"
                                        asp-route-searchTerm="@searchTerm"
                                        asp-route-sort="@sort"
+                                       asp-route-categoryId="@categoryId"
                                        asp-route-pageIndex="@pageNumber"
                                        asp-route-pageSize="@pageSize"
                                        class="store-page-link">@pageNumber</a>
@@ -335,10 +354,11 @@
 
                             @if (pageIndex < totalPages)
                             {
-                                <a asp-controller="Store"
+                                    <a asp-controller="Store"
                                    asp-action="Index"
                                    asp-route-searchTerm="@searchTerm"
                                    asp-route-sort="@sort"
+                                       asp-route-categoryId="@categoryId"
                                    asp-route-pageIndex="@(pageIndex + 1)"
                                    asp-route-pageSize="@pageSize"
                                    class="store-page-link store-page-nav">

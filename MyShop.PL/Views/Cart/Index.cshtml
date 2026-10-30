@@ -3,6 +3,7 @@
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "Shopping Cart";
+    ViewData["Robots"] = "noindex,follow";
 
     var items = Model?.Items ?? new List<MyShop.DAL.Entities.CartItem>();
     var totalItems = Model?.TotalItems ?? 0;
@@ -37,7 +38,7 @@
                             <div class="cart-item-media">
                                 @if (!string.IsNullOrWhiteSpace(imageUrl))
                                 {
-                                    <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                    <img src="@imageUrl" alt="@item.ProductName" width="96" height="96" loading="lazy" decoding="async" />
                                 }
                                 else
                                 {
@@ -53,13 +54,14 @@
                             </div>
 
                             <div>
-                                <h3>@item.ProductName</h3>
+                                <h3 data-no-translate>@item.ProductName</h3>
                                 <div class="cart-item-meta">
                                     <span>Unit price: @CurrencyFormatter.ToEgp(item.Price)</span>
                                     <span>Product #@item.ProductId</span>
                                 </div>
                                 <div class="cart-quantity-tools">
                                     <form asp-controller="Cart" asp-action="Decrease" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@item.ProductId" />
                                         <button type="submit" class="cart-quantity-button" aria-label="Decrease quantity">
                                             <i class="fas fa-minus"></i>
@@ -69,6 +71,7 @@
                                     <span class="cart-quantity-value">@item.Quantity</span>
 
                                     <form asp-controller="Cart" asp-action="Increase" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@item.ProductId" />
                                         <button type="submit" class="cart-quantity-button" aria-label="Increase quantity">
                                             <i class="fas fa-plus"></i>
@@ -76,6 +79,7 @@
                                     </form>
 
                                     <form asp-controller="Cart" asp-action="Remove" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="productId" value="@item.ProductId" />
                                         <button type="submit" class="cart-remove-button" aria-label="Remove item">
                                             <i class="fas fa-trash"></i>
@@ -94,11 +98,6 @@
 
                 <aside class="cart-summary">
                     <h3>Order Summary</h3>
-                    <div class="cart-coupon">
-                        <label class="visually-hidden" for="couponCode">Coupon code</label>
-                        <input id="couponCode" type="text" placeholder="Coupon code" autocomplete="off" />
-                        <button type="button">Apply</button>
-                    </div>
                     <div class="cart-summary-row">
                         <span>Total items</span>
                         <strong>@totalItems</strong>
@@ -109,8 +108,9 @@
                     </div>
                     <div class="cart-summary-row">
                         <span>Shipping</span>
-                        <strong>Calculated later</strong>
+                        <strong>No fee added</strong>
                     </div>
+                    <p class="cart-shipping-note">The displayed total includes product prices only.</p>
                     <div class="cart-summary-row cart-summary-total">
                         <span>Total</span>
                         <strong>@CurrencyFormatter.ToEgp(totalPrice)</strong>
@@ -126,6 +126,7 @@
                             <span>Keep Shopping</span>
                         </a>
                         <form asp-controller="Cart" asp-action="Clear" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
                             <button type="submit" class="store-button-ghost">
                                 <i class="fas fa-broom"></i>
                                 <span>Clear Cart</span>

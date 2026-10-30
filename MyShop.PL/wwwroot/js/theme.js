@@ -11,9 +11,13 @@
         root.setAttribute('data-theme', dark ? 'dark' : 'light');
         root.setAttribute('data-store-theme', dark ? 'dark' : 'light');
         localStorage.setItem('myshop-theme', dark ? 'dark' : 'light');
+        var themeColor = document.querySelector('meta[name="theme-color"]');
+        if (themeColor) themeColor.setAttribute('content', dark ? '#0b1120' : '#f5f7fb');
         document.querySelectorAll('[data-theme-toggle]').forEach(function (button) {
             button.setAttribute('aria-pressed', dark ? 'true' : 'false');
-            button.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+            button.setAttribute('aria-label', root.lang === 'ar'
+                ? (dark ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن')
+                : (dark ? 'Switch to light theme' : 'Switch to dark theme'));
             var icon = button.querySelector('i');
             if (icon) {
                 icon.classList.toggle('fa-moon', !dark);

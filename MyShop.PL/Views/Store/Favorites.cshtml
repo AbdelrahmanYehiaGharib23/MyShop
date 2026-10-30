@@ -1,6 +1,7 @@
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "Favorites";
+    ViewData["Robots"] = "noindex,follow";
     var addToCartUrl = Url.Action("AddToCart", "Cart") ?? "/Cart/AddToCart";
 }
 
@@ -17,6 +18,10 @@
             </a>
         </header>
 
+        <div class="favorites-loading" data-favorites-loading role="status" aria-live="polite" hidden>
+            <span class="store-button-loader" aria-hidden="true"></span>
+            <span>Loading your saved products…</span>
+        </div>
         <div class="favorites-grid" data-favorites-grid aria-live="polite"></div>
         <div class="store-empty favorites-empty" data-favorites-empty>
             <span class="store-empty-visual"><i class="far fa-heart" aria-hidden="true"></i></span>

@@ -36,5 +36,8 @@ namespace MyShop.DAL.Entities
         public string? PaymobIntentionId { get; set; }
 
         public string? PaymobOrderId { get; set; }
+
+        // Reused when the browser retries the initial checkout POST.
+        public string? CheckoutRequestId { get; set; }
     }
 }

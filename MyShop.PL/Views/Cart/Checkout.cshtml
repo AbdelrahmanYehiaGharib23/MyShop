@@ -7,6 +7,7 @@
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "Checkout";
+    ViewData["Robots"] = "noindex,follow";
 
     var items = Model?.Items ?? new List<MyShop.DAL.Entities.CartItem>();
     var totalItems = items.Sum(item => item.Quantity);
@@ -89,9 +90,13 @@
                   data-paymob-url="@paymobPaymentUrl"
                   data-paymob-public-key="@(paymobSettings?.PublicKey ?? string.Empty)"
                   data-paymob-return-url="@paymobReturnUrl"
-                  data-orders-url="@ordersUrl">
+                  data-orders-url="@ordersUrl"
+                  data-analytics-checkout
+                  data-checkout-value="@total.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  data-checkout-items="@totalItems">
                 @Html.AntiForgeryToken()
                 <input asp-for="OrderId" type="hidden" />
+                <input asp-for="CheckoutRequestId" type="hidden" />
 
                 <details class="checkout-summary store-fade-in" data-checkout-summary open>
                     <summary class="checkout-summary-header">
@@ -116,7 +121,7 @@
                                     <div class="checkout-item-media">
                                         @if (!string.IsNullOrWhiteSpace(imageUrl))
                                         {
-                                            <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                            <img src="@imageUrl" alt="@item.ProductName" width="72" height="72" loading="lazy" decoding="async" />
                                         }
                                         else
                                         {
@@ -130,7 +135,7 @@
                                     </div>
 
                                     <div class="checkout-item-info">
-                                        <h3>@item.ProductName</h3>
+                                        <h3 data-no-translate>@item.ProductName</h3>
                                         <span>Qty @item.Quantity x @CurrencyFormatter.ToEgp(item.Price)</span>
                                     </div>
 
@@ -145,8 +150,9 @@
                         </div>
                         <div class="cart-summary-row">
                             <span>Shipping</span>
-                            <strong>@(shipping == 0 ? "Free" : CurrencyFormatter.ToEgp(shipping))</strong>
+                            <strong>@(shipping == 0 ? "No fee added" : CurrencyFormatter.ToEgp(shipping))</strong>
                         </div>
+                        <p class="checkout-shipping-note">The displayed total includes product prices only.</p>
                         <div class="cart-summary-row cart-summary-total">
                             <span>Total</span>
                             <strong>@CurrencyFormatter.ToEgp(total)</strong>
@@ -181,7 +187,7 @@
                                 <span class="checkout-panel-icon"><i class="fas fa-truck" aria-hidden="true"></i></span>
                                 <div class="checkout-delivery-copy">
                                     <h2>Delivery details</h2>
-                                    <p><span><i class="fas fa-phone-alt" aria-hidden="true"></i> @Model?.Phone</span><span><i class="fas fa-map-marker-alt" aria-hidden="true"></i> @Model?.Address</span></p>
+                                    <p><span data-no-translate><i class="fas fa-phone-alt" aria-hidden="true"></i> @Model?.Phone</span><span data-no-translate><i class="fas fa-map-marker-alt" aria-hidden="true"></i> @Model?.Address</span></p>
                                 </div>
                             </div>
                         }
@@ -191,7 +197,7 @@
                                 <span class="checkout-panel-icon"><i class="fas fa-truck"></i></span>
                                 <div>
                                     <h2>Delivery Information</h2>
-                                    <p>These two fields are used by the order service when creating your order.</p>
+                                    <p>Add the phone number and address where you want this order delivered.</p>
                                 </div>
                             </div>
 

@@ -1,4 +1,8 @@
+@using System.Text.Json
+@using System.Text.RegularExpressions
+@using Microsoft.Extensions.Options
 @inject MyShop.BLL.Services.CartServices.ICartService CartService
+@inject IOptions<MyShop.BLL.Models.Common.AnalyticsSettings> AnalyticsOptions
 @{
     var pageTitle = ViewData["Title"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
@@ -12,6 +16,16 @@
     var searchTerm = ViewData["SearchTerm"]?.ToString() ?? string.Empty;
     var sort = ViewData["Sort"]?.ToString() ?? string.Empty;
     var pageSize = ViewData["PageSize"]?.ToString() ?? string.Empty;
+    var categoryId = ViewData["CategoryId"]?.ToString() ?? string.Empty;
+    var description = ViewData["Description"]?.ToString() ?? "Discover selected tech products, compare clear prices, save favorites and check out securely with myShop.";
+    var canonicalUrl = ViewData["CanonicalUrl"]?.ToString() ?? $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.PathBase}{Context.Request.Path}";
+    var socialImage = ViewData["ImageUrl"]?.ToString() ?? Url.Content("~/Images/myshop-mark.svg");
+    var configuredAnalyticsId = AnalyticsOptions.Value.GoogleTagManagerId?.Trim() ?? string.Empty;
+    var googleTagManagerId = Regex.IsMatch(configuredAnalyticsId, @"^GTM-[A-Z0-9]+$", RegexOptions.IgnoreCase)
+        ? configuredAnalyticsId
+        : string.Empty;
+    var isProductPage = string.Equals(currentController, "Store", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(currentAction, "Details", StringComparison.OrdinalIgnoreCase);
     var loadStripeJs = string.Equals(ViewData["LoadStripeJs"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
     var cartCount = 0;
 
@@ -26,11 +40,37 @@
 }
 
 <!DOCTYPE html>
-<html lang="en" data-theme="dark" data-store-theme="dark">
+<html lang="en" dir="ltr" data-theme="dark" data-store-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "myShop" : $"{pageTitle} - myShop")</title>
+    <meta name="description" content="@description" />
+    @if (ViewData["Robots"] is string robots)
+    {
+        <meta name="robots" content="@robots" />
+    }
+    <link rel="canonical" href="@canonicalUrl" />
+    <meta property="og:type" content="@(isProductPage ? "product" : "website")" />
+    <meta property="og:site_name" content="myShop" />
+    <meta property="og:title" content="@(string.IsNullOrWhiteSpace(pageTitle) ? "myShop" : $"{pageTitle} - myShop")" />
+    <meta property="og:description" content="@description" />
+    <meta property="og:url" content="@canonicalUrl" />
+    <meta property="og:image" content="@(socialImage.StartsWith("http", StringComparison.OrdinalIgnoreCase) ? socialImage : $"{Context.Request.Scheme}://{Context.Request.Host}{Url.Content(socialImage)}")" />
+    @if (isProductPage && ViewData["ProductPrice"] is string productPrice)
+    {
+        <meta property="product:price:amount" content="@productPrice" />
+        <meta property="product:price:currency" content="EGP" />
+    }
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0b1120" />
+
+    @if (!string.IsNullOrEmpty(googleTagManagerId))
+    {
+        <script>
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer',@Html.Raw(JsonSerializer.Serialize(googleTagManagerId)));
+        </script>
+    }
 
     <script>
             (function () {
@@ -41,12 +81,16 @@
                     : (prefersDark ? 'dark' : 'light');
                 document.documentElement.setAttribute('data-theme', theme);
                 document.documentElement.setAttribute('data-store-theme', theme);
+                var language = localStorage.getItem('myshop-language');
+                if (language !== 'ar' && language !== 'en') language = (navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en';
+                document.documentElement.setAttribute('lang', language);
+                document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
             })();
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/plugins/fontawesome-free/css/all.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -60,13 +104,43 @@
     <link rel="stylesheet" href="~/css/orders.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/experience.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/responsive-mobile.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
     <link rel="icon" type="image/svg+xml" href="~/Images/myshop-mark.svg" asp-append-version="true" />
+    @if (string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase)
+         && string.Equals(currentController, "Store", StringComparison.OrdinalIgnoreCase))
+    {
+        var websiteJsonLd = JsonSerializer.Serialize(new Dictionary<string, object>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "WebSite",
+            ["name"] = "myShop",
+            ["url"] = Url.Action("Index", "Store", null, Context.Request.Scheme)!,
+            ["potentialAction"] = new Dictionary<string, object>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.PathBase}/Store/Index?searchTerm={{search_term_string}}",
+                ["query-input"] = "required name=search_term_string"
+            }
+        });
+        <script type="application/ld+json">@Html.Raw(websiteJsonLd)</script>
+    }
 </head>
 <body>
-    <div class="store-app">
+    @if (!string.IsNullOrEmpty(googleTagManagerId))
+    {
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=@googleTagManagerId" height="0" width="0" style="display:none;visibility:hidden" title="Google Tag Manager"></iframe></noscript>
+    }
+    <a class="store-skip-link" href="#main-content">Skip to content</a>
+    <div class="store-app"
+         data-user-authenticated="@(User.Identity?.IsAuthenticated == true ? "true" : "false")"
+         data-favorites-read-url="@Url.Action("FavoritesData", "Store")"
+         data-favorites-add-url="@Url.Action("AddFavorite", "Store")"
+         data-favorites-remove-url="@Url.Action("RemoveFavorite", "Store")"
+         data-favorites-add-to-cart-url="@Url.Action("AddToCart", "Cart")"
+         data-favorites-sync-url="@Url.Action("SyncFavorites", "Store")">
         <div class="store-top-strip">
             <div class="store-container" aria-label="Store benefits">
-                <span><i class="fas fa-shipping-fast" aria-hidden="true"></i> Free shipping <span aria-hidden="true">·</span> Secure checkout <span aria-hidden="true">·</span> Support ready</span>
+                <span><i class="fas fa-shield-alt" aria-hidden="true"></i> Secure checkout <span aria-hidden="true">·</span> Clear order summary <span aria-hidden="true">·</span> Order status in your account</span>
             </div>
         </div>
 
@@ -126,6 +200,7 @@
                         <i class="fas fa-search" aria-hidden="true"></i>
                         <input type="hidden" name="sort" value="@sort" />
                         <input type="hidden" name="pageSize" value="@pageSize" />
+                        <input type="hidden" name="categoryId" value="@categoryId" />
                         <input class="store-search-input"
                                type="search"
                                name="searchTerm"
@@ -138,6 +213,9 @@
                     </form>
 
                     <div class="store-nav-actions">
+                        <button type="button" class="store-icon-button store-language-button" data-language-toggle aria-label="Switch to Arabic" title="Switch language">
+                            <span aria-hidden="true">ع</span>
+                        </button>
                         <button type="button" class="store-icon-button" data-store-theme-toggle data-theme-toggle aria-label="Switch to light theme" aria-pressed="true">
                             <i class="fas fa-moon"></i>
                         </button>
@@ -160,12 +238,12 @@
                                         data-bs-toggle="dropdown"
                                         aria-expanded="false">
                                     <span class="store-user-avatar"><i class="fas fa-user"></i></span>
-                                    <span>@displayName</span>
+                                    <span data-no-translate>@displayName</span>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end store-user-menu">
                                     <li>
                                         <span class="dropdown-item-text">
-                                            <strong>@displayName</strong>
+                                            <strong data-no-translate>@displayName</strong>
                                             <small>Customer account</small>
                                         </span>
                                     </li>
@@ -201,7 +279,12 @@
             </div>
         </nav>
 
-        <main class="store-main">
+        <div class="store-network-banner" data-network-status role="status" aria-live="polite" hidden>
+            <i class="fas fa-wifi" aria-hidden="true"></i>
+            <span data-network-message>You’re offline. Some store actions may need a connection.</span>
+        </div>
+
+        <main class="store-main" id="main-content" tabindex="-1">
             <div class="store-toast-stack" data-store-toast-stack role="status" aria-live="polite">
                 @if (!string.IsNullOrWhiteSpace(createToast)
                                 || !string.IsNullOrWhiteSpace(updateToast)
@@ -256,12 +339,7 @@
                         <span class="store-brand-mark"><i class="fas fa-store"></i></span>
                         <span class="store-brand-text">myShop</span>
                     </a>
-                    <p>Modern shopping for selected tech products with a focused customer cart experience.</p>
-                    <div class="store-socials" aria-label="Social links">
-                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    </div>
+                    <p>Browse selected tech products, save favorites and manage your orders in one place.</p>
                 </div>
 
                 <div>
@@ -272,16 +350,8 @@
                  </div>
 
                 <div>
-                    <h2>Categories</h2>
-                    <span>Laptops</span>
-                    <span>Smartphones</span>
-                    <span>Electronics</span>
-                </div>
-
-                <div>
-                    <h2>Contact</h2>
-                    <span><i class="fas fa-envelope"></i> support@myshop.local</span>
-                    <span><i class="fas fa-phone"></i> +20 100 000 0000</span>
+                    <h2>Secure payments</h2>
+                    <p>Choose an available payment method during checkout.</p>
                     <div class="store-payment-providers" aria-label="Payment providers">
                         <h3>Payments</h3>
                         <div class="store-payment-provider-list">
@@ -299,8 +369,14 @@
         </footer>
     </div>
 
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <form hidden data-favorites-antiforgery>@Html.AntiForgeryToken()</form>
+    }
+
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/theme.js" asp-append-version="true"></script>
+    <script src="~/js/language.js" asp-append-version="true"></script>
     @if (loadStripeJs)
     {
         <script src="https://js.stripe.com/v3/" data-stripe-js></script>

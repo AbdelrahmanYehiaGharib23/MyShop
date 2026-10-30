@@ -8,9 +8,10 @@ namespace MyShop.DAL.Presistence.Specifications
         {
             public ProductCountSpecification(ProductSpecParams specParams)
                 : base(p =>
-                    string.IsNullOrWhiteSpace(specParams.Search)
-                    || p.Name.ToLower().Contains(specParams.Search.ToLower())
-                    || (p.Description != null && p.Description.ToLower().Contains(specParams.Search.ToLower())))
+                    (string.IsNullOrWhiteSpace(specParams.Search)
+                        || p.Name.ToLower().Contains(specParams.Search.ToLower())
+                        || (p.Description != null && p.Description.ToLower().Contains(specParams.Search.ToLower())))
+                    && (!specParams.CategoryId.HasValue || p.CategoryId == specParams.CategoryId.Value))
             {
             }
     }

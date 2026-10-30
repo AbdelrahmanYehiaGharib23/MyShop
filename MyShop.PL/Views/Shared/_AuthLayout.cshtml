@@ -2,11 +2,13 @@
     Layout => Auth (Register / Login)
 *@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" dir="ltr" data-theme="dark">
 <head>
     <meta charset="utf-8" />
     <title>@ViewData["Title"] - MyShop Auth</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex,follow" />
+    <meta name="theme-color" content="#0b1120" />
     <link rel="icon" type="image/svg+xml" href="/Images/myshop-mark.svg" />
     <script>
         (function () {
@@ -14,13 +16,17 @@
             var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             var valid = saved === 'dark' || saved === 'light';
             document.documentElement.setAttribute('data-theme', valid ? saved : (dark ? 'dark' : 'light'));
+            var language = localStorage.getItem('myshop-language');
+            if (language !== 'ar' && language !== 'en') language = (navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en';
+            document.documentElement.setAttribute('lang', language);
+            document.documentElement.setAttribute('dir', language === 'ar' ? 'rtl' : 'ltr');
         })();
     </script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -36,6 +42,7 @@
     <link rel="stylesheet" href="~/css/auth-polish.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/experience.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/responsive-mobile.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/rtl.css" asp-append-version="true" />
 </head>
 <body>
 
@@ -43,6 +50,9 @@
 
         <!-- Theme Toggle Button -->
         <div class="theme-toggle">
+            <button type="button" class="auth-language-toggle" data-language-toggle aria-label="Switch to Arabic" title="Switch language">
+                <span aria-hidden="true">ع</span>
+            </button>
             <button id="toggleTheme" type="button" data-theme-toggle aria-label="Switch theme" aria-pressed="true">
                 <i class="fas fa-moon" aria-hidden="true"></i><span>Dark Mode</span>
             </button>
@@ -58,6 +68,7 @@
     <script src="/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
 
     <script src="/js/theme.js"></script>
+    <script src="~/js/language.js" asp-append-version="true"></script>
     <script src="~/js/auth-ui.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)

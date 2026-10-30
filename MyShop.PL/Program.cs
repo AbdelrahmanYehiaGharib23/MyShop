@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 using System.Net;
 using MyShop.BLL.Mapping;
 using MyShop.BLL.Models.Common;
@@ -8,6 +10,7 @@ using MyShop.BLL.Services.AttachmentServices;
 using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.CategoryServices;
 using MyShop.BLL.Services.CurrentUserServices;
+using MyShop.BLL.Services.FavoriteServices;
 using MyShop.BLL.Services.IdentityServices;
 using MyShop.BLL.Services.OrderServices;
 using MyShop.BLL.Services.PaymentServices;
@@ -25,6 +28,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders =
@@ -61,6 +74,7 @@ builder.Services.AddScoped<IPasswordResetManager, PasswordResetManager>();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IEmailTemplateService, EmailTemplateService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
 // Stripe
 builder.Services.Configure<StripeSettings>(
@@ -75,39 +89,45 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<PaymobSettings>(
     builder.Configuration.GetSection("Paymob"));
 
+builder.Services.Configure<AnalyticsSettings>(
+    builder.Configuration.GetSection("Analytics"));
+
 builder.Services.AddHttpClient<IPaymobPaymentGateway,
     PaymobPaymentGateway>();
 
-// Redis - Upstash
-var redisConnectionString =
-    builder.Configuration.GetConnectionString("Redis");
-
-if (string.IsNullOrWhiteSpace(redisConnectionString))
+// Use an isolated in-memory session cache for integration and local UI checks.
+// Production and Development continue to use the configured Redis cache.
+if (builder.Environment.IsEnvironment("Testing"))
 {
-    throw new InvalidOperationException(
-        "Redis connection string is missing.");
+    builder.Services.AddDistributedMemoryCache();
 }
-
-var redisUri = new Uri(redisConnectionString);
-
-var userInfo = redisUri.UserInfo.Split(':', 2);
-
-var redisOptions = new ConfigurationOptions
+else
 {
-    Ssl = true,
-    SslHost = redisUri.Host,
-    AbortOnConnectFail = false,
-    User = userInfo[0],
-    Password = Uri.UnescapeDataString(userInfo[1])
-};
+    var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
-redisOptions.EndPoints.Add(redisUri.Host, 6379);
+    if (string.IsNullOrWhiteSpace(redisConnectionString))
+        throw new InvalidOperationException("Redis connection string is missing.");
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.ConfigurationOptions = redisOptions;
-    options.InstanceName = "MyShop:";
-});
+    var redisUri = new Uri(redisConnectionString);
+    var userInfo = redisUri.UserInfo.Split(':', 2);
+
+    var redisOptions = new ConfigurationOptions
+    {
+        Ssl = true,
+        SslHost = redisUri.Host,
+        AbortOnConnectFail = false,
+        User = userInfo[0],
+        Password = Uri.UnescapeDataString(userInfo[1])
+    };
+
+    redisOptions.EndPoints.Add(redisUri.Host, 6379);
+
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.ConfigurationOptions = redisOptions;
+        options.InstanceName = "MyShop:";
+    });
+}
 
 // Session
 builder.Services.AddSession(options =>
@@ -129,10 +149,14 @@ builder.Services.AddHybridCache(options =>
 
 var app = builder.Build();
 
-app.InitializeDatabase();
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    app.InitializeDatabase();
+}
 
 // Configure the HTTP request pipeline
 app.UseForwardedHeaders();
+app.UseResponseCompression();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -141,7 +165,13 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        context.Context.Response.Headers.CacheControl = "public,max-age=604800,stale-while-revalidate=86400";
+    }
+});
 
 app.UseRouting();
 
@@ -149,6 +179,7 @@ app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStatusCodePagesWithReExecute("/Home/ErrorStatus", "?statusCode={0}");
 
 app.MapRazorPages();
 
@@ -157,3 +188,5 @@ app.MapControllerRoute(
     pattern: "{controller=Account}/{action=Register}/{id?}");
 
 app.Run();
+
+public partial class Program { }

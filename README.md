@@ -272,6 +272,24 @@ or simply run the solution using **Visual Studio**.
 
 ---
 
+## Run Tests
+
+Run the unit and HTTP integration test suites from the repository root:
+
+```bash
+dotnet test MyShop..sln
+```
+
+To generate a Cobertura coverage report:
+
+```bash
+dotnet test MyShop..sln --coverlet --coverlet-output-format cobertura
+```
+
+See [`tests/README.md`](tests/README.md) for the test layout and contribution guidance. GitHub Actions runs the same test suite on pushes and pull requests.
+
+---
+
 # 📌 Current Progress
 
 * ✅ Product CRUD
@@ -410,10 +428,19 @@ or simply run the solution using **Visual Studio**.
 
 ---
 
+## Storefront release setup
+
+* Checkout now refreshes cart prices from the product records and asks the customer to review the total when prices change. It snapshots current product data into the order and uses a unique checkout request key to prevent duplicate orders. Apply the `AddCheckoutRequestId` Entity Framework migration before deploying this version.
+* Payment status pages read the order state from the server. Paymob’s browser return is informational; the order becomes paid only after the HMAC-validated webhook confirms the amount, currency, and integration. Configure `Paymob:SecretKey`, `Paymob:PublicKey`, `Paymob:IntegrationId`, `Paymob:HmacSecret`, and `Paymob:CallbackBaseUrl` with the provider’s live values and a public HTTPS URL.
+* A declined Stripe payment attempt leaves the order pending so the customer can retry. Paymob returns to a status page that refreshes the server state and offers a way back to payment while the order is pending.
+* Product records do not currently contain stock quantity, reservation, or shipping rules. The storefront does not claim a stock level or add an unconfigured shipping charge. Add the store’s actual inventory and delivery policies before showing availability or final delivery charges.
+* Store events are pushed to `window.dataLayer` using standard event names (`view_item_list`, `view_item`, `search`, `add_to_cart`, `begin_checkout`, `select_payment_method`, and `purchase`). To connect Google Tag Manager, set `Analytics:GoogleTagManagerId` to the store’s `GTM-...` container ID. No external analytics script loads while that setting is empty; choose and implement the required consent behavior before enabling the container.
+* The public storefront includes offline feedback, focus-visible states, reduced-motion support, image dimensions, and mobile layouts. Verify the deployed checkout with the live payment accounts and test the storefront on current iOS Safari and Android Chrome before launch.
+
 # 📖 Future Improvements
 
 * Dashboard Analytics
-* Wishlist
+* Inventory management and stock reservation
 * Coupons & Discounts
 * REST API
 * JWT Authentication

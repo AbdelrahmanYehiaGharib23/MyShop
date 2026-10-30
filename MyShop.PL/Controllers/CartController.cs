@@ -26,8 +26,11 @@ namespace MyShop.PL.Controllers
             _stripeSettings = stripeOptions.Value;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            if (await _cartService.RefreshCartAsync())
+                TempData["Message"] = "Prices changed or a product was removed. Review the updated cart before checkout.";
+
             var model = new CartViewModel
             {
                 Items = _cartService.GetCart(),
@@ -44,14 +47,35 @@ namespace MyShop.PL.Controllers
             int productId,
             int quantity = 1)
         {
-            await _cartService.AddToCart(
-                productId,
-                quantity);
+            try
+            {
+                await _cartService.AddToCart(productId, quantity);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return BadRequest(new { message = "Choose a valid product quantity." });
+
+                TempData["Message"] = "Choose a valid product quantity.";
+                return RedirectToAction("Index", "Store");
+            }
+            catch (KeyNotFoundException)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    return NotFound(new { message = "This product is no longer available." });
+
+                TempData["Message"] = "This product is no longer available.";
+                return RedirectToAction("Index", "Store");
+            }
+
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                return Ok(new { productId, quantity });
 
             return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Remove(int productId)
         {
             _cartService.RemoveFromCart(productId);
@@ -60,6 +84,7 @@ namespace MyShop.PL.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Increase(int productId)
         {
             _cartService.IncreaseQuantity(productId);
@@ -68,6 +93,7 @@ namespace MyShop.PL.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Decrease(int productId)
         {
             _cartService.DecreaseQuantity(productId);
@@ -76,6 +102,7 @@ namespace MyShop.PL.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Clear()
         {
             _cartService.ClearCart();
@@ -88,11 +115,15 @@ namespace MyShop.PL.Controllers
         public async Task<IActionResult> Checkout(
             int? orderId = null)
         {
+            if (!orderId.HasValue && await _cartService.RefreshCartAsync())
+                TempData["Message"] = "Prices changed or a product was removed. Review the updated order total.";
+
             var cartItems = _cartService.GetCart();
 
             var model = new CheckoutViewModel
             {
-                OrderId = orderId
+                OrderId = orderId,
+                CheckoutRequestId = Guid.NewGuid().ToString("N")
             };
 
             ViewBag.StripePublishableKey =
@@ -100,10 +131,20 @@ namespace MyShop.PL.Controllers
 
             if (orderId.HasValue)
             {
-                var order =
-                    await _orderService
-                        .GetOrderForPaymentAsync(
-                            orderId.Value);
+                MyShop.DAL.Entities.Order? order;
+                try
+                {
+                    order = await _orderService.GetOrderForPaymentAsync(orderId.Value);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return NotFound();
+                }
+                catch (InvalidOperationException)
+                {
+                    TempData["Message"] = "This order is no longer awaiting payment.";
+                    return RedirectToAction("MyOrders", "Orders");
+                }
 
                 if (order is null)
                     return NotFound();
@@ -138,6 +179,7 @@ namespace MyShop.PL.Controllers
         public async Task<IActionResult> Checkout(
             CheckoutViewModel model)
         {
+            var cartChanged = await _cartService.RefreshCartAsync();
             var cartItems = _cartService.GetCart();
 
             if (model.OrderId.HasValue)
@@ -162,15 +204,32 @@ namespace MyShop.PL.Controllers
                 return View(model);
             }
 
+            if (cartChanged)
+            {
+                model.Items = cartItems;
+                model.TotalPrice = _cartService.GetTotalPrice();
+                ViewBag.StripePublishableKey = _stripeSettings.PublishableKey;
+                TempData["Message"] = "Prices changed or a product was removed. Review the updated order total and continue again.";
+                return View(model);
+            }
+
             var dto = new CreateOrderDto
             {
                 Address = model.Address,
-                Phone = model.Phone
+                Phone = model.Phone,
+                CheckoutRequestId = model.CheckoutRequestId
             };
 
-            var orderId =
-                await _orderService
-                    .CreatePendingOrderAsync(dto);
+            int orderId;
+            try
+            {
+                orderId = await _orderService.CreatePendingOrderAsync(dto);
+            }
+            catch (InvalidOperationException ex)
+            {
+                TempData["Message"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
 
             _cartService.ClearCart();
 

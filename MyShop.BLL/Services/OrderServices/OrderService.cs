@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using MyShop.BLL.Models.Dto.OrderDto;
 using MyShop.BLL.Services.CartServices;
 using MyShop.BLL.Services.CurrentUserServices;
@@ -38,12 +39,6 @@ namespace MyShop.BLL.Services.OrderServices
         public async Task<int> CreatePendingOrderAsync(
             CreateOrderDto dto)
         {
-            var cartItems = _cartService.GetCart();
-
-            if (cartItems is null || !cartItems.Any())
-                throw new InvalidOperationException(
-                    "Cart is empty.");
-
             var userId =
                 _currentUserService.GetCurrentUserId();
 
@@ -58,34 +53,89 @@ namespace MyShop.BLL.Services.OrderServices
                 throw new InvalidOperationException(
                     "User email is not available.");
 
+            var checkoutRequestId = dto.CheckoutRequestId?.Trim();
+            if (checkoutRequestId is null
+                || !Guid.TryParseExact(checkoutRequestId, "N", out _))
+                throw new InvalidOperationException("The checkout session expired. Return to checkout and try again.");
+
+            var existingOrder = (await _unitOfWork.OrderRepository.FindAsync(
+                    order => order.UserId == userId
+                        && order.CheckoutRequestId == checkoutRequestId))
+                .FirstOrDefault();
+
+            if (existingOrder is not null)
+                return existingOrder.Id;
+
+            var cartItems = _cartService.GetCart();
+            if (cartItems.Count == 0)
+                throw new InvalidOperationException("Cart is empty.");
+
             var order = new Order
             {
                 UserId = userId,
                 CustomerEmail = userEmail,
                 Address = dto.Address,
                 Phone = dto.Phone,
-                TotalPrice = _cartService.GetTotalPrice(),
+                TotalPrice = 0,
                 OrderDate = DateTime.UtcNow,
-                Status = OrderStatus.Pending
+                Status = OrderStatus.Pending,
+                CheckoutRequestId = checkoutRequestId
             };
 
             foreach (var item in cartItems)
             {
+                if (item.ProductId <= 0 || item.Quantity <= 0)
+                    throw new InvalidOperationException("Your cart has an invalid item. Review it and try again.");
+
+                var product = await _unitOfWork.ProductRepository.GetByIdAsync(item.ProductId);
+                if (product is null)
+                    throw new InvalidOperationException("A product in your cart is no longer available. Review your cart.");
+
+                order.TotalPrice += product.Price * item.Quantity;
                 order.OrderItems.Add(new OrderItem
                 {
-                    ProductId = item.ProductId,
-                    ProductName = item.ProductName,
-                    ProductImageUrl = item.ImageUrl,
+                    ProductId = product.Id,
+                    ProductName = product.Name,
+                    ProductImageUrl = product.ImageUrl,
                     Quantity = item.Quantity,
-                    Price = item.Price
+                    Price = product.Price
                 });
             }
 
             _unitOfWork.OrderRepository.Add(order);
 
-            await _unitOfWork.CompleteAsync();
+            try
+            {
+                await _unitOfWork.CompleteAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // If two retries reach the server together, the unique key makes
+                // the later request return the first order instead of duplicating it.
+                var concurrentOrder = (await _unitOfWork.OrderRepository.FindAsync(
+                        existing => existing.UserId == userId
+                            && existing.CheckoutRequestId == checkoutRequestId))
+                    .FirstOrDefault();
+
+                if (concurrentOrder is not null)
+                    return concurrentOrder.Id;
+
+                throw;
+            }
 
             return order.Id;
+        }
+
+        public async Task<Order?> GetOrderForCustomerAsync(int orderId)
+        {
+            var userId = _currentUserService.GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+                throw new UnauthorizedAccessException("User is not authenticated.");
+
+            var order = await _unitOfWork.OrderRepository
+                .GetEntityWithSpecAsync(new OrderByIdSpecification(orderId));
+
+            return order?.UserId == userId ? order : null;
         }
 
         public async Task<Order?> GetOrderForPaymentAsync(

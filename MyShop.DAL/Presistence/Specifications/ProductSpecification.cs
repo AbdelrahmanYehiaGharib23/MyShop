@@ -9,9 +9,10 @@ namespace MyShop.DAL.Presistence.Specifications
         // List (Search + Sorting + Pagination)
         public ProductSpecification(ProductSpecParams specParams)
             : base(p =>
-        string.IsNullOrWhiteSpace(specParams.Search)
-        || p.Name.ToLower().Contains(specParams.Search.ToLower())
-        || (p.Description != null && p.Description.ToLower().Contains(specParams.Search.ToLower())))
+        (string.IsNullOrWhiteSpace(specParams.Search)
+            || p.Name.ToLower().Contains(specParams.Search.ToLower())
+            || (p.Description != null && p.Description.ToLower().Contains(specParams.Search.ToLower())))
+        && (!specParams.CategoryId.HasValue || p.CategoryId == specParams.CategoryId.Value))
         { 
          // Include Category
             AddInclude(p => p.Category);

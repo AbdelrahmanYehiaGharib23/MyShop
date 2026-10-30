@@ -40,6 +40,13 @@ namespace MyShop.DAL.Presistence.Data.Configurations
             builder.Property(o => o.EstimatedDeliveryDate)
                 .HasColumnType("date");
 
+            builder.Property(o => o.CheckoutRequestId)
+                .HasMaxLength(32);
+
+            builder.HasIndex(o => o.CheckoutRequestId)
+                .IsUnique()
+                .HasFilter("[CheckoutRequestId] IS NOT NULL");
+
             builder.Property(o => o.OrderDate)
                 .HasDefaultValueSql("GETDATE()");
 

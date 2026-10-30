@@ -12,6 +12,8 @@ namespace MyShop.DAL.Presistence.Specifications
 
         public string? Sort { get; set; }
 
+        public int? CategoryId { get; set; }
+
         private int pageIndex = 1;
 
         public int PageIndex

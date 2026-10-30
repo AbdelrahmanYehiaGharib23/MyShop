@@ -158,6 +158,26 @@ namespace MyShop.BLL.Services.ReviewServices
                 ReviewCount = reviewList.Count
             };
         }
+
+        public async Task<IReadOnlyDictionary<int, ReviewSummaryDto>> GetReviewSummariesAsync(IEnumerable<int> productIds)
+        {
+            var ids = productIds.Where(id => id > 0).Distinct().ToArray();
+            if (ids.Length == 0)
+                return new Dictionary<int, ReviewSummaryDto>();
+
+            var reviews = await _unitOfWork.ReviewRepository
+                .GetAllWithSpecAsync(new ProductReviewsForProductsSpecification(ids));
+
+            return reviews
+                .GroupBy(review => review.ProductId)
+                .ToDictionary(
+                    group => group.Key,
+                    group => new ReviewSummaryDto
+                    {
+                        AverageRating = group.Average(review => review.Rating),
+                        ReviewCount = group.Count()
+                    });
+        }
     }
 }
 

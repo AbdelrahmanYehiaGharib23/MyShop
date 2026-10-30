@@ -188,7 +188,7 @@ body:has(.checkout-page) .store-top-strip { display: none; }
 .checkout-page .paymob-pixel-view { container-type: inline-size; }
 .checkout-page .paymob-payment-layout { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "card" "form"; align-items: start; gap: 24px; }
 .checkout-page .paymob-form-shell { grid-area: form; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
-.checkout-page .paymob-pixel-host { position: relative; width: 100%; min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface-2); box-shadow: var(--shadow-sm); }
+.checkout-page .paymob-pixel-host { position: relative; width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .checkout-page .paymob-pixel-host.is-loading { min-height: 280px; }
 .checkout-page #paymob-pixel-checkout { width: 100%; min-width: 0; }
 .checkout-page .paymob-pixel-loading:not([hidden]) { position: absolute; z-index: 2; inset: 12px; display: flex; min-height: 0; align-items: center; justify-content: center; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--text-muted); font-size: 14px; text-align: center; }
@@ -297,7 +297,7 @@ body:has(.checkout-page) .store-top-strip { display: none; }
     .checkout-page .payment-provider-grid { grid-template-columns: minmax(0, 1fr); }
     .checkout-page .payment-provider-card { min-height: 0; }
     .checkout-page .payment-provider-card p { min-height: 0; }
-    .checkout-page .paymob-pixel-host { padding: 12px; }
+    .checkout-page .paymob-pixel-host { padding: 0; }
 }
 
 @media (max-width: 390px) {

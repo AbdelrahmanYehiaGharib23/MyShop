@@ -4,6 +4,7 @@
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = "My Orders";
+    ViewData["Robots"] = "noindex,follow";
 
     var orders = (Model ?? Enumerable.Empty<MyShop.BLL.Models.Dto.OrderDto.OrderDto>())
         .OrderByDescending(order => order.OrderDate)
@@ -87,7 +88,7 @@
                                 <h2>@CurrencyFormatter.ToEgp(order.TotalPrice)</h2>
                             </div>
 
-                            <span class="order-status @statusClass">
+                        <span class="order-status @statusClass">
                                 <i class="@statusIcon"></i>
                                 @order.Status
                             </span>
@@ -98,11 +99,11 @@
                                 <div class="order-meta-grid">
                                     <div><span>Order date</span><strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy")</strong></div>
                                     <div><span>Items</span><strong>@itemCount</strong></div>
-                                    <div><span>Phone</span><strong>@order.Phone</strong></div>
+                                    <div><span>Phone</span><strong data-no-translate>@order.Phone</strong></div>
                                 </div>
                                 <div class="order-address">
                                     <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                    <div><span class="order-detail-label">Delivery address</span><strong>@order.Address</strong></div>
+                                    <div><span class="order-detail-label">Delivery address</span><strong data-no-translate>@order.Address</strong></div>
                                 </div>
                             </div>
 
@@ -122,7 +123,7 @@
                                     <span class="delivery-route-line" aria-hidden="true"><i class="fas fa-truck"></i></span>
                                     <div class="delivery-route-stop is-destination">
                                         <span class="delivery-route-marker"><i class="fas fa-location-dot" aria-hidden="true"></i></span>
-                                        <div><strong>Delivery address</strong><span>@order.Address</span></div>
+                                        <div><strong>Delivery address</strong><span data-no-translate>@order.Address</span></div>
                                     </div>
                                 </div>
                                 <ol class="delivery-tracking-list">
@@ -188,7 +189,7 @@
                                                     <span class="placeholder-illustration compact" aria-hidden="true"><span class="placeholder-screen"></span><span class="placeholder-base"></span><span class="placeholder-spark one"></span><span class="placeholder-spark two"></span></span>
                                                 }
                                             </div>
-                                            <div class="order-item-info"><strong>@item.ProductName</strong><span>Qty @item.Quantity x @CurrencyFormatter.ToEgp(item.Price)</span></div>
+                                            <div class="order-item-info"><strong data-no-translate>@item.ProductName</strong><span>Qty @item.Quantity x @CurrencyFormatter.ToEgp(item.Price)</span></div>
                                             <b>@CurrencyFormatter.ToEgp(item.TotalPrice)</b>
                                         </div>
                                     }

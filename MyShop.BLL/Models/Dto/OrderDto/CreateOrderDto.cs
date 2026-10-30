@@ -9,5 +9,7 @@ namespace MyShop.BLL.Models.Dto.OrderDto
         public string Address { get; set; } = string.Empty;
 
         public string Phone { get; set; } = string.Empty;
+
+        public string CheckoutRequestId { get; set; } = string.Empty;
     }
 }

@@ -9,6 +9,8 @@ namespace MyShop.BLL.Services.CartServices
     {
         List<CartItem> GetCart();
 
+        Task<bool> RefreshCartAsync();
+
         Task AddToCart(int productId, int quantity = 1);
 
         void RemoveFromCart(int productId);

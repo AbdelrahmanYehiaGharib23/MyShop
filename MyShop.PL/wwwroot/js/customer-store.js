@@ -9,6 +9,7 @@
     var noResults = document.querySelector('[data-store-no-results]');
     var cartTarget = document.querySelector('[data-store-cart-target]');
     var cartBadge = document.querySelector('[data-store-cart-badge]');
+    var networkBanner = document.querySelector('[data-network-status]');
     var activeCategory = 'all';
 
     function normalize(value) {
@@ -73,6 +74,23 @@
         dismissToast(toast, 4200);
     }
 
+    function updateNetworkStatus(isOnline) {
+        if (!networkBanner) return;
+        var message = networkBanner.querySelector('[data-network-message]');
+        networkBanner.hidden = false;
+        networkBanner.classList.toggle('is-online', isOnline);
+        if (message) {
+            message.textContent = isOnline
+                ? 'Connection restored. You can continue.'
+                : 'You’re offline. Some store actions may need a connection.';
+        }
+        if (isOnline) {
+            window.setTimeout(function () {
+                if (navigator.onLine) networkBanner.hidden = true;
+            }, 3500);
+        }
+    }
+
     function updateThemeIcon(theme) {
         if (!themeToggle) {
             return;
@@ -84,7 +102,9 @@
         }
 
         icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+        themeToggle.setAttribute('aria-label', root.lang === 'ar'
+            ? (theme === 'dark' ? 'التبديل إلى الوضع الفاتح' : 'التبديل إلى الوضع الداكن')
+            : (theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'));
     }
 
     function setTheme(theme) {
@@ -235,6 +255,11 @@
         flyer.style.top = startY + 'px';
         document.body.appendChild(flyer);
 
+        if (typeof flyer.animate !== 'function') {
+            flyer.remove();
+            return;
+        }
+
         var animation = flyer.animate([
             { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
             { transform: 'translate3d(' + ((endX - startX) * .55) + 'px, ' + ((endY - startY) - 48) + 'px, 0) scale(.72)', opacity: .92, offset: .58 },
@@ -252,6 +277,7 @@
     function restoreButton(button, html) {
         button.classList.remove('is-loading', 'is-added');
         button.disabled = false;
+        button.removeAttribute('aria-busy');
         button.innerHTML = html;
     }
 
@@ -260,12 +286,12 @@
             return;
         }
 
-        document.querySelectorAll('.store-cart-form').forEach(function (form) {
-            if (!/AddToCart/i.test(form.getAttribute('action') || '')) {
-                return;
-            }
+        document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (!(form instanceof HTMLFormElement)
+                || !form.matches('.store-cart-form')
+                || !/AddToCart/i.test(form.getAttribute('action') || '')) return;
 
-            form.addEventListener('submit', function (event) {
                 var button = form.querySelector('button[type="submit"]');
                 var quantityInput = form.querySelector('input[name="quantity"]');
                 var quantity = parseInt(quantityInput && quantityInput.value, 10);
@@ -279,10 +305,9 @@
                 event.preventDefault();
                 form.dataset.storeSubmitting = 'true';
                 button.disabled = true;
+                button.setAttribute('aria-busy', 'true');
                 button.classList.add('is-loading');
                 button.innerHTML = '<span class="store-button-loader" aria-hidden="true"></span><span>Adding...</span>';
-
-                flyToCart(getProductVisual(form));
 
                 fetch(form.action, {
                     method: form.method || 'POST',
@@ -293,27 +318,45 @@
                     }
                 }).then(function (response) {
                     if (!response.ok) {
-                        throw new Error('Add to cart failed');
+                        return response.json().catch(function () { return {}; }).then(function (payload) {
+                            throw new Error(payload.message || 'Add to cart failed. Try again.');
+                        });
                     }
 
-                    return response.text();
-                }).then(function () {
+                    return response.json().catch(function () { return {}; });
+                }).then(function (payload) {
                     pulseCart(Number.isNaN(quantity) ? 1 : quantity);
                     button.classList.remove('is-loading');
                     button.classList.add('is-added');
                     button.innerHTML = '<i class="fas fa-check"></i><span>Added</span>';
+                    flyToCart(getProductVisual(form));
                     showToast('success', 'Added to cart', productName + ' is now in your cart.');
+
+                    if (typeof window.myShopTrack === 'function') {
+                        var card = form.closest('[data-product-card], [data-product-view]');
+                        var productId = form.querySelector('[name="productId"]');
+                        var amount = Number(card && card.dataset.productAmount) || undefined;
+                        window.myShopTrack('add_to_cart', {
+                            currency: 'EGP',
+                            value: amount ? amount * (Number.isNaN(quantity) ? 1 : quantity) : undefined,
+                            items: [{
+                                item_id: productId ? productId.value : '',
+                                item_name: productName,
+                                price: amount,
+                                quantity: Number.isNaN(quantity) ? 1 : quantity
+                            }]
+                        });
+                    }
 
                     window.setTimeout(function () {
                         form.dataset.storeSubmitting = 'false';
                         restoreButton(button, originalHtml);
                     }, 1450);
-                }).catch(function () {
+                }).catch(function (error) {
                     form.dataset.storeSubmitting = 'false';
                     restoreButton(button, originalHtml);
-                    showToast('danger', 'Could not add item', 'Please try adding the product again.');
+                    showToast('danger', 'Could not add item', error.message || 'Please try adding the product again.');
                 });
-            });
         });
     }
 
@@ -649,6 +692,11 @@
 
             requestPaymentIntent()
                 .then(function (payload) {
+                    if (payload.completed && payload.redirectUrl) {
+                        window.location.assign(payload.redirectUrl);
+                        return { alreadyCompleted: true };
+                    }
+
                     if (!payload.clientSecret) {
                         throw new Error('Payment client secret was not returned.');
                     }
@@ -675,6 +723,7 @@
                     });
                 })
                 .then(function (payload) {
+                    if (payload.alreadyCompleted) return payload;
                     if (payload.result.error) {
                         throw new Error(payload.result.error.message || 'Payment was not completed.');
                     }
@@ -682,6 +731,7 @@
                     return confirmPaymentOnServer(payload.paymentIntentId);
                 })
                 .then(function (payload) {
+                    if (payload.alreadyCompleted) return;
                     button.classList.remove('is-loading');
                     button.classList.add('is-paid');
                     button.innerHTML = '<i class="fas fa-check"></i><span>Payment Complete</span>';
@@ -783,13 +833,18 @@
         var originalHtml = button.innerHTML;
         var paymobInstance = null;
         var activeClientSecret = null;
-        var pixelReadyObserver = null;
+        var pixelReadyObservers = [];
+        var pixelReadyResizeObserver = null;
         var pixelReadyTimeout = 0;
 
         function stopPixelReadinessCheck() {
-            if (pixelReadyObserver) {
-                pixelReadyObserver.disconnect();
-                pixelReadyObserver = null;
+            pixelReadyObservers.forEach(function (observer) {
+                observer.disconnect();
+            });
+            pixelReadyObservers = [];
+            if (pixelReadyResizeObserver) {
+                pixelReadyResizeObserver.disconnect();
+                pixelReadyResizeObserver = null;
             }
             if (pixelReadyTimeout) {
                 window.clearTimeout(pixelReadyTimeout);
@@ -938,6 +993,7 @@
                 showSaveCard: false,
                 hideCardHolderName: false,
                 customStyle: {
+                    HideCardLabel: true,
                     Width_of_Container: '100%',
                     Container_Padding: '0',
                     Color_Container: themeColor('--surface', '#111A2E'),
@@ -950,11 +1006,14 @@
                     Color_Disabled: root.getAttribute('data-theme') === 'light' ? '#64748B' : '#475569',
                     Text_Color_For_Payment_Button: '#FFFFFF',
                     Color_Error: themeColor('--danger', '#F87171'),
-                    Radius_Border: '12',
+                    Radius_Border: '10',
                     Font_Family: themeColor('--font-sans', 'Inter, system-ui, sans-serif'),
                     Font_Size_Label: '14',
                     Font_Size_Input_Fields: '16',
                     Font_Size_Payment_Button: '15',
+                    Font_Weight_Label: 650,
+                    Font_Weight_Input_Fields: 500,
+                    Font_Weight_Payment_Button: 700,
                     Direction: 'ltr',
                     Placeholder_Text: {
                         holderName: 'Name exactly as printed on your card (English)'
@@ -975,24 +1034,83 @@
             });
 
             if (pixelLoading && pixelHost) {
+                var observedPixelRoots = [];
+                var visitedPixelRoots = [];
+                var secureFieldsReady = false;
+
+                var observePixelRoot = function (treeRoot) {
+                    if (observedPixelRoots.indexOf(treeRoot) !== -1) {
+                        return;
+                    }
+
+                    observedPixelRoots.push(treeRoot);
+                    var observer = new MutationObserver(checkPixelReadiness);
+                    observer.observe(treeRoot, { childList: true, subtree: true });
+                    pixelReadyObservers.push(observer);
+                };
+
+                var inspectPixelRoot = function (treeRoot) {
+                    if (!treeRoot || visitedPixelRoots.indexOf(treeRoot) !== -1) {
+                        return;
+                    }
+
+                    visitedPixelRoots.push(treeRoot);
+                    observePixelRoot(treeRoot);
+                    if (treeRoot.querySelector && treeRoot.querySelector('iframe, input')) {
+                        secureFieldsReady = true;
+                    }
+
+                    if (treeRoot.shadowRoot) {
+                        inspectPixelRoot(treeRoot.shadowRoot);
+                    }
+
+                    if (!treeRoot.querySelectorAll) {
+                        return;
+                    }
+
+                    Array.prototype.forEach.call(treeRoot.querySelectorAll('*'), function (element) {
+                        if (element.shadowRoot) {
+                            inspectPixelRoot(element.shadowRoot);
+                        }
+                    });
+                };
+
                 var hideLoadingWhenReady = function () {
-                    if (!pixelHost.querySelector('iframe, input')) {
+                    visitedPixelRoots = [];
+                    secureFieldsReady = false;
+                    inspectPixelRoot(pixelMount);
+
+                    // Paymob renders its secure controls inside Shadow DOM. A closed
+                    // shadow root cannot be queried, so use the mounted component's
+                    // rendered height as a fallback when the form is visibly present.
+                    var renderedHeight = pixelMount.getBoundingClientRect().height;
+                    if (!secureFieldsReady && renderedHeight < 180) {
                         return false;
                     }
+
                     stopPixelReadinessCheck();
                     pixelLoading.hidden = true;
                     pixelHost.classList.remove('is-loading');
                     return true;
                 };
 
-                pixelReadyObserver = new MutationObserver(hideLoadingWhenReady);
-                pixelReadyObserver.observe(pixelHost, { childList: true, subtree: true });
+                function checkPixelReadiness() {
+                    hideLoadingWhenReady();
+                }
+
+                observePixelRoot(pixelMount);
+                if (typeof window.ResizeObserver === 'function') {
+                    pixelReadyResizeObserver = new window.ResizeObserver(checkPixelReadiness);
+                    pixelReadyResizeObserver.observe(pixelMount);
+                }
+
                 if (!hideLoadingWhenReady()) {
                     pixelReadyTimeout = window.setTimeout(function () {
+                        pixelReadyTimeout = 0;
                         if (!hideLoadingWhenReady()) {
                             showPixelError(new Error('Paymob secure fields did not load in time. Check your connection and retry.'), clientSecret);
                         }
-                    }, 10000);
+                    }, 20000);
                 }
             }
         }
@@ -1096,6 +1214,11 @@
                         } catch (parseError) {
                             payload = null;
                         }
+                    }
+
+                    if (payload && payload.completed && payload.redirectUrl) {
+                        window.location.assign(payload.redirectUrl);
+                        return Promise.resolve({ alreadyCompleted: true });
                     }
 
                     if (!response.ok) {
@@ -1411,8 +1534,10 @@
                 avatar.className = 'review-avatar';
                 avatar.textContent = initialsFromUser(userName, userId);
                 name.textContent = own ? 'You' : (userName || 'Customer');
+                name.setAttribute('data-no-translate', '');
                 date.textContent = formatReviewDate(readValue(review, 'createdOn'));
                 body.textContent = comment;
+                body.setAttribute('data-no-translate', '');
 
                 authorText.appendChild(name);
                 authorText.appendChild(date);
@@ -1627,6 +1752,9 @@
 
     updateThemeIcon(root.getAttribute('data-store-theme') || 'dark');
     updateNavbarState();
+    if (!navigator.onLine) updateNetworkStatus(false);
+    window.addEventListener('offline', function () { updateNetworkStatus(false); });
+    window.addEventListener('online', function () { updateNetworkStatus(true); });
     initImageLoaders();
     initCountAnimations();
     enhanceCartForms();
@@ -1659,23 +1787,6 @@
             });
 
             applyProductFilters();
-        });
-    });
-
-    document.querySelectorAll('[data-wishlist-button]').forEach(function (button) {
-        button.setAttribute('aria-pressed', 'false');
-
-        button.addEventListener('click', function () {
-            var icon = button.querySelector('i');
-            var isActive = !button.classList.contains('active');
-
-            button.classList.toggle('active', isActive);
-            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-
-            if (icon) {
-                icon.classList.toggle('fas', isActive);
-                icon.classList.toggle('far', !isActive);
-            }
         });
     });
 

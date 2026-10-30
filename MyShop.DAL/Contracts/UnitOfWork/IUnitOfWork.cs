@@ -13,6 +13,7 @@ namespace MyShop.DAL.Contracts.UnitOfWork
         IPasswordResetRepository PasswordResetRepository { get; }
         IOrderRepository OrderRepository { get; }
         IReviewRepository ReviewRepository { get; }
+        IGenericRepository<MyShop.DAL.Entities.FavoriteProduct> FavoriteRepository { get; }
 
         Task<int> CompleteAsync();
         //void Dispose();

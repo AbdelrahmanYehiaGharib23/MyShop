@@ -11,4 +11,12 @@ namespace MyShop.DAL.Presistence.Specifications
             AddOrderByDescending(r => r.CreatedOn ?? DateTime.MinValue);
         }
     }
+
+    public sealed class ProductReviewsForProductsSpecification : BaseSpecification<Review>
+    {
+        public ProductReviewsForProductsSpecification(IReadOnlyCollection<int> productIds)
+            : base(review => productIds.Contains(review.ProductId) && !review.IsDeleted)
+        {
+        }
+    }
 }

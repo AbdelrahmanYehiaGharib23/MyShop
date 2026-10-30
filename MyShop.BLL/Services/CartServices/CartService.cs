@@ -31,8 +31,50 @@ namespace MyShop.BLL.Services.CartServices
             return JsonSerializer.Deserialize<List<CartItem>>(carttJson)??new List<CartItem>();
         }
 
+        public async Task<bool> RefreshCartAsync()
+        {
+            var cart = GetCart();
+            var changed = false;
+
+            foreach (var item in cart.ToArray())
+            {
+                if (item.ProductId <= 0 || item.Quantity <= 0)
+                {
+                    cart.Remove(item);
+                    changed = true;
+                    continue;
+                }
+
+                var product = await _unitOfWork.ProductRepository.GetByIdAsync(item.ProductId);
+                if (product is null)
+                {
+                    cart.Remove(item);
+                    changed = true;
+                    continue;
+                }
+
+                if (item.ProductName != product.Name
+                    || item.Price != product.Price
+                    || item.ImageUrl != product.ImageUrl)
+                {
+                    item.ProductName = product.Name;
+                    item.Price = product.Price;
+                    item.ImageUrl = product.ImageUrl;
+                    changed = true;
+                }
+            }
+
+            if (changed)
+                SaveCart(cart);
+
+            return changed;
+        }
+
         public async Task AddToCart(int productId, int quantity = 1)
         {
+            if (productId <= 0 || quantity <= 0)
+                throw new ArgumentOutOfRangeException(nameof(quantity), "Choose a valid product quantity.");
+
             var cart = GetCart();
             var product =await _unitOfWork.ProductRepository.GetByIdAsync(productId);
             if(product is null)

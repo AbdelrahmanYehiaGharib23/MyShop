@@ -7,6 +7,7 @@ namespace MyShop.PL.ViewModels
         public string? SearchTerm { get; set; }
 
         public string? Sort { get; set; }
+        public int? CategoryId { get; set; }
 
         public int PageIndex { get; set; } = 1;
 
@@ -15,6 +16,7 @@ namespace MyShop.PL.ViewModels
         public int Count { get; set; }
 
         public IEnumerable<ProductDto> Products { get; set; } = [];
+        public IEnumerable<MyShop.BLL.Models.Dto.CategoryDto.CategoryDto> Categories { get; set; } = [];
 
         public int TotalPages => PageSize <= 0 ? 0 : (int)Math.Ceiling(Count / (double)PageSize);
 

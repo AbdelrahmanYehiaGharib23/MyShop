@@ -16,5 +16,7 @@ namespace MyShop.BLL.Services.ReviewServices
         Task DeleteReviewAsync(int reviewId);
         Task<ReviewSummaryDto> GetReviewSummaryAsync(int productId);
 
+        Task<IReadOnlyDictionary<int, ReviewSummaryDto>> GetReviewSummariesAsync(IEnumerable<int> productIds);
+
     }
 }

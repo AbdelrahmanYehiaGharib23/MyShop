@@ -1,24 +1,79 @@
 @using MyShop.BLL.Models.Dto.ProductDto
+@using MyShop.BLL.Models.Dto.ReviewDto
+@using System.Text.Json
 @model ProductDetailsDto
 
 @{
     Layout = "~/Views/Shared/_Customer.cshtml";
     ViewData["Title"] = Model.Name;
+    var reviewSummary = ViewData["ReviewSummary"] as ReviewSummaryDto ?? new ReviewSummaryDto();
+    var pageDescription = string.IsNullOrWhiteSpace(Model.Description)
+        ? $"Explore {Model.Name} in the {Model.CategoryName} collection at myShop."
+        : Model.Description.Length > 155 ? Model.Description[..152] + "…" : Model.Description;
+    ViewData["Description"] = pageDescription;
+    ViewData["CanonicalUrl"] = Url.Action("Details", "Store", new { id = Model.Id }, Context.Request.Scheme);
+    ViewData["ProductPrice"] = Model.Price.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     var imageUrl = string.IsNullOrWhiteSpace(Model.ImageUrl)
         ? null
         : Url.Content($"~/{Model.ImageUrl.TrimStart('/')}");
+    ViewData["ImageUrl"] = imageUrl;
     var detailsUrl = Url.Action("Details", "Store", new { id = Model.Id }) ?? $"/Store/Details/{Model.Id}";
+    var categoryUrl = Url.Action("Index", "Store", new { categoryId = Model.CategoryId }) ?? "/Store/Index";
     var addToCartUrl = Url.Action("AddToCart", "Cart") ?? "/Cart/AddToCart";
+    var productStructuredData = JsonSerializer.Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "Product",
+        ["name"] = Model.Name,
+        ["description"] = pageDescription,
+        ["image"] = imageUrl is null ? null : $"{Context.Request.Scheme}://{Context.Request.Host}{imageUrl}",
+        ["sku"] = Model.Id.ToString(),
+        ["category"] = Model.CategoryName,
+        ["offers"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "Offer",
+            ["priceCurrency"] = "EGP",
+            ["price"] = Model.Price.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            ["url"] = Url.Action("Details", "Store", new { id = Model.Id }, Context.Request.Scheme)
+        },
+        ["aggregateRating"] = reviewSummary.ReviewCount > 0 ? new Dictionary<string, object?>
+        {
+            ["@type"] = "AggregateRating",
+            ["ratingValue"] = reviewSummary.AverageRating,
+            ["reviewCount"] = reviewSummary.ReviewCount
+        } : null
+    });
+    var breadcrumbStructuredData = JsonSerializer.Serialize(new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "BreadcrumbList",
+        ["itemListElement"] = new object[]
+        {
+            new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 1, ["name"] = "Products", ["item"] = Url.Action("Index", "Store", null, Context.Request.Scheme) },
+            new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 2, ["name"] = Model.CategoryName, ["item"] = Url.Action("Index", "Store", new { categoryId = Model.CategoryId }, Context.Request.Scheme) },
+            new Dictionary<string, object?> { ["@type"] = "ListItem", ["position"] = 3, ["name"] = Model.Name, ["item"] = Url.Action("Details", "Store", new { id = Model.Id }, Context.Request.Scheme) }
+        }
+    });
 }
 
-<section class="detail-page">
+<script type="application/ld+json">@Html.Raw(productStructuredData)</script>
+<script type="application/ld+json">@Html.Raw(breadcrumbStructuredData)</script>
+
+<section class="detail-page" data-product-view data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-category="@Model.CategoryName" data-product-amount="@Model.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
     <div class="store-container">
+        <nav class="store-breadcrumbs" aria-label="Breadcrumb">
+            <a asp-controller="Store" asp-action="Index">Products</a>
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            <a href="@categoryUrl" data-no-translate>@Model.CategoryName</a>
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            <span aria-current="page" data-no-translate>@Model.Name</span>
+        </nav>
         <div class="detail-layout">
             <div class="detail-media">
                 @if (!string.IsNullOrWhiteSpace(imageUrl))
                 {
-                    <img src="@imageUrl" alt="@Model.Name" loading="eager" decoding="async" />
+                    <img src="@imageUrl" alt="@Model.Name" width="900" height="900" fetchpriority="high" decoding="async" />
                 }
                 else
                 {
@@ -35,27 +90,28 @@
 
             <div class="detail-panel">
                 <div class="detail-heading-row">
-                    <span class="detail-category-badge">@Model.CategoryName</span>
+                    <span class="detail-category-badge" data-no-translate>@Model.CategoryName</span>
                     <button type="button" class="wishlist-button detail-wishlist" aria-label="Add @Model.Name to favorites" data-wishlist-button
                             data-product-id="@Model.Id" data-product-name="@Model.Name" data-product-category="@Model.CategoryName"
                             data-product-price="@CurrencyFormatter.ToEgp(Model.Price)" data-product-image="@(imageUrl ?? string.Empty)"
+                            data-product-amount="@Model.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                             data-product-details-url="@detailsUrl"
                             data-add-to-cart-url="@addToCartUrl">
                         <i class="far fa-heart"></i>
                     </button>
                 </div>
 
-                <div class="store-rating detail-rating" aria-label="Rated 4.8 out of 5">
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star"></i>
-                    <i class="fas fa-star-half-alt"></i>
-                    <span>4.8 customer rating</span>
+                <div class="store-rating detail-rating" aria-label="@(reviewSummary.ReviewCount == 0 ? "No reviews yet" : $"Rated {reviewSummary.AverageRating:0.0} out of 5 from {reviewSummary.ReviewCount} reviews")">
+                    @for (var star = 1; star <= 5; star++)
+                    {
+                        var starIcon = reviewSummary.AverageRating >= star ? "fas fa-star" : reviewSummary.AverageRating >= star - 0.5 ? "fas fa-star-half-alt" : "far fa-star";
+                        <i class="@starIcon" aria-hidden="true"></i>
+                    }
+                    <span>@(reviewSummary.ReviewCount == 0 ? "No reviews yet" : $"{reviewSummary.AverageRating:0.0} customer rating · {reviewSummary.ReviewCount} reviews")</span>
                 </div>
 
-                <h1>@Model.Name</h1>
-                <p class="detail-description">
+                <h1 data-no-translate>@Model.Name</h1>
+                <p class="detail-description" data-no-translate>
                     @(string.IsNullOrWhiteSpace(Model.Description) ? "Product details will be available soon." : Model.Description)
                 </p>
 
@@ -66,14 +122,13 @@
                     </div>
                     <div class="detail-fact">
                         <span>Category</span>
-                        <strong>@Model.CategoryName</strong>
+                        <strong data-no-translate>@Model.CategoryName</strong>
                     </div>
                 </div>
 
                 <div class="detail-benefits">
-                    <span><i class="fas fa-shipping-fast"></i> Fast cart flow</span>
-                    <span><i class="fas fa-undo"></i> Easy review before checkout</span>
-                    <span><i class="fas fa-shield-alt"></i> Secure customer session</span>
+                    <span><i class="fas fa-receipt" aria-hidden="true"></i> Review the full order total before payment.</span>
+                    <span><i class="fas fa-shield-alt" aria-hidden="true"></i> Card details are handled by the selected payment provider.</span>
                 </div>
 
                 <div class="store-detail-actions">
