@@ -17,7 +17,7 @@
 
 <partial name="PartialView/_ProductStyles" />
 
-<section class="product-shell">
+<section class="product-shell product-index-page">
     @if (TempData["Message"] is not null)
     {
         <div class="product-alert">
@@ -37,7 +37,7 @@
     <div class="product-toolbar">
         <div>
             <span class="product-kicker">Store inventory</span>
-            <h2>Products</h2>
+            <h2>Product Management</h2>
             <p>Manage product presentation, pricing, images, and category placement.</p>
         </div>
         <div class="product-toolbar-actions">
@@ -54,15 +54,15 @@
 
     <div class="product-metrics">
         <div>
-            <span>Total products</span>
+            <div class="product-metric-label"><i class="fas fa-box" aria-hidden="true"></i><span>Total products</span></div>
             <strong>@products.Count</strong>
         </div>
         <div>
-            <span>Categories in use</span>
+            <div class="product-metric-label"><i class="fas fa-tags" aria-hidden="true"></i><span>Categories in use</span></div>
             <strong>@categories.Count</strong>
         </div>
         <div>
-            <span>Average price</span>
+            <div class="product-metric-label"><i class="fas fa-chart-line" aria-hidden="true"></i><span>Average price</span></div>
             <strong>@(products.Any() ? CurrencyFormatter.ToEgp(products.Average(product => product.Price)) : CurrencyFormatter.ToEgp(0))</strong>
         </div>
     </div>
@@ -80,12 +80,12 @@
                     <div class="product-card-media">
                         @if (!string.IsNullOrWhiteSpace(imageUrl))
                         {
-                            <img src="@imageUrl" alt="@product.Name" />
+                            <img src="@imageUrl" alt="@product.Name" loading="lazy" decoding="async" />
                         }
                         else
                         {
                             <div class="product-image-fallback">
-                                <i class="fas fa-image"></i>
+                                <i class="fas fa-image" aria-hidden="true"></i>
                             </div>
                         }
                         <span class="product-category-pill">@product.CategoryName</span>
@@ -95,7 +95,6 @@
                         <h3>@product.Name</h3>
                         <div class="product-card-meta">
                             <strong>@CurrencyFormatter.ToEgp(product.Price)</strong>
-                            <span>@product.CategoryName</span>
                         </div>
                         <div class="product-card-actions">
                             <a asp-action="Details" asp-route-id="@product.Id" class="product-secondary-action">

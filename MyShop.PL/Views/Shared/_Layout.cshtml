@@ -391,6 +391,8 @@
                         <li class="nav-item">
                             <a asp-controller="OrderManagement"
                                asp-action="Index"
+                               title="Orders"
+                               aria-label="Orders"
                                class="nav-link @(string.Equals(currentController, "OrderManagement", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-receipt"></i>
                                 <p>Orders</p>
@@ -400,6 +402,8 @@
                         <li class="nav-item">
                             <a asp-controller="Product"
                                asp-action="Index"
+                               title="Products"
+                               aria-label="Products"
                                class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && !string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-box-open"></i>
                                 <p>Products</p>
@@ -409,6 +413,8 @@
                         <li class="nav-item">
                             <a asp-controller="Product"
                                asp-action="DeletedProducts"
+                               title="Deleted Products"
+                               aria-label="Deleted Products"
                                class="nav-link @(string.Equals(currentController, "Product", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "DeletedProducts", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-trash-restore"></i>
                                 <p>Deleted Products</p>
@@ -418,6 +424,8 @@
                         <li class="nav-item">
                             <a asp-controller="Category"
                                asp-action="Index"
+                               title="Categories"
+                               aria-label="Categories"
                                class="nav-link @(string.Equals(currentController, "Category", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-tags"></i>
                                 <p>Categories</p>
@@ -427,6 +435,8 @@
                         <li class="nav-item">
                             <a asp-controller="User"
                                asp-action="Index"
+                               title="Users"
+                               aria-label="Users"
                                class="nav-link @(string.Equals(currentController, "User", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-users"></i>
                                 <p>Users</p>
@@ -436,6 +446,8 @@
                         <li class="nav-item">
                             <a asp-controller="Roles"
                                asp-action="Index"
+                               title="Roles"
+                               aria-label="Roles"
                                class="nav-link @(string.Equals(currentController, "Roles", StringComparison.OrdinalIgnoreCase) ? "active" : string.Empty)">
                                 <i class="nav-icon fas fa-user-shield"></i>
                                 <p>Roles</p>

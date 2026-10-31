@@ -1,3 +1,16 @@
+:root {
+    --admin-radius-sm: 8px;
+    --admin-radius-md: 12px;
+    --admin-radius-lg: 16px;
+    --admin-space-1: 4px;
+    --admin-space-2: 8px;
+    --admin-space-3: 12px;
+    --admin-space-4: 16px;
+    --admin-space-5: 20px;
+    --admin-space-6: 24px;
+    --admin-product-media: #e9eef5;
+}
+
 :root[data-theme="dark"] {
     color-scheme: dark;
     --admin-deep-surface: #0b1220;
@@ -468,4 +481,320 @@ html[data-theme="light"] body.hold-transition .admin-user-chip {
 
 html[data-theme="light"] body.hold-transition .admin-navbar-subtitle {
     color: var(--admin-muted) !important;
+}
+
+/* Shared admin navigation and keyboard treatment. */
+body.hold-transition .admin-navbar-title,
+body.hold-transition .admin-user-chip,
+body.hold-transition .admin-navbar-subtitle {
+    color: var(--admin-text-strong) !important;
+}
+
+body.hold-transition .admin-navbar-subtitle {
+    color: var(--admin-text) !important;
+}
+
+body.hold-transition .admin-menu-toggle.nav-link {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    margin: 0 4px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--admin-radius-sm);
+    background: transparent;
+    color: var(--admin-text-strong) !important;
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease;
+}
+
+body.hold-transition .admin-menu-toggle.nav-link:hover {
+    border-color: var(--admin-border);
+    background: var(--admin-surface-hover);
+    color: var(--admin-primary) !important;
+}
+
+body.hold-transition .admin-menu-toggle.nav-link:focus-visible,
+body.hold-transition :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid var(--admin-primary) !important;
+    outline-offset: 3px;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link {
+    color: var(--admin-text) !important;
+}
+
+body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link.active {
+    background: color-mix(in srgb, var(--admin-primary) 16%, var(--admin-surface)) !important;
+    color: var(--admin-text-strong) !important;
+    box-shadow: inset 3px 0 0 var(--admin-primary), inset 0 0 0 1px color-mix(in srgb, var(--admin-primary) 38%, transparent) !important;
+}
+
+/* Keep Product Management's own title, eyebrow, and description as the page header. */
+body.hold-transition:has(.product-index-page) .content-header,
+body.hold-transition:has(.product-index-page) .admin-card > .card-header {
+    display: none;
+}
+
+body.hold-transition:has(.product-index-page) .content-wrapper .admin-card {
+    overflow: visible;
+    border: 0 !important;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.hold-transition:has(.product-index-page) .content-wrapper .admin-card > .card-body {
+    padding: 0;
+    background: transparent !important;
+}
+
+body.hold-transition:has(.product-index-page) .product-shell {
+    --product-card-gap: var(--admin-space-4);
+    max-width: 1680px;
+    margin-inline: auto;
+    color: var(--admin-text);
+}
+
+body.hold-transition:has(.product-index-page) .product-toolbar {
+    align-items: flex-end;
+    gap: var(--admin-space-5);
+    padding: var(--admin-space-2) 0 var(--admin-space-5);
+}
+
+body.hold-transition:has(.product-index-page) .product-toolbar h2 {
+    color: var(--admin-text-strong);
+    letter-spacing: -.025em;
+}
+
+body.hold-transition:has(.product-index-page) .product-toolbar p {
+    max-width: 650px;
+    line-height: 1.6;
+}
+
+body.hold-transition:has(.product-index-page) .product-metrics {
+    align-items: stretch;
+    gap: var(--admin-space-3);
+    margin-bottom: var(--admin-space-5);
+}
+
+body.hold-transition:has(.product-index-page) .product-metrics > div {
+    min-width: 0;
+    min-height: 112px;
+    padding: var(--admin-space-4) var(--admin-space-5);
+    border-radius: var(--admin-radius-md);
+    box-shadow: var(--admin-shadow);
+}
+
+body.hold-transition:has(.product-index-page) .product-metric-label {
+    display: flex;
+    align-items: center;
+    gap: var(--admin-space-2);
+}
+
+body.hold-transition:has(.product-index-page) .product-metric-label i {
+    display: inline-grid;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    place-items: center;
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary);
+}
+
+body.hold-transition:has(.product-index-page) .product-metric-label span {
+    display: inline;
+    color: var(--admin-text);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.hold-transition:has(.product-index-page) .product-metrics strong {
+    margin-top: var(--admin-space-2);
+    color: var(--admin-text-strong);
+    font-size: clamp(21px, 2vw, 26px);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+body.hold-transition:has(.product-index-page) .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    align-items: stretch;
+    gap: var(--product-card-gap);
+}
+
+body.hold-transition:has(.product-index-page) .product-card {
+    display: flex;
+    min-width: 0;
+    height: 100%;
+    flex-direction: column;
+    border-radius: var(--admin-radius-md);
+    box-shadow: var(--admin-shadow);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+body.hold-transition:has(.product-index-page) .product-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--admin-primary) 34%, transparent), var(--admin-shadow);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-media {
+    box-sizing: border-box;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: var(--admin-space-3);
+    border-radius: var(--admin-radius-md) var(--admin-radius-md) 0 0;
+    background: var(--admin-product-media);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-media img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--admin-radius-sm);
+    background: var(--admin-product-media);
+    object-fit: contain;
+}
+
+body.hold-transition:has(.product-index-page) .product-image-fallback {
+    min-height: 0;
+    border-radius: var(--admin-radius-sm);
+    background: linear-gradient(135deg, #e4ebf4, #f5f7fa);
+    color: #52647b;
+}
+
+body.hold-transition:has(.product-index-page) .product-category-pill {
+    left: var(--admin-space-3);
+    bottom: var(--admin-space-3);
+    max-width: calc(100% - 24px);
+    border-color: rgba(37, 99, 235, .24);
+    border-radius: 999px;
+    background: var(--admin-accent-soft);
+    color: var(--admin-primary);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-body {
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: var(--admin-space-4);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-body h3 {
+    display: -webkit-box;
+    min-height: 0;
+    overflow: hidden;
+    margin: 0 0 var(--admin-space-3);
+    color: var(--admin-text-strong);
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+body.hold-transition:has(.product-index-page) .product-card-meta {
+    justify-content: flex-start;
+    margin: 0 0 var(--admin-space-4);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-meta strong {
+    color: var(--admin-success);
+    font-size: 18px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--admin-space-2);
+    margin-top: auto;
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions .product-secondary-action,
+body.hold-transition:has(.product-index-page) .product-card-actions .product-danger-link {
+    box-sizing: border-box;
+    display: inline-flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding-inline: 2px;
+    border-radius: var(--admin-radius-sm);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions .product-secondary-action {
+    border-color: var(--admin-border);
+    background: transparent;
+    color: var(--admin-text);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions .product-secondary-action:hover {
+    border-color: var(--admin-primary);
+    background: var(--admin-accent-soft);
+    color: var(--admin-text-strong);
+    transform: translateY(-1px);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions .product-danger-link {
+    border-color: var(--admin-danger);
+    background: transparent;
+    color: var(--admin-danger-soft-text);
+}
+
+body.hold-transition:has(.product-index-page) .product-card-actions .product-danger-link:hover {
+    border-color: var(--admin-danger);
+    background: var(--admin-danger);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+body.hold-transition:has(.product-index-page) .product-primary-action,
+body.hold-transition:has(.product-index-page) .product-secondary-action,
+body.hold-transition:has(.product-index-page) .product-danger-link {
+    transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+@media (max-width: 860px) {
+    body.hold-transition:has(.product-index-page) .product-toolbar {
+        align-items: stretch;
+    }
+
+    body.hold-transition:has(.product-index-page) .product-toolbar-actions {
+        width: 100%;
+    }
+}
+
+@media (max-width: 679.98px) {
+    body.hold-transition:has(.product-index-page) .product-metrics {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.hold-transition:has(.product-index-page) .product-metrics > div {
+        min-height: 94px;
+    }
+
+    body.hold-transition:has(.product-index-page) .product-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body.hold-transition:has(.product-index-page) .product-card,
+    body.hold-transition:has(.product-index-page) .product-card-actions a {
+        transition: none !important;
+    }
+
+    body.hold-transition:has(.product-index-page) .product-card:hover,
+    body.hold-transition:has(.product-index-page) .product-card-actions a:hover {
+        transform: none !important;
+    }
 }
