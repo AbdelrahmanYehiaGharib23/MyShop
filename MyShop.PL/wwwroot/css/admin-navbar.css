@@ -1,0 +1,78 @@
+/* Loaded after the shared theme styles to keep the AdminLTE header consistent. */
+#adminTopbar {
+    background-color: var(--admin-page, #0f172a) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--admin-border, #24314f) !important;
+    box-shadow: 0 8px 24px rgba(3, 9, 20, .12) !important;
+    color: var(--admin-text-strong, #f4f7fb) !important;
+}
+
+#adminTopbar .admin-navbar-title,
+#adminTopbar .admin-user-chip,
+#adminTopbar .admin-user-chip .admin-user-name,
+#adminTopbar .nav-link {
+    color: var(--admin-text-strong, #f4f7fb) !important;
+    opacity: 1;
+}
+
+#adminTopbar .admin-navbar-subtitle {
+    color: var(--admin-muted, #8ea0b8) !important;
+    opacity: 1;
+}
+
+#adminTopbar .admin-menu-toggle.nav-link {
+    display: inline-flex;
+    width: 42px;
+    height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+    border: 1px solid transparent !important;
+    border-radius: var(--admin-radius-control, 10px) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--admin-text-strong, #f4f7fb) !important;
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+}
+
+#adminTopbar .admin-menu-toggle.nav-link:hover,
+#adminTopbar .admin-menu-toggle.nav-link:focus-visible {
+    border-color: var(--admin-border, #24314f) !important;
+    background: var(--admin-surface-hover, #18243b) !important;
+    color: var(--admin-primary, #38bdf8) !important;
+}
+
+#adminTopbar .admin-menu-toggle.nav-link:focus-visible {
+    outline: 3px solid var(--admin-primary, #38bdf8) !important;
+    outline-offset: 2px;
+}
+
+html[data-theme="light"] #adminTopbar {
+    background-color: var(--admin-page, #f4f7fb) !important;
+    border-bottom-color: var(--admin-border, #dce4ee) !important;
+    box-shadow: 0 8px 24px rgba(21, 34, 56, .06) !important;
+    color: var(--admin-text-strong, #152238) !important;
+}
+
+html[data-theme="light"] #adminTopbar .admin-navbar-title,
+html[data-theme="light"] #adminTopbar .admin-user-chip,
+html[data-theme="light"] #adminTopbar .admin-user-chip .admin-user-name,
+html[data-theme="light"] #adminTopbar .nav-link {
+    color: var(--admin-text-strong, #152238) !important;
+}
+
+html[data-theme="light"] #adminTopbar .admin-navbar-subtitle {
+    color: var(--admin-muted, #66758b) !important;
+}
+
+html[data-theme="light"] #adminTopbar .admin-menu-toggle.nav-link:hover,
+html[data-theme="light"] #adminTopbar .admin-menu-toggle.nav-link:focus-visible {
+    background: var(--admin-surface-hover, #edf3fa) !important;
+    color: var(--admin-primary, #2563eb) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #adminTopbar .admin-menu-toggle.nav-link {
+        transition: none;
+    }
+}
