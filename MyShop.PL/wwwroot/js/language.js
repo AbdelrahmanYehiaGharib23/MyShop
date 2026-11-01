@@ -257,7 +257,8 @@
             var visual = button.querySelector('[aria-hidden="true"]');
             button.setAttribute('aria-label', label);
             button.setAttribute('title', label);
-            if (visual) visual.textContent = language === 'ar' ? 'EN' : 'ع';
+            var visualText = language === 'ar' ? 'EN' : 'ع';
+            if (visual && visual.textContent !== visualText) visual.textContent = visualText;
         });
         document.querySelectorAll('[data-wishlist-button]').forEach(function (button) {
             var productName = button.dataset.productName || (language === 'ar' ? 'المنتج' : 'product');
@@ -295,7 +296,6 @@
                 if (translated !== value) element.setAttribute(attribute, translated);
             });
         });
-        updateLanguageButtons(language);
     }
 
     function applyLanguage(language) {
@@ -303,6 +303,7 @@
         root.lang = language;
         root.dir = language === 'ar' ? 'rtl' : 'ltr';
         localizeSubtree(document.body, language);
+        updateLanguageButtons(language);
         document.dispatchEvent(new CustomEvent('myshop:languagechange', { detail: { language: language } }));
     }
 
