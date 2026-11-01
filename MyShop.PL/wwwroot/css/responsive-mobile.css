@@ -1058,13 +1058,13 @@ body {
 }
 
 @keyframes auth-story-enter {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { transform: translateY(8px); }
+    to { transform: translateY(0); }
 }
 
 @keyframes auth-field-enter {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { transform: translateY(5px); }
+    to { transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {

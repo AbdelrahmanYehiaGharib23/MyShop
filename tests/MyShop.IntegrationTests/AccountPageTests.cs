@@ -27,4 +27,23 @@ public sealed class AccountPageTests : IClassFixture<MyShopWebApplicationFactory
             TestContext.Current.CancellationToken);
         Assert.Contains("Login", html, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task RegisterPage_ReturnsRenderedHtml()
+    {
+        using var response = await _client.GetAsync(
+            "/Account/Register",
+            TestContext.Current.CancellationToken);
+
+        response.EnsureSuccessStatusCode();
+
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+
+        var html = await response.Content.ReadAsStringAsync(
+            TestContext.Current.CancellationToken);
+        Assert.Contains("auth-shell", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Create your account", html, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("First name", html, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("fonts.googleapis.com", html, StringComparison.OrdinalIgnoreCase);
+    }
 }
