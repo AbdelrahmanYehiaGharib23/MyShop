@@ -5,73 +5,594 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = $"Order #{Model.Order.Id}";
     ViewBag.PageTitle = "Order Management";
-    ViewBag.CardTitle = $"Order #{Model.Order.Id}";
+    ViewBag.UseAdminCard = false;
 
     var order = Model.Order;
     var canFulfill = order.Status == OrderStatus.Paid;
     var allowedStages = Enum.GetValues<OrderFulfillmentStatus>()
         .Where(stage => stage == order.FulfillmentStatus || (int)stage == (int)order.FulfillmentStatus + 1)
         .ToList();
+    var fulfillmentStages = Enum.GetValues<OrderFulfillmentStatus>().ToList();
+    var currentStageIndex = fulfillmentStages.IndexOf(order.FulfillmentStatus);
+    var paymentStatusClass = order.Status switch
+    {
+        OrderStatus.Paid => "is-paid",
+        OrderStatus.Pending => "is-pending",
+        _ => "is-problem"
+    };
+    var paymentGateMessage = order.Status switch
+    {
+        OrderStatus.Pending => "Fulfillment stays locked until payment is successfully confirmed.",
+        OrderStatus.Failed => "Payment failed. Fulfillment is unavailable until a successful payment is recorded.",
+        OrderStatus.Cancelled => "This order is cancelled, so fulfillment cannot continue.",
+        _ => "Payment must succeed before fulfillment can continue."
+    };
+    var paymentTimelineClass = order.Status == OrderStatus.Paid
+        ? "is-complete"
+        : order.Status == OrderStatus.Pending ? "is-current" : "is-stopped";
 }
 
 <style>
-    .order-detail-shell { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, .8fr); gap: 18px; }
-    .order-detail-panel { background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 14px; box-shadow: 0 8px 24px rgba(22, 34, 51, .05); overflow: hidden; }
-    .order-detail-panel-header { padding: 17px 20px; border-bottom: 1px solid var(--admin-border); color: var(--admin-text-strong); font-weight: 800; }
+    .order-detail-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 1.28fr) minmax(320px, .82fr);
+        align-items: start;
+        gap: 20px;
+    }
+
+    .order-detail-panel {
+        min-width: 0;
+        overflow: hidden;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-card, 16px);
+        background: var(--admin-surface);
+        box-shadow: var(--admin-shadow, 0 12px 28px rgba(0, 0, 0, .12));
+    }
+
+    .order-detail-panel-header {
+        display: flex;
+        min-height: 76px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--admin-border);
+    }
+
+    .order-detail-panel-heading { min-width: 0; }
+    .order-detail-eyebrow {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--admin-primary);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .order-detail-panel-heading h2 {
+        margin: 0;
+        color: var(--admin-text-strong);
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+    .order-reference {
+        display: inline-flex;
+        min-height: 34px;
+        flex: 0 0 auto;
+        align-items: center;
+        padding: 6px 11px;
+        border: 1px solid var(--admin-border);
+        border-radius: 999px;
+        background: var(--admin-surface-soft);
+        color: var(--admin-text-strong);
+        font-size: 12px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .order-back-link {
+        display: inline-flex;
+        min-height: 38px;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 11px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-control, 10px);
+        color: var(--admin-text-strong);
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background-color .18s ease, border-color .18s ease, color .18s ease;
+    }
+
+    .order-back-link:hover {
+        border-color: var(--admin-primary);
+        background: var(--admin-surface-hover);
+        color: var(--admin-primary);
+        text-decoration: none;
+    }
+
     .order-detail-panel-body { padding: 20px; }
-    .order-detail-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-    .order-detail-summary span, .order-detail-item span { display: block; color: var(--admin-muted); font-size: 12px; }
-    .order-detail-summary strong { display: block; margin-top: 4px; color: var(--admin-text-strong); overflow-wrap: anywhere; }
-    .order-detail-item { display: flex; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--admin-border); }
-    .order-detail-item:last-child { border-bottom: 0; }
-    .order-stage-note { margin: 14px 0 0; padding: 12px; border-radius: 8px; background: var(--admin-surface-soft); color: var(--admin-text); font-size: 13px; }
-    .order-status-readonly { padding: 12px; border-radius: 8px; background: var(--admin-badge-warning-bg); color: var(--admin-badge-warning-text); }
-    @@media (max-width: 900px) { .order-detail-shell { grid-template-columns: 1fr; } }
-    @@media (max-width: 520px) { .order-detail-summary { grid-template-columns: 1fr; } }
+
+    .order-detail-summary {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 0;
+    }
+
+    .order-summary-field {
+        min-width: 0;
+        padding: 13px 14px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-surface-soft);
+    }
+
+    .order-summary-field dt {
+        margin-bottom: 5px;
+        color: var(--admin-muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .order-summary-field dd {
+        overflow-wrap: anywhere;
+        margin: 0;
+        color: var(--admin-text-strong);
+        font-size: 14px;
+        font-weight: 750;
+    }
+
+    .order-summary-field.order-summary-total dd {
+        color: var(--admin-success);
+        font-size: 17px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .order-payment-status {
+        display: inline-flex;
+        min-height: 28px;
+        align-items: center;
+        gap: 7px;
+        padding: 4px 10px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .order-payment-status.is-paid {
+        border-color: color-mix(in srgb, var(--admin-success) 35%, transparent);
+        background: var(--admin-badge-success-bg);
+        color: var(--admin-badge-success-text);
+    }
+
+    .order-payment-status.is-pending {
+        border-color: color-mix(in srgb, var(--admin-badge-warning-text) 35%, transparent);
+        background: var(--admin-badge-warning-bg);
+        color: var(--admin-badge-warning-text);
+    }
+
+    .order-payment-status.is-problem {
+        border-color: color-mix(in srgb, var(--admin-danger) 35%, transparent);
+        background: var(--admin-badge-danger-bg);
+        color: var(--admin-badge-danger-text);
+    }
+
+    .order-products-section {
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--admin-border);
+    }
+
+    .order-products-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 11px;
+    }
+
+    .order-products-heading h3 {
+        margin: 0;
+        color: var(--admin-text-strong);
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .order-products-heading span {
+        color: var(--admin-muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .order-detail-items { display: grid; gap: 9px; }
+
+    .order-detail-item {
+        display: grid;
+        min-width: 0;
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        padding: 9px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-surface-soft);
+    }
+
+    .order-detail-item-media {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        overflow: hidden;
+        border: 1px solid var(--admin-border);
+        border-radius: 9px;
+        background: var(--admin-media-surface, #e9eef6);
+        color: #2563eb;
+    }
+
+    .order-detail-item-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .order-detail-item-copy { display: grid; min-width: 0; gap: 4px; }
+
+    .order-detail-item-copy strong {
+        overflow: hidden;
+        color: var(--admin-text-strong) !important;
+        font-size: 13px;
+        font-weight: 750;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .order-detail-item-copy span {
+        color: var(--admin-muted) !important;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .order-detail-item-total {
+        color: var(--admin-text-strong) !important;
+        font-size: 13px;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .order-fulfillment-steps {
+        display: grid;
+        gap: 0;
+        margin: 18px 0 20px;
+        padding: 0;
+        list-style: none;
+    }
+
+    .order-fulfillment-step {
+        position: relative;
+        display: grid;
+        min-height: 58px;
+        grid-template-columns: 30px minmax(0, 1fr);
+        gap: 11px;
+    }
+
+    .order-fulfillment-step:not(:last-child)::after {
+        position: absolute;
+        top: 29px;
+        bottom: 0;
+        left: 14px;
+        width: 1px;
+        background: var(--admin-border);
+        content: "";
+    }
+
+    .order-fulfillment-marker {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        width: 29px;
+        height: 29px;
+        place-items: center;
+        border: 1px solid var(--admin-border);
+        border-radius: 50%;
+        background: var(--admin-surface);
+        color: var(--admin-muted);
+        font-size: 11px;
+    }
+
+    .order-fulfillment-step.is-complete .order-fulfillment-marker {
+        border-color: var(--admin-success);
+        background: var(--admin-success);
+        color: #fff;
+    }
+
+    .order-fulfillment-step.is-current .order-fulfillment-marker {
+        border-color: var(--admin-primary);
+        background: var(--admin-accent-soft);
+        color: var(--admin-primary);
+    }
+
+    .order-fulfillment-step.is-stopped .order-fulfillment-marker {
+        border-color: var(--admin-danger);
+        color: var(--admin-danger);
+    }
+
+    .order-fulfillment-step-copy { display: grid; align-content: start; gap: 2px; padding: 2px 0 12px; }
+
+    .order-fulfillment-step-copy strong {
+        color: var(--admin-text-strong);
+        font-size: 13px;
+        font-weight: 750;
+    }
+
+    .order-fulfillment-step-copy span {
+        color: var(--admin-muted);
+        font-size: 12px;
+        line-height: 1.4;
+    }
+
+    .order-fulfillment-step.is-current .order-fulfillment-step-copy strong { color: var(--admin-primary); }
+    .order-fulfillment-step.is-stopped .order-fulfillment-step-copy strong { color: var(--admin-danger); }
+
+    .order-payment-gate {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        padding: 14px;
+        border: 1px solid color-mix(in srgb, var(--admin-badge-warning-text) 34%, var(--admin-border));
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-badge-warning-bg);
+        color: var(--admin-badge-warning-text);
+    }
+
+    .order-payment-gate > i { margin-top: 3px; font-size: 16px; }
+    .order-payment-gate strong { display: block; margin-bottom: 3px; font-size: 13px; }
+    .order-payment-gate p { margin: 0; font-size: 12px; line-height: 1.45; }
+
+    .order-fulfillment-form {
+        padding: 16px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-surface-soft);
+    }
+
+    .order-fulfillment-form .form-group { margin-bottom: 15px; }
+    .order-fulfillment-form .form-group:last-of-type { margin-bottom: 17px; }
+
+    .order-fulfillment-form label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--admin-text-strong) !important;
+        font-size: 12px;
+        font-weight: 750;
+    }
+
+    .order-fulfillment-form .form-control {
+        min-height: 44px;
+        border: 1px solid var(--admin-border) !important;
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-input, #0b1527) !important;
+        color: var(--admin-text-strong) !important;
+        box-shadow: none;
+    }
+
+    .order-fulfillment-form .form-control:focus {
+        border-color: var(--admin-primary) !important;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--admin-primary) 23%, transparent) !important;
+    }
+
+    .order-fulfillment-form select option { background: var(--admin-surface); color: var(--admin-text-strong); }
+    .order-fulfillment-form .form-text { color: var(--admin-muted) !important; font-size: 11px; line-height: 1.45; }
+    .order-fulfillment-form .text-danger { color: var(--admin-danger) !important; font-size: 12px; }
+
+    .order-delivery-current {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 15px;
+        border: 1px solid var(--admin-border);
+        border-radius: var(--admin-radius-control, 10px);
+        background: var(--admin-surface-soft);
+    }
+
+    .order-delivery-current h3 {
+        margin: 0 0 1px;
+        color: var(--admin-text-strong);
+        font-size: 13px;
+        font-weight: 800;
+    }
+
+    .order-delivery-fact { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; color: var(--admin-text); font-size: 12px; }
+    .order-delivery-fact > i { margin-top: 2px; color: var(--admin-primary); }
+    .order-delivery-fact strong { color: var(--admin-text-strong); }
+
+    .order-detail-shell :is(a, button, input, select):focus-visible {
+        outline: 3px solid var(--admin-primary) !important;
+        outline-offset: 2px;
+    }
+
+    @@media (max-width: 1050px) {
+        .order-detail-shell { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @@media (max-width: 620px) {
+        .order-detail-panel-header { flex-wrap: wrap; padding: 15px; }
+        .order-detail-panel-body { padding: 15px; }
+        .order-detail-summary { grid-template-columns: minmax(0, 1fr); }
+        .order-detail-item { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+        .order-detail-item-media { width: 44px; height: 44px; }
+        .order-detail-item-total { grid-column: 2; }
+        .order-back-link { margin-left: auto; }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .order-back-link { transition: none; }
+    }
 </style>
 
-<section class="order-detail-shell">
-    <div class="order-detail-panel">
-        <div class="order-detail-panel-header d-flex justify-content-between align-items-center">
-            <span>Order #@order.Id</span>
-            <a asp-action="Index" class="btn btn-sm btn-outline-secondary"><i class="fas fa-arrow-left mr-1"></i>All orders</a>
-        </div>
-        <div class="order-detail-panel-body">
-            <div class="order-detail-summary mb-4">
-                <div><span>Customer email</span><strong>@order.CustomerEmail</strong></div>
-                <div><span>Phone</span><strong>@order.Phone</strong></div>
-                <div><span>Order date</span><strong>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</strong></div>
-                <div><span>Delivery address</span><strong>@order.Address</strong></div>
-                <div><span>Payment status</span><strong>@order.Status</strong></div>
-                <div><span>Order total</span><strong>@CurrencyFormatter.ToEgp(order.TotalPrice)</strong></div>
+<section class="order-detail-shell" aria-label="Order details">
+    <article class="order-detail-panel order-overview-panel">
+        <header class="order-detail-panel-header">
+            <div class="order-detail-panel-heading">
+                <span class="order-detail-eyebrow">Order overview</span>
+                <h2>Customer and order details</h2>
             </div>
+            <span class="order-reference">Order #@order.Id</span>
+            <a asp-action="Index" class="order-back-link"><i class="fas fa-arrow-left" aria-hidden="true"></i>All orders</a>
+        </header>
 
-            <h5 class="font-weight-bold">Items (@(order.Items?.Sum(item => item.Quantity) ?? 0))</h5>
-            @foreach (var item in order.Items ?? [])
-            {
-                <div class="order-detail-item">
-                    <div><strong>@item.ProductName</strong><span>Qty @item.Quantity · @CurrencyFormatter.ToEgp(item.Price) each</span></div>
-                    <strong>@CurrencyFormatter.ToEgp(item.TotalPrice)</strong>
+        <div class="order-detail-panel-body">
+            <dl class="order-detail-summary">
+                <div class="order-summary-field">
+                    <dt>Customer email</dt>
+                    <dd>@order.CustomerEmail</dd>
                 </div>
-            }
-        </div>
-    </div>
+                <div class="order-summary-field">
+                    <dt>Phone</dt>
+                    <dd>@order.Phone</dd>
+                </div>
+                <div class="order-summary-field">
+                    <dt>Order date</dt>
+                    <dd>@order.OrderDate.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</dd>
+                </div>
+                <div class="order-summary-field">
+                    <dt>Delivery address</dt>
+                    <dd>@order.Address</dd>
+                </div>
+                <div class="order-summary-field">
+                    <dt>Payment status</dt>
+                    <dd>
+                        <span class="order-payment-status @paymentStatusClass">
+                            <i class="fas @(order.Status == OrderStatus.Paid ? "fa-check-circle" : order.Status == OrderStatus.Pending ? "fa-clock" : "fa-exclamation-circle")" aria-hidden="true"></i>
+                            @order.Status
+                        </span>
+                    </dd>
+                </div>
+                <div class="order-summary-field order-summary-total">
+                    <dt>Order total</dt>
+                    <dd>@CurrencyFormatter.ToEgp(order.TotalPrice)</dd>
+                </div>
+            </dl>
 
-    <div class="order-detail-panel">
-        <div class="order-detail-panel-header">Fulfillment and delivery</div>
+            <section class="order-products-section" aria-labelledby="order-products-title">
+                <div class="order-products-heading">
+                    <h3 id="order-products-title">Products</h3>
+                    <span>@(order.Items?.Sum(item => item.Quantity) ?? 0) items</span>
+                </div>
+
+                <div class="order-detail-items">
+                    @foreach (var item in order.Items ?? [])
+                    {
+                        var imageUrl = string.IsNullOrWhiteSpace(item.ProductImageUrl)
+                            ? null
+                            : Url.Content($"~/{item.ProductImageUrl.TrimStart('/')}");
+
+                        <article class="order-detail-item">
+                            <div class="order-detail-item-media">
+                                @if (!string.IsNullOrWhiteSpace(imageUrl))
+                                {
+                                    <img src="@imageUrl" alt="@item.ProductName" loading="lazy" decoding="async" />
+                                }
+                                else
+                                {
+                                    <i class="fas fa-box-open" aria-hidden="true"></i>
+                                }
+                            </div>
+                            <div class="order-detail-item-copy">
+                                <strong title="@item.ProductName">@item.ProductName</strong>
+                                <span>Qty @item.Quantity · @CurrencyFormatter.ToEgp(item.Price) each</span>
+                            </div>
+                            <strong class="order-detail-item-total">@CurrencyFormatter.ToEgp(item.TotalPrice)</strong>
+                        </article>
+                    }
+                </div>
+            </section>
+        </div>
+    </article>
+
+    <aside class="order-detail-panel order-fulfillment-panel" aria-labelledby="fulfillment-title">
+        <header class="order-detail-panel-header">
+            <div class="order-detail-panel-heading">
+                <span class="order-detail-eyebrow">Delivery workflow</span>
+                <h2 id="fulfillment-title">Fulfillment and delivery</h2>
+            </div>
+        </header>
+
         <div class="order-detail-panel-body">
             @if (TempData["SuccessMessage"] is string successMessage)
             {
-                <div class="alert alert-success"><i class="fas fa-check-circle mr-1"></i>@successMessage</div>
+                <div class="alert alert-success"><i class="fas fa-check-circle mr-1" aria-hidden="true"></i>@successMessage</div>
             }
+
+            <ol class="order-fulfillment-steps" aria-label="Order progress">
+                <li class="order-fulfillment-step @paymentTimelineClass">
+                    <span class="order-fulfillment-marker"><i class="fas @(order.Status == OrderStatus.Paid ? "fa-check" : order.Status == OrderStatus.Pending ? "fa-clock" : "fa-exclamation")" aria-hidden="true"></i></span>
+                    <div class="order-fulfillment-step-copy">
+                        <strong>Payment</strong>
+                        <span>@order.Status</span>
+                    </div>
+                </li>
+                @foreach (var stage in fulfillmentStages)
+                {
+                    var stageIndex = fulfillmentStages.IndexOf(stage);
+                    var stageLabel = stage switch
+                    {
+                        OrderFulfillmentStatus.AwaitingPreparation => "Awaiting preparation",
+                        OrderFulfillmentStatus.Preparing => "Preparing",
+                        OrderFulfillmentStatus.Shipped => "With courier",
+                        OrderFulfillmentStatus.Delivered => "Delivered",
+                        _ => stage.ToString()
+                    };
+                    var stageClass = !canFulfill
+                        ? "is-locked"
+                        : stageIndex < currentStageIndex ? "is-complete" : stageIndex == currentStageIndex ? "is-current" : "is-upcoming";
+                    var stageNote = !canFulfill
+                        ? "Available after successful payment"
+                        : stageIndex < currentStageIndex ? "Complete" : stageIndex == currentStageIndex ? "Current step" : "Up next";
+
+                    <li class="order-fulfillment-step @stageClass">
+                        <span class="order-fulfillment-marker">
+                            @if (stageClass == "is-complete")
+                            {
+                                <i class="fas fa-check" aria-hidden="true"></i>
+                            }
+                            else if (stageClass == "is-locked")
+                            {
+                                <i class="fas fa-lock" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <span>@(stageIndex + 1)</span>
+                            }
+                        </span>
+                        <div class="order-fulfillment-step-copy">
+                            <strong>@stageLabel</strong>
+                            <span>@stageNote</span>
+                        </div>
+                    </li>
+                }
+            </ol>
 
             @if (!canFulfill)
             {
-                <div class="order-status-readonly">Payment must succeed before this order can be prepared or shipped. Current payment status: <strong>@order.Status</strong>.</div>
+                <div class="order-payment-gate" role="status">
+                    <i class="fas fa-lock" aria-hidden="true"></i>
+                    <div>
+                        <strong>Fulfillment is on hold</strong>
+                        <p>@paymentGateMessage</p>
+                    </div>
+                </div>
             }
             else
             {
-                <form asp-action="UpdateFulfillment" asp-route-id="@order.Id" method="post">
+                <form asp-action="UpdateFulfillment" asp-route-id="@order.Id" method="post" class="order-fulfillment-form">
                     @Html.AntiForgeryToken()
                     <input asp-for="Order.Id" type="hidden" />
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -92,7 +613,7 @@
                                 <option value="@stage">@label</option>
                             }
                         </select>
-                        <small class="form-text text-muted">Move one step at a time. You can save the current stage again to edit delivery details.</small>
+                        <small class="form-text">Move one step at a time. Save the current stage again to edit delivery details.</small>
                     </div>
 
                     <div class="form-group">
@@ -113,18 +634,28 @@
                         <span asp-validation-for="EstimatedDeliveryDate" class="text-danger"></span>
                     </div>
 
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i>Save order update</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1" aria-hidden="true"></i>Save order update</button>
                 </form>
             }
 
             @if (!string.IsNullOrWhiteSpace(order.CourierName) || !string.IsNullOrWhiteSpace(order.TrackingNumber) || order.EstimatedDeliveryDate.HasValue)
             {
-                <hr />
-                <h6 class="font-weight-bold">Current delivery details</h6>
-                @if (!string.IsNullOrWhiteSpace(order.CourierName)) { <p class="mb-1"><strong>Courier:</strong> @order.CourierName</p> }
-                @if (!string.IsNullOrWhiteSpace(order.TrackingNumber)) { <p class="mb-1"><strong>Tracking:</strong> @order.TrackingNumber</p> }
-                @if (order.EstimatedDeliveryDate is DateOnly arrival) { <p class="mb-1"><strong>Estimated arrival:</strong> @arrival.ToString("MMM dd, yyyy")</p> }
+                <section class="order-delivery-current" aria-labelledby="current-delivery-title">
+                    <h3 id="current-delivery-title">Current delivery details</h3>
+                    @if (!string.IsNullOrWhiteSpace(order.CourierName))
+                    {
+                        <div class="order-delivery-fact"><i class="fas fa-shipping-fast" aria-hidden="true"></i><span><strong>Courier</strong> @order.CourierName</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(order.TrackingNumber))
+                    {
+                        <div class="order-delivery-fact"><i class="fas fa-barcode" aria-hidden="true"></i><span><strong>Tracking number</strong> @order.TrackingNumber</span></div>
+                    }
+                    @if (order.EstimatedDeliveryDate is DateOnly arrival)
+                    {
+                        <div class="order-delivery-fact"><i class="fas fa-calendar-alt" aria-hidden="true"></i><span><strong>Estimated arrival</strong> @arrival.ToString("MMM dd, yyyy")</span></div>
+                    }
+                </section>
             }
         </div>
-    </div>
+    </aside>
 </section>
