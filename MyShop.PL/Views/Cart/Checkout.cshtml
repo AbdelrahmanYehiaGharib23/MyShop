@@ -150,9 +150,8 @@
                         </div>
                         <div class="cart-summary-row">
                             <span>Shipping</span>
-                            <strong>@(shipping == 0 ? "No fee added" : CurrencyFormatter.ToEgp(shipping))</strong>
+                            <strong>@(shipping == 0 ? "Free" : CurrencyFormatter.ToEgp(shipping))</strong>
                         </div>
-                        <p class="checkout-shipping-note">The displayed total includes product prices only.</p>
                         <div class="cart-summary-row cart-summary-total">
                             <span>Total</span>
                             <strong>@CurrencyFormatter.ToEgp(total)</strong>
@@ -165,7 +164,7 @@
                             </div>
                         }
                         <div class="cart-summary-row stripe-converted-total" data-paymob-summary-charge hidden>
-                            <span>Paymob charge</span>
+                            <span>Paymob charge<small>Processed in EGP</small></span>
                             <strong>@CurrencyFormatter.ToEgp(total)</strong>
                         </div>
 
@@ -344,6 +343,10 @@
                                                     <span>Preparing Paymob's secure card form...</span>
                                                 </div>
                                             </div>
+                                            <p class="paymob-payment-hint">
+                                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                                <span>Complete every required card field. Paymob enables payment after the details are valid.</span>
+                                            </p>
                                             <div class="payment-card-errors" data-paymob-pixel-errors role="alert" aria-live="polite"></div>
                                         </div>
 

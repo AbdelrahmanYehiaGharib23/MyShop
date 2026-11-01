@@ -993,7 +993,7 @@
                 showSaveCard: false,
                 hideCardHolderName: false,
                 customStyle: {
-                    HideCardLabel: true,
+                    HideCardLabel: false,
                     Width_of_Container: '100%',
                     Container_Padding: '0',
                     Color_Container: themeColor('--surface', '#111A2E'),
@@ -1003,7 +1003,7 @@
                     Color_For_Text_Placeholder: themeColor('--text-muted', '#A7B4C8'),
                     Color_Border_Input_Fields: themeColor('--border', '#24314D'),
                     Color_Primary: themeColor('--primary', '#3B82F6'),
-                    Color_Disabled: root.getAttribute('data-theme') === 'light' ? '#64748B' : '#475569',
+                    Color_Disabled: '#64748B',
                     Text_Color_For_Payment_Button: '#FFFFFF',
                     Color_Error: themeColor('--danger', '#F87171'),
                     Radius_Border: '10',
@@ -1018,7 +1018,7 @@
                     Placeholder_Text: {
                         holderName: 'Name exactly as printed on your card (English)'
                     },
-                    Vertical_Spacing_between_components: '14'
+                    Vertical_Spacing_between_components: '8'
                 },
                 afterPaymentComplete: function () {
                     showToast('success', 'Payment submitted', 'Paymob is confirming your payment.');
