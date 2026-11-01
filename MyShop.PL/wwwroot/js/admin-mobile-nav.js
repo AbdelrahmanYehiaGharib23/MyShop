@@ -12,6 +12,12 @@
         toggle.setAttribute('aria-expanded', String(open));
     };
 
+    // Start desktop visits with the full navigation labels visible.
+    if (!mobileQuery.matches) {
+        body.classList.remove('sidebar-collapse');
+        toggle.setAttribute('aria-expanded', 'true');
+    }
+
     toggle.addEventListener('click', () => {
         if (mobileQuery.matches) {
             setOpen(!body.classList.contains('admin-mobile-menu-open'));

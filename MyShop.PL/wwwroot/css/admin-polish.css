@@ -900,3 +900,49 @@ body.hold-transition .main-sidebar .nav-sidebar > .nav-item > .nav-link.active .
         transition: none !important;
     }
 }
+
+/* Keep the shared admin shell readable when theme and AdminLTE styles overlap. */
+html[data-theme="dark"] body.hold-transition .wrapper > .main-header.navbar {
+    background: var(--admin-page, #0f172a) !important;
+    background-color: var(--admin-page, #0f172a) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--admin-border, #24314f) !important;
+    color: var(--admin-text-strong, #f4f7fb) !important;
+}
+
+html[data-theme="light"] body.hold-transition .wrapper > .main-header.navbar {
+    background: var(--admin-page, #f4f7fb) !important;
+    background-color: var(--admin-page, #f4f7fb) !important;
+    background-image: none !important;
+    border-bottom: 1px solid var(--admin-border, #dce4ee) !important;
+    color: var(--admin-text-strong, #152238) !important;
+}
+
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-navbar-title,
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-user-chip,
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-user-chip .admin-user-name {
+    color: var(--admin-text-strong) !important;
+    opacity: 1 !important;
+}
+
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-navbar-subtitle {
+    color: var(--admin-muted) !important;
+    opacity: 1 !important;
+}
+
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-menu-toggle.nav-link {
+    border: 1px solid transparent !important;
+    border-radius: var(--admin-radius-control, 10px) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: var(--admin-text-strong) !important;
+    box-shadow: none !important;
+}
+
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-menu-toggle.nav-link:hover,
+html[data-theme] body.hold-transition .wrapper > .main-header .admin-menu-toggle.nav-link:focus-visible {
+    border-color: var(--admin-border) !important;
+    background: var(--admin-surface-hover) !important;
+    background-color: var(--admin-surface-hover) !important;
+    color: var(--admin-primary) !important;
+}
