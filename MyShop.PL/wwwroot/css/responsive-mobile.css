@@ -141,14 +141,15 @@ body {
         height: 42px;
         place-items: center;
         padding: 0;
-        border: 1px solid var(--admin-border);
+        border: 1px solid transparent;
         border-radius: 10px;
-        background: var(--admin-surface);
+        background: transparent;
         color: var(--admin-text-strong);
         cursor: pointer;
     }
     body.hold-transition .admin-menu-toggle:hover,
     body.hold-transition .admin-menu-toggle:focus-visible {
+        border-color: var(--admin-border);
         background: var(--admin-surface-hover);
         color: var(--admin-primary);
     }
@@ -384,18 +385,18 @@ body {
     .catalog-toolbar { align-items: stretch; flex-direction: column; gap: 12px; }
     .product-toolbar-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .product-toolbar-actions :is(a, button) { min-width: 0; width: 100%; min-height: 44px; padding-inline: 8px; font-size: 12px; }
-    .product-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px; }
+    .product-metrics { grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 8px; }
     .product-metrics > div { min-width: 0; padding: 12px; }
-    .product-metrics > div:last-child { grid-column: 1 / -1 !important; }
-    .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
+    .product-metrics > div:last-child { grid-column: 1 / -1; }
+    .product-metrics > div:last-child { grid-column: 1 / -1; }
+    .product-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 10px; }
     .product-card { min-width: 0; }
     .product-card-media { aspect-ratio: 1 / 1; }
     .product-card-body { min-width: 0; padding: 10px; }
     .product-card-body h3 { min-height: 2.5em; font-size: 13px; line-height: 1.25; overflow-wrap: anywhere; }
     .product-card-meta { align-items: flex-start; flex-direction: column; gap: 4px; }
     .product-card-meta strong { font-size: 13px; }
-    .product-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-    .product-card-actions > :last-child { grid-column: 1 / -1; }
+    .product-card-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .product-card-actions :is(a, button) { width: 100%; min-width: 0; min-height: 42px; padding-inline: 5px; font-size: 11px; }
     .catalog-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     .catalog-metric { min-width: 0; padding: 12px; }

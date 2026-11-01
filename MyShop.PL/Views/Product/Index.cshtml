@@ -7,12 +7,13 @@
         .Select(product => product.CategoryName)
         .Where(category => !string.IsNullOrWhiteSpace(category))
         .Distinct()
+        .OrderBy(category => category, StringComparer.OrdinalIgnoreCase)
         .ToList();
 
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Products";
-    ViewBag.PageTitle = "Product Management";
-    ViewBag.CardTitle = "Products";
+    ViewBag.HideContentHeader = true;
+    ViewBag.UseAdminCard = false;
 }
 
 <partial name="PartialView/_ProductStyles" />
@@ -53,34 +54,75 @@
     </div>
 
     <div class="product-metrics">
-        <div>
-            <span>Total products</span>
-            <strong>@products.Count</strong>
+        <div class="product-metric">
+            <span class="product-metric-icon" aria-hidden="true"><i class="fas fa-boxes"></i></span>
+            <div class="product-metric-copy">
+                <span>Total products</span>
+                <strong>@products.Count</strong>
+            </div>
         </div>
-        <div>
-            <span>Categories in use</span>
-            <strong>@categories.Count</strong>
+        <div class="product-metric">
+            <span class="product-metric-icon" aria-hidden="true"><i class="fas fa-tags"></i></span>
+            <div class="product-metric-copy">
+                <span>Categories in use</span>
+                <strong>@categories.Count</strong>
+            </div>
         </div>
-        <div>
-            <span>Average price</span>
-            <strong>@(products.Any() ? CurrencyFormatter.ToEgp(products.Average(product => product.Price)) : CurrencyFormatter.ToEgp(0))</strong>
+        <div class="product-metric">
+            <span class="product-metric-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></span>
+            <div class="product-metric-copy">
+                <span>Average price</span>
+                <strong>@(products.Any() ? CurrencyFormatter.ToEgp(products.Average(product => product.Price)) : CurrencyFormatter.ToEgp(0))</strong>
+            </div>
         </div>
     </div>
 
     @if (products.Any())
     {
-        <div class="product-grid">
+        <div class="product-filters" data-product-filters>
+            <label class="product-search-field">
+                <span class="sr-only">Search products by name</span>
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" data-product-search placeholder="Search products..." autocomplete="off" />
+            </label>
+            <label class="product-select-field">
+                <span class="sr-only">Filter by category</span>
+                <select data-product-category>
+                    <option value="">All categories</option>
+                    @foreach (var category in categories)
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </label>
+            <label class="product-select-field">
+                <span class="sr-only">Sort products</span>
+                <select data-product-sort>
+                    <option value="default">Default order</option>
+                    <option value="name-asc">Name: A to Z</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                </select>
+            </label>
+        </div>
+        <p class="product-results-summary" data-product-results aria-live="polite"></p>
+
+        <div class="product-grid" data-product-grid>
             @foreach (var product in products)
             {
                 var imageUrl = string.IsNullOrWhiteSpace(product.ImageUrl)
                     ? null
                     : Url.Content($"~/{product.ImageUrl.TrimStart('/')}");
 
-                <article class="product-card">
+                <article class="product-card"
+                         data-product-card
+                         data-product-name="@product.Name"
+                         data-product-category="@product.CategoryName"
+                         data-product-price="@product.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                     <div class="product-card-media">
                         @if (!string.IsNullOrWhiteSpace(imageUrl))
                         {
-                            <img src="@imageUrl" alt="@product.Name" />
+                            <img src="@imageUrl" alt="@product.Name" loading="lazy" decoding="async" />
                         }
                         else
                         {
@@ -95,7 +137,6 @@
                         <h3>@product.Name</h3>
                         <div class="product-card-meta">
                             <strong>@CurrencyFormatter.ToEgp(product.Price)</strong>
-                            <span>@product.CategoryName</span>
                         </div>
                         <div class="product-card-actions">
                             <a asp-action="Details" asp-route-id="@product.Id" class="product-secondary-action">
@@ -115,6 +156,11 @@
                 </article>
             }
         </div>
+        <div class="product-filter-empty" data-product-empty hidden>
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <p>No products match these filters.</p>
+            <button class="product-filter-reset" type="button" data-product-reset>Clear filters</button>
+        </div>
     }
     else
     {
@@ -129,3 +175,70 @@
         </div>
     }
 </section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var filters = document.querySelector('[data-product-filters]');
+            var grid = document.querySelector('[data-product-grid]');
+            if (!filters || !grid) return;
+
+            var search = filters.querySelector('[data-product-search]');
+            var category = filters.querySelector('[data-product-category]');
+            var sort = filters.querySelector('[data-product-sort]');
+            var summary = document.querySelector('[data-product-results]');
+            var empty = document.querySelector('[data-product-empty]');
+            var reset = document.querySelector('[data-product-reset]');
+            var cards = Array.prototype.slice.call(grid.querySelectorAll('[data-product-card]'));
+            var total = cards.length;
+            cards.forEach(function (card, index) {
+                card.dataset.productOrder = String(index);
+            });
+
+            function updateProducts() {
+                var query = (search.value || '').trim().toLocaleLowerCase();
+                var selectedCategory = category.value;
+                var sortBy = sort.value;
+                var visibleCount = 0;
+
+                cards.sort(function (left, right) {
+                    if (sortBy === 'name-asc') {
+                        return left.dataset.productName.localeCompare(right.dataset.productName);
+                    }
+                    if (sortBy === 'price-asc') {
+                        return Number(left.dataset.productPrice) - Number(right.dataset.productPrice);
+                    }
+                    if (sortBy === 'price-desc') {
+                        return Number(right.dataset.productPrice) - Number(left.dataset.productPrice);
+                    }
+                    return Number(left.dataset.productOrder) - Number(right.dataset.productOrder);
+                });
+
+                cards.forEach(function (card) {
+                    var matchesName = card.dataset.productName.toLocaleLowerCase().includes(query);
+                    var matchesCategory = !selectedCategory || card.dataset.productCategory === selectedCategory;
+                    var matches = matchesName && matchesCategory;
+                    card.hidden = !matches;
+                    if (matches) visibleCount++;
+                    grid.appendChild(card);
+                });
+
+                summary.textContent = 'Showing ' + visibleCount + ' of ' + total + ' products';
+                empty.hidden = visibleCount !== 0;
+            }
+
+            search.addEventListener('input', updateProducts);
+            category.addEventListener('change', updateProducts);
+            sort.addEventListener('change', updateProducts);
+            reset.addEventListener('click', function () {
+                search.value = '';
+                category.value = '';
+                sort.value = 'default';
+                updateProducts();
+                search.focus();
+            });
+
+            updateProducts();
+        })();
+    </script>
+}
