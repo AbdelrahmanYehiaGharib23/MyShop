@@ -92,7 +92,10 @@ namespace MyShop.BLL.Services.PaymentServices
                     postal_code = "NA"
                 },
 
-                special_reference = orderId.ToString(),
+                // Paymob requires a unique merchant reference for every intention.
+                // Include the local order ID so callbacks can still be correlated,
+                // and a fresh suffix so a retry can create a new intention.
+                special_reference = $"{orderId}-{Guid.NewGuid():N}",
 
                 expiration = 3600,
 

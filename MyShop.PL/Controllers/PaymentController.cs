@@ -525,8 +525,9 @@ namespace MyShop.PL.Controllers
                 return Ok();
             }
 
-            var localOrderId =
+            var merchantOrderReference =
                 transaction.Order?.MerchantOrderId;
+            var localOrderId = merchantOrderReference?.Split('-', 2)[0];
 
             if (!int.TryParse(localOrderId, out var orderId))
             {
