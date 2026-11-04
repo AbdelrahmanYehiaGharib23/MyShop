@@ -665,9 +665,9 @@ body {
     .store-nav-actions .store-login-link { width: auto !important; min-width: 56px; min-height: 40px; padding-inline: 8px; font-size: 11px; }
     .store-nav-actions .store-primary-link { display: inline-flex; min-width: 58px; min-height: 40px; justify-content: center; padding-inline: 8px; border-radius: 12px; font-size: 11px; }
 
-    .store-search { min-height: 43px; border-radius: 14px; }
-    .store-search-input { min-height: 43px; border-radius: 14px; }
-    .store-search-submit { width: 31px; height: 31px; }
+    .store-search { min-height: 50px; border-radius: 16px; }
+    .store-search-input { min-height: 48px; border-radius: 12px; }
+    .store-search-submit { width: 36px; height: 36px; }
 
     .store-nav-links {
         position: fixed;

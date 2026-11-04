@@ -25,6 +25,57 @@
 .store-product-actions { gap: 8px; }
 .store-product-card:hover { transform: translateY(-4px); }
 
+/* Make the catalog search read as one prominent, usable control in the shared navbar. */
+.store-navbar-collapse { min-width: 0; }
+.store-search {
+    box-sizing: border-box;
+    flex: 1 1 300px;
+    min-width: 230px;
+    max-width: 460px;
+    margin-inline: 0;
+    min-height: 54px;
+    padding: 5px 6px;
+    border: 1px solid var(--store-border);
+    border-radius: 999px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--store-surface) 96%, transparent), color-mix(in srgb, var(--store-surface-2) 88%, transparent));
+    box-shadow: 0 12px 28px rgba(5, 15, 30, .12), inset 0 1px 0 rgba(255, 255, 255, .08);
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, max-width .2s ease;
+}
+.store-search > i { left: 18px; font-size: 15px; }
+.store-search-input {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 42px;
+    padding: 0 52px 0 48px;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    box-shadow: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+.store-search-input:focus { border: 0; background: transparent; box-shadow: none; outline: 0; }
+.store-search:focus-within {
+    flex-basis: 340px;
+    max-width: 500px;
+    border-color: color-mix(in srgb, var(--store-primary) 64%, var(--store-border));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--store-primary) 16%, transparent), 0 14px 32px rgba(5, 15, 30, .16);
+    transform: translateY(-1px);
+}
+.store-search-submit { right: 6px; width: 40px; height: 40px; }
+.store-search-submit:focus-visible { outline: 3px solid color-mix(in srgb, var(--store-primary) 48%, white); outline-offset: 3px; }
+
+@media (min-width: 1101px) {
+    body:has(.checkout-page) .store-search { flex: 1 1 300px; min-width: 250px; max-width: 420px; }
+    body:has(.checkout-page) .store-search:focus-within { flex-basis: 340px; max-width: 460px; }
+}
+
+@media (min-width: 992px) and (max-width: 1100px) {
+    .store-search { flex: 1 1 240px; min-width: 200px; max-width: 300px; }
+    body:has(.checkout-page) .store-search { flex: 1 1 220px; min-width: 190px; max-width: 290px; }
+    body:has(.checkout-page) .store-search:focus-within { flex-basis: 260px; max-width: 320px; }
+}
+
 .checkout-page .paymob-payment-badges { display: flex; align-items: center; gap: 12px; }
 .checkout-page .paymob-card-aside { display: flex; width: 116px; flex: 0 0 116px; grid-template-columns: minmax(0, 1fr); justify-content: flex-end; order: 0; }
 .checkout-page .paymob-card-preview { width: 100%; max-width: 116px; height: auto; aspect-ratio: 1.586 / 1; padding: 9px 11px; border-radius: 12px; }
