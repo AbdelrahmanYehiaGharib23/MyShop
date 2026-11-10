@@ -417,8 +417,8 @@
                 setFavoriteState(button, !button.classList.contains('active'));
             } else {
                 var isActive = button.classList.contains('active');
-                setFavoriteState(button, isActive, false);
-                if (isActive) pulseFavorite(button);
+                setFavoriteState(button, !isActive, false);
+                if (!isActive) pulseFavorite(button);
             }
             persistFromButton(button);
         });
