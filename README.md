@@ -14,10 +14,12 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 * Product Catalog
 * Product Details
 * Shopping Cart
+* Customer Favorites
 * Product Search
 * Product Sorting
 * Server-Side Pagination
 * Dark & Light Theme
+* Arabic and English interface support
 * Session-Based Cart
 
 ---
@@ -53,15 +55,16 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 * Order Items Management
 * Order Confirmation
 * Customer Order Workflow
+* Customer-facing fulfillment stages and store-provided delivery details
 
 ---
 
 ## 💳 Payment
 
 * Stripe Payment Integration
+* Paymob Payment Integration (EGP)
 * Secure Checkout Payment Flow
-* Payment Processing through Stripe
-* Payment Status Handling
+* Server-verified payment status and webhook handling
 * Integration with Order Checkout
 
 ---
@@ -160,6 +163,7 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 * Memory Cache
 * Session
 * Stripe
+* Paymob
 * Repository Pattern
 * Unit Of Work
 * Specification Pattern
@@ -260,6 +264,22 @@ Example:
 
 > ⚠️ Do not commit your real Stripe Secret Key to GitHub. Use **User Secrets** or environment variables for production environments.
 
+## Configure Paymob
+
+Set the Paymob values through **User Secrets** for local development or environment variables on the hosting provider. Do not commit live keys or HMAC secrets.
+
+Required settings:
+
+```text
+Paymob:SecretKey
+Paymob:PublicKey
+Paymob:IntegrationId
+Paymob:HmacSecret
+Paymob:CallbackBaseUrl
+```
+
+`Paymob:CallbackBaseUrl` must be a public HTTPS base URL so Paymob can reach the payment notification endpoint. Payment is confirmed from the verified webhook; the browser redirect alone does not mark an order as paid.
+
 ---
 
 ## Run the Project
@@ -299,6 +319,7 @@ See [`tests/README.md`](tests/README.md) for the test layout and contribution gu
 * ✅ Authentication
 * ✅ Authorization
 * ✅ Shopping Cart
+* ✅ Customer Favorites
 * ✅ Product Search
 * ✅ Product Sorting
 * ✅ Server-Side Pagination
@@ -308,6 +329,8 @@ See [`tests/README.md`](tests/README.md) for the test layout and contribution gu
 * ✅ Orders
 * ✅ Checkout
 * ✅ Stripe Payment Integration
+* ✅ Paymob Payment Integration
+* ✅ Customer order and delivery progress
 * ✅ Order Confirmation Email
 * ✅ Product Reviews & Ratings
 * ✅ SQL Server Database Backup
@@ -316,117 +339,63 @@ See [`tests/README.md`](tests/README.md) for the test layout and contribution gu
 
 # 📸 Screenshots
 
+The screenshots below show the current customer storefront and admin workflows. They are linked to the image files in the [`Images`](Images) folder.
+
 ## 🛍 Customer Store
 
-### Customer Home (Light)
+| Home — Light | Home — Dark |
+| --- | --- |
+| <img src="Images/CustomerHomeLight.png" alt="Customer storefront in light mode" width="460"> | <img src="Images/CustomerHomeDark.png" alt="Customer storefront in dark mode" width="460"> |
 
-![Customer Home Light](Images/CustomerHomeLight.png)
+| Home — Dark variant | Product search |
+| --- | --- |
+| <img src="Images/CustomerHomeDark2.png" alt="Customer storefront dark mode variant" width="460"> | <img src="Images/SearchProduct.png" alt="Customer product search" width="460"> |
 
----
+| Shopping cart | Checkout |
+| --- | --- |
+| <img src="Images/ShoppingCart.png" alt="Customer shopping cart" width="460"> | <img src="Images/Checkout.png" alt="Customer checkout and payment selection" width="460"> |
 
-### Customer Home (Dark)
+| Pay securely with Stripe | Pay securely with Paymob |
+| --- | --- |
+| <img src="Images/Pay%20securely%20with%20Stripe.png" alt="Stripe payment experience" width="460"> | <img src="Images/Pay%20securely%20with%20Paymob.png" alt="Paymob payment experience" width="460"> |
 
-![Customer Home Dark](Images/CustomerHomeDark.png)
+| Payment confirmed | My orders |
+| --- | --- |
+| <img src="Images/Payment%20confirmed.png" alt="Payment confirmation page" width="460"> | <img src="Images/My%20Orders.png" alt="Customer order history and delivery progress" width="460"> |
 
----
+| Delivery information | Product reviews |
+| --- | --- |
+| <img src="Images/Delivery%20Information.png" alt="Customer delivery information" width="460"> | <img src="Images/Product%20Reviews.png" alt="Product reviews and ratings" width="460"> |
 
-### Customer Home (Dark Variant)
+| Login | Register |
+| --- | --- |
+| <img src="Images/Login.png" alt="Customer login page" width="460"> | <img src="Images/Register.png" alt="Customer registration page" width="460"> |
 
-![Customer Home Dark 2](Images/CustomerHomeDark2.png)
+| Arabic translation |
+| --- |
+| <img src="Images/Translate%20into%20Arabic.png" alt="Storefront translated into Arabic" width="460"> |
 
----
+## 🛠 Admin Dashboard
 
-### Product Search
+| Admin home — Dark | Admin home — Light |
+| --- | --- |
+| <img src="Images/AdminHomeDark.png" alt="Admin dashboard in dark mode" width="460"> | <img src="Images/AdminHomeLight.png" alt="Admin dashboard in light mode" width="460"> |
 
-![Product Search](Images/SearchProduct.png)
+| Add a product | Edit products |
+| --- | --- |
+| <img src="Images/Adding%20a%20product%20from%20the%20Admin%20panel.png" alt="Adding a product from the admin panel" width="460"> | <img src="Images/Edit%20Products.png" alt="Admin product editing page" width="460"> |
 
----
+| Categories | Users |
+| --- | --- |
+| <img src="Images/Display%20categories.png" alt="Admin category management" width="460"> | <img src="Images/Display%20Users.png" alt="Admin user management" width="460"> |
 
-### Product Details
+| Create a role | Manage roles |
+| --- | --- |
+| <img src="Images/Create%20Role.png" alt="Creating an admin role" width="460"> | <img src="Images/Manage%20Role.png" alt="Managing user roles" width="460"> |
 
-![Product Details](Images/ProductDetailsDark.png)
-
----
-
-### Shopping Cart
-
-![Shopping Cart](Images/ShoppingCart.png)
-
----
-
-### Checkout
-
-![Checkout](Images/Checkout.png)
-
----
-
-### Product Reviews
-
-![Product Reviews](Images/Product%20Reviews.png)
-
----
-
-## 📦 Products
-
-### Product List
-
-![Product List](Images/Dispaly%20Products.png)
-
----
-
-### Create Product
-
-![Create Product](Images/Create%20Products.png)
-
----
-
-### Edit Product
-
-![Edit Product](Images/Edit%20Products.png)
-
----
-
-## 📂 Categories
-
-### Category List
-
-![Category List](Images/Display%20categories.png)
-
----
-
-### Create Category
-
-![Create Category](Images/Create%20Categories.png)
-
----
-
-## 🔐 Roles
-
-### Display Roles
-
-![Display Roles](Images/Display%20Roles.png)
-
----
-
-### Create Role
-
-![Create Role](Images/Create%20Roles.png)
-
----
-
-### Edit User Role
-
-![Edit User Role](Images/Edit%20Roles%20\(Select%20User\).png)
-
----
-
-## 👥 Users
-
-### Display Users
-
-![Display Users](Images/Display%20Users.png)
-
----
+| Order management | Fulfillment and delivery |
+| --- | --- |
+| <img src="Images/Order%20Management.png" alt="Admin order management" width="460"> | <img src="Images/Fulfillment%20and%20delivery.png" alt="Admin fulfillment and delivery workflow" width="460"> |
 
 ## Storefront release setup
 
@@ -458,7 +427,8 @@ See [`tests/README.md`](tests/README.md) for the test layout and contribution gu
 * Shopping Cart is implemented using **ASP.NET Core Session**.
 * Authentication and Authorization are powered by **ASP.NET Core Identity**.
 * Orders and Checkout are integrated into the customer purchasing workflow.
-* Payments are processed through **Stripe**.
+* Payments are supported through **Stripe** and **Paymob**.
+* Customers can view order fulfillment progress and delivery details entered by the store.
 * Product Reviews and Ratings are supported for products.
 * Order confirmation emails are sent through the email integration.
 * A SQL Server backup (`Database/MyShop.bak`) is included for quick project setup.
