@@ -6,6 +6,31 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 
 ---
 
+## 🧭 System Workflow
+
+MyShop is an online store backed by an admin dashboard. The sections below describe what happens behind the main customer and store actions, beyond the screenshots.
+
+### Customer journey
+
+1. **Discover products:** Customers browse the catalog, open product details, search by name, sort results, and move through server-paginated listings. They can also save products to Favorites.
+2. **Build a cart:** Cart contents are kept in the customer session. Before checkout, the application refreshes product data and prices. If a product changed or became unavailable, the customer sees the updated cart and must review it before continuing.
+3. **Place an order:** The customer enters delivery contact details and submits checkout. The application creates a pending order with a snapshot of the purchased items and prevents duplicate checkout submissions.
+4. **Pay:** The customer chooses Stripe (USD) or Paymob (EGP). A successful browser redirect is not treated as proof of payment: the server verifies the provider callback/webhook, including the order and payment details, before marking the order paid. A pending or failed payment can be checked from the order/payment status pages.
+5. **Follow delivery progress:** After payment, the customer can follow fulfillment stages in **My Orders**. The store enters the courier, tracking number, and estimated arrival date in the admin order page; those details then appear to the customer.
+
+### Store and admin workflow
+
+- Store staff use the admin dashboard to manage products, images, categories, customer accounts, roles, and orders.
+- An order cannot enter fulfillment until its payment is confirmed. Fulfillment progresses one step at a time: **Awaiting preparation → Preparing → Shipped → Delivered**.
+- Courier and tracking details are required before an order can be marked as shipped. These are details entered by the store; the project does not currently connect to a courier API or show a live GPS map.
+- Product reviews and customer ratings are displayed with the product catalog. Order confirmation messages are sent through the configured email service.
+
+### Application layers
+
+- **MyShop.PL:** ASP.NET Core MVC web application, controllers, Razor views, view models, and static storefront/admin assets.
+- **MyShop.BLL:** Application services, DTOs, mapping, and business workflows for products, categories, carts, favorites, orders, reviews, identity, email, and payments.
+- **MyShop.DAL:** EF Core entities, database context, repositories, specifications, and unit-of-work implementation.
+
 # 🚀 Features
 
 ## 🛍 Customer Store
@@ -174,19 +199,19 @@ The project includes a complete **Admin Dashboard** for managing the store and a
 
 ```text
 MyShop
-│
 ├── Database
 │   └── MyShop.bak
-│
-├── Images
-│
-├── MyShop.PL
-├── MyShop.BLL
-└── MyShop.DAL
+├── Images                 # README screenshots
+├── MyShop.PL              # ASP.NET Core MVC app, controllers, views, and web assets
+├── MyShop.BLL             # Application services, DTOs, and business workflows
+├── MyShop.DAL             # EF Core entities, persistence, repositories, and specifications
+├── tests                  # Unit and HTTP integration tests
+└── MyShop..sln
 ```
 
----
+The solution separates the web interface, application workflows, and database access into three projects. The web project calls business services; those services use the data-access abstractions rather than putting database rules in Razor views.
 
+---
 # 🚀 Getting Started
 
 ## Prerequisites
@@ -343,6 +368,8 @@ The screenshots below show the current customer storefront and admin workflows. 
 
 ## 🛍 Customer Store
 
+The storefront supports both light and dark themes and is designed for desktop and mobile. Customers can browse and search the catalog, then continue from a product into cart, checkout, and order tracking.
+
 | Home — Light | Home — Dark |
 | --- | --- |
 | <img src="Images/CustomerHomeLight.png" alt="Customer storefront in light mode" width="460"> | <img src="Images/CustomerHomeDark.png" alt="Customer storefront in dark mode" width="460"> |
@@ -351,13 +378,19 @@ The screenshots below show the current customer storefront and admin workflows. 
 | --- | --- |
 | <img src="Images/CustomerHomeDark2.png" alt="Customer storefront dark mode variant" width="460"> | <img src="Images/SearchProduct.png" alt="Customer product search" width="460"> |
 
+Search helps customers narrow the catalog before opening an item. The cart keeps the selected products for the current session, and checkout refreshes their prices before creating an order.
+
 | Shopping cart | Checkout |
 | --- | --- |
 | <img src="Images/ShoppingCart.png" alt="Customer shopping cart" width="460"> | <img src="Images/Checkout.png" alt="Customer checkout and payment selection" width="460"> |
 
+Choose a payment provider at checkout: Stripe processes card payment in USD, while Paymob processes card payment in EGP. The application waits for a verified server callback before treating the order as paid.
+
 | Pay securely with Stripe | Pay securely with Paymob |
 | --- | --- |
 | <img src="Images/Pay%20securely%20with%20Stripe.png" alt="Stripe payment experience" width="460"> | <img src="Images/Pay%20securely%20with%20Paymob.png" alt="Paymob payment experience" width="460"> |
+
+After payment, customers can see the order status and delivery journey from their account. Delivery details appear when store staff enter them in the admin order workflow.
 
 | Payment confirmed | My orders |
 | --- | --- |
@@ -376,6 +409,8 @@ The screenshots below show the current customer storefront and admin workflows. 
 | <img src="Images/Translate%20into%20Arabic.png" alt="Storefront translated into Arabic" width="460"> |
 
 ## 🛠 Admin Dashboard
+
+Authorized staff use the dashboard to maintain the catalog and categories, manage users and roles, and process orders. Paid orders move through fulfillment in sequence; courier and tracking information is shared with the customer after dispatch.
 
 | Admin home — Dark | Admin home — Light |
 | --- | --- |
