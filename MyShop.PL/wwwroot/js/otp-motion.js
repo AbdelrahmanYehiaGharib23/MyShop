@@ -134,7 +134,6 @@
         var gap = baseGap * (1 - clamp(join, 0, 1));
         var total = cellWidth * digitCount + gap * (digitCount - 1);
         var start = (width - total) / 2;
-        var joinedRadius = 8 * (1 - clamp(join, 0, 1));
         var submittingProgress = clamp(progress.x, 0, 1);
 
         cells.forEach(function (cell, index) {
@@ -144,18 +143,18 @@
 
             cell.element.style.left = (start + index * (cellWidth + gap)).toFixed(2) + 'px';
             cell.element.style.width = Math.max(0, joinedWidth).toFixed(2) + 'px';
-            cell.element.style.borderRadius = index === 0
-                ? '8px ' + joinedRadius + 'px ' + joinedRadius + 'px 8px'
-                : index === digitCount - 1
-                    ? joinedRadius + 'px 8px 8px ' + joinedRadius + 'px'
-                    : joinedRadius + 'px';
-            cell.element.style.background = submittingProgress > .01
-                ? 'color-mix(in srgb, var(--primary) ' + (submittingProgress * 100).toFixed(1) + '%, var(--surface-2))'
-                : active > .01
-                    ? 'color-mix(in srgb, var(--primary) ' + (active * 14).toFixed(1) + '%, var(--surface-2))'
-                    : '';
+            cell.element.style.setProperty(
+                '--otp-underline-color',
+                submittingProgress > .01 || active > .01
+                    ? 'color-mix(in srgb, var(--primary) ' + (Math.max(active, submittingProgress) * 100).toFixed(1) + '%, var(--border))'
+                    : 'var(--border)'
+            );
+            cell.element.style.setProperty('--otp-underline-scale', (0.88 + active * 0.24).toFixed(3));
             cell.digit.style.opacity = digitOpacity.toFixed(3);
             cell.digit.style.transform = 'translateY(' + cell.y.x.toFixed(2) + 'px)';
+            cell.digit.style.color = active > .01
+                ? 'color-mix(in srgb, var(--primary) ' + (active * 30).toFixed(1) + '%, var(--text))'
+                : '';
             cell.caret.style.opacity = active > .5 && !value[index] && (elapsed * 1.8) % 2 < 1.2 ? '1' : '0';
         });
 

@@ -1,8 +1,15 @@
-.otp-input-group {
+.auth-form .otp-input-group,
+.auth-form .otp-input-group:focus-within {
     min-height: 56px !important;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 .auth-verify-otp .auth-step-icon {
+    display: flex;
+    margin: 0 auto 18px;
     border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
     background: color-mix(in srgb, var(--primary) 14%, var(--surface));
     color: var(--primary);
@@ -66,13 +73,29 @@
     min-width: 0;
     height: 56px;
     place-items: center;
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
+    overflow: visible;
+    border-radius: 0;
+    background: transparent;
     color: var(--text);
     font-size: 22px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     will-change: transform, width, left;
+}
+
+.otp-cell::after {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    width: 28px;
+    height: 2px;
+    border-radius: var(--r-pill);
+    background: var(--otp-underline-color, var(--border));
+    content: "";
+    opacity: .9;
+    transform: translateX(-50%) scaleX(var(--otp-underline-scale, 1));
+    transform-origin: center;
+    will-change: transform, background-color;
 }
 
 .otp-cell-digit {
@@ -89,7 +112,7 @@
     height: 24px;
     margin-left: -1px;
     border-radius: 1px;
-    background: var(--text);
+    background: var(--primary);
 }
 
 .otp-status {
@@ -100,7 +123,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    color: var(--primary-contrast);
+    color: var(--primary);
     font-size: var(--type-sm);
     font-weight: 700;
     opacity: 0;
@@ -136,6 +159,7 @@
 @media (prefers-reduced-motion: reduce) {
     .otp-cell,
     .otp-cell-digit,
+    .otp-cell::after,
     .otp-status-spinner {
         will-change: auto;
     }
