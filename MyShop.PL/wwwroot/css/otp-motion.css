@@ -1,0 +1,133 @@
+.otp-input-group {
+    min-height: 56px !important;
+}
+
+.otp-motion {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 56px;
+    margin-inline-start: 36px;
+}
+
+.otp-native-input {
+    display: block;
+    width: 100% !important;
+    min-width: 0;
+    min-height: 56px !important;
+    height: 56px;
+    padding: 10px 12px !important;
+    border: 0 !important;
+    border-radius: inherit;
+    outline: 0;
+    background: transparent !important;
+    color: var(--text) !important;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .16em;
+    box-shadow: none !important;
+}
+
+.otp-boxes {
+    display: none;
+    position: relative;
+    width: 100%;
+    height: 56px;
+    direction: ltr;
+}
+
+.otp-motion--ready .otp-boxes {
+    display: block;
+}
+
+.otp-motion--ready .otp-native-input {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100% !important;
+    min-height: 56px !important;
+    height: 56px;
+    padding: 0 !important;
+    opacity: 0;
+    cursor: text;
+    caret-color: transparent;
+}
+
+.otp-cell {
+    position: absolute;
+    top: 0;
+    display: grid;
+    min-width: 0;
+    height: 56px;
+    place-items: center;
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    will-change: transform, width, left;
+}
+
+.otp-cell-digit {
+    display: block;
+    font-style: normal;
+    will-change: transform, opacity;
+}
+
+.otp-cell-caret {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 2px;
+    height: 24px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: var(--text);
+}
+
+.otp-status {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--primary-contrast);
+    font-size: var(--type-sm);
+    font-weight: 700;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.otp-status-spinner {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: otp-spin .7s linear infinite;
+}
+
+@keyframes otp-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 360px) {
+    .otp-motion { margin-inline-start: 32px; }
+    .otp-cell { font-size: 19px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .otp-cell,
+    .otp-cell-digit,
+    .otp-status-spinner {
+        will-change: auto;
+    }
+
+    .otp-status-spinner {
+        animation-duration: 1.8s;
+    }
+}

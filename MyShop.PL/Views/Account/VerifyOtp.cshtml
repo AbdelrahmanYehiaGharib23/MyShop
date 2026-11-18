@@ -6,6 +6,10 @@
     ViewData["Title"] = "Verify OTP";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/otp-motion.css" asp-append-version="true" />
+}
+
 <div class="auth-card">
     <div class="auth-step-icon">
         <i class="fas fa-shield-halved"></i>
@@ -24,10 +28,26 @@
         </div>
         <span asp-validation-for="Email" class="field-validation-error"></span>
 
-        <div class="input-group">
+        <label asp-for="Otp" class="visually-hidden">Verification code</label>
+        <div class="input-group otp-input-group">
             <span class="input-icon"><i class="fas fa-lock"></i></span>
-            <label asp-for="Otp" class="visually-hidden">Verification code</label>
-            <input asp-for="Otp" placeholder="OTP Code" required />
+            <div class="otp-motion" data-otp-motion>
+                <div class="otp-boxes" aria-hidden="true"></div>
+                <div class="otp-status" data-otp-status aria-live="polite" aria-atomic="true">
+                    <span class="otp-status-spinner" aria-hidden="true"></span>
+                    <span data-otp-status-text></span>
+                </div>
+                <input asp-for="Otp"
+                       class="otp-native-input"
+                       placeholder="OTP Code"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       maxlength="6"
+                       pattern="[0-9]{6}"
+                       autocapitalize="off"
+                       spellcheck="false"
+                       required />
+            </div>
         </div>
         <span asp-validation-for="Otp" class="field-validation-error"></span>
 
@@ -36,3 +56,7 @@
 
     <p class="switch-form">Back to <a asp-action="ForgotPassword" asp-controller="Account">Forgot Password</a></p>
 </div>
+
+@section Scripts {
+    <script src="~/js/otp-motion.js" asp-append-version="true"></script>
+}
