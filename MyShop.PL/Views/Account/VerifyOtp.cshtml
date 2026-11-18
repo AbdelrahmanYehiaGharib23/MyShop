@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="~/css/otp-motion.css" asp-append-version="true" />
 }
 
-<div class="auth-card">
+<div class="auth-card auth-verify-otp">
     <div class="auth-step-icon">
-        <i class="fas fa-shield-halved"></i>
+        <i class="fas fa-shield-alt" aria-hidden="true"></i>
     </div>
 
     <h2 class="auth-title">Verify OTP</h2>
@@ -30,7 +30,6 @@
 
         <label asp-for="Otp" class="visually-hidden">Verification code</label>
         <div class="input-group otp-input-group">
-            <span class="input-icon"><i class="fas fa-lock"></i></span>
             <div class="otp-motion" data-otp-motion>
                 <div class="otp-boxes" aria-hidden="true"></div>
                 <div class="otp-status" data-otp-status aria-live="polite" aria-atomic="true">

@@ -2,12 +2,18 @@
     min-height: 56px !important;
 }
 
+.auth-verify-otp .auth-step-icon {
+    border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+    background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+    color: var(--primary);
+}
+
 .otp-motion {
     position: relative;
     flex: 1 1 auto;
     min-width: 0;
     height: 56px;
-    margin-inline-start: 36px;
+    margin-inline-start: 0;
 }
 
 .otp-native-input {
@@ -116,8 +122,15 @@
 }
 
 @media (max-width: 360px) {
-    .otp-motion { margin-inline-start: 32px; }
     .otp-cell { font-size: 19px; }
+}
+
+@media (max-width: 520px) {
+    .auth-verify-otp {
+        width: min(100%, calc(100vw - 24px));
+        max-width: calc(100vw - 24px);
+        padding: 24px 18px;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
